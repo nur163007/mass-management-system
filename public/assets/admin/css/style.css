@@ -1,0 +1,11 @@
+.viewall {
+    background-color: green;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    margin-right: 20px;
+}
+
+.viewall:hover {
+    color: yellow;
+}
