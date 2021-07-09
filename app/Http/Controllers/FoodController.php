@@ -50,15 +50,16 @@ class FoodController extends Controller
     }
 
     public function viewCategory(){
-        return view('admin.foodCategory.viewCategory');
-    }
-
-    public function showCategory(){
-       
         $categories = Category::all();
-
-        return response()->json($categories);
+        return view('admin.foodCategory.viewCategory',compact('categories'));
     }
+
+    // public function showCategory(){
+       
+    //     $categories = Category::all();
+
+    //     return response()->json($categories);
+    // }
 
      public function deleteCategory($id){
         $categories = Category::findOrFail($id);
@@ -69,9 +70,10 @@ class FoodController extends Controller
             }
            
             $categories->delete();
-            return response()->json('success');
+            return redirect()->back()->with('success','Category successfully deleted.');
         }else{
-            return response()->json('error');
+            return redirect()->back()->with('error','Something Error Found !, Please try again.');
+           
         }
      }
 

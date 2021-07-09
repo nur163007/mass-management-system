@@ -9,7 +9,7 @@
         <div class="card">
             <div class="row">
                 <div class="card-header col-md-6 col-6">
-                    <h3>Edit Category</h3>
+                    <h3 class="font-weight-bolder">Edit Category</h3>
                 </div>
                 <div class="card-header col-md-6 col-6 text-right">
                     <a href="{{route('admin.view.category')}}" class="viewall"><i class="fas fa-dolly-flatbed"></i> All Categories</a>
@@ -82,7 +82,7 @@ $('#form').on("submit",function(event){
     // console.log("clicked");
     event.preventDefault();
     var form = new FormData(this);
-    var my_url = base_url+"/admin/updateCategory";
+    var my_url = "{{route('update.category')}}";
     $.ajax({
         url:my_url,
         data:form,
@@ -96,7 +96,7 @@ $('#form').on("submit",function(event){
             // alert('successfully stored');
            
             if(response === "success"){
-             window.location.reload(); 
+             // window.location.reload(); 
                 Toast.fire({
                         type:'success',
                         title:'Category successfully updated.',

@@ -9,7 +9,7 @@
         <div class="card">
             <div class="row">
                 <div class="card-header col-md-6 col-6">
-                    <h3>Edit Item</h3>
+                    <h3 class="font-weight-bolder">Edit Item</h3>
                 </div>
                 <div class="card-header col-md-6 col-6 text-right">
                     <a href="{{route('admin.view.foodItem')}}" class="viewall"><i class="fas fa-dolly-flatbed"></i> All Items</a>
@@ -99,7 +99,7 @@ $(document).ready(function(){
     $('#form').on("submit",function(event){
         event.preventDefault();
         var form = new FormData(this);
-        var my_url = base_url+"/admin/updateFoodItem";
+        var my_url ="{{route('update.foodItem')}}";
         $.ajax({
             url:my_url,
             data:form,
@@ -112,7 +112,7 @@ $(document).ready(function(){
             //    alert(response);
                 // alert('successfully stored');
                 if(response === "success"){
-             window.location.reload(); 
+            //  window.location.reload(); 
                 Toast.fire({
                         type:'success',
                         title:'Item successfully updated.',

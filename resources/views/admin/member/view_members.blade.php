@@ -9,7 +9,7 @@
             <div class="card">
                 <div class="row">
                     <div class="card-header col-md-6 col-6">
-                        <h3>All Members</h3>
+                        <h3 class="font-weight-bolder">All Members</h3>
                     </div>
                     <div class="card-header col-md-6 col-6 text-right">
                         <a href="{{route('admin.add-member')}}" class="viewall"><i class="far fa-user"></i> Add Member</a>
@@ -20,7 +20,7 @@
 
                 <div class="card-body">
                     <table id="all-category" class="table table-bordered table-hover">
-                        <thead>
+                        <thead class="bg-cyan">
                             <tr>
                                 <th>SL NO</th>
                                 <th>Name</th>
@@ -29,12 +29,34 @@
                                 <th>Address</th>
                                 <th>Photo</th>
                                 <th>NID Photo</th>
+                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="tbody">
                                                 
-                            {{-- show data using ajax --}}
+                            @foreach ($members as $member)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $member->full_name }}</td>
+                               
+                                <td> 0{{ $member->phone_no }}</td>
+                                <td> {{ $member->email }}</td>
+                                <td> {{ $member->address }}</td>
+                                <td><img style="width: 60px; height:60px"
+                                            src="{{ asset('uploads/members/profile/' . $member->photo) }}" alt=""></td>
+                                <td><img style="width: 60px; height:60px"
+                                            src="{{ asset('uploads/members/nid/' . $member->nid_photo) }}" alt=""></td>
+                                
+                                 <td> 
+                                    <input type="checkbox" data-size="mini" data-toggle="toggle" data-on="Active" data-off="Inactive" id="memberStatus" data-id="{{ $member->id}}" {{ $member->status == 1 ? 'checked' : '' }} >
+                                </td>
+                                <td style="width: 80px">
+                                    <a href="{{route('admin.edit-member',$member->id)}}" class="btn btn-info btn-xs"> <i class="fas fa-pencil-alt"></i> </a>
+                                    <a href="{{route('admin.delete',$member->id)}}" class="btn btn-danger btn-xs"> <i class="fa fa-trash-alt"></i> </a>
+                                </td>
+                            </tr>
+                        @endforeach
                         
                         </tbody>
                     </table>
@@ -57,90 +79,27 @@
                         timer:3000
                     });
 
-                    $(document).ready(function(){
-        function showData(){
-            $.ajax({
-                url:"{{route('admin.showdata')}}",
-                method:"GET",
-                success: function(response){
-                    console.log(response);
-                    output="";
-				if(response){
-					x=response;
-				}else{
-					x="";
-				}
-				for(i=0;i<x.length;i++){
-				output+="<tr><td>"+x[i].id+ 
-				       "</td><td>"+x[i].full_name+ "</td><td>"+x[i].phone_no+ "</td><td>"+x[i].address+ "</td><td>"+x[i].email+ "</td>"+"<td> <img width='80px' height='60px' src="+'{{asset('uploads/members/profile')}}'+'/'+x[i].photo+ "> </td>"+"<td> <img width='80px' height='60px' src="+'{{asset('uploads/members/nid')}}'+'/'+x[i].nid_photo+ "> </td><td> <a class='btn btn-warning btn-sm btn-edit' href="+'{{url('admin/editdata')}}'+'/'+x[i].id+"><i class='fas fa-edit'></i></i></a> <button class='btn btn-danger btn-sm btn-del' data-sid="+x[i].id+"><i class='fas fa-trash'></i></i></button> </td></tr>";
-					   
-				}
-                $("#tbody").html(output);
-                },
-                error:function(error){
-                    
-                }
-            });
-        }
-        
-        showData();
+          $(document).ready(function(){
+           $('body').on('change','#memberStatus',function(){
+            //    alert('ok');
+          var id=$(this).attr('data-id');
+        //   alert(id);
+          if(this.checked){
+            var status = 1;
+          }
+          else{
+            var status = 0;
+          }
+        //   console.log(status);
+        $.ajax({
+          url:'memberStatus/'+id+'/'+status,
+          method:'get',
+          success:function(success){
+            console.log(success);
+          },
+        });
 
-            //delete function
-        
-        $("#tbody").on("click",".btn-del", function(){
-			 console.log("clicked delete button");
-			 let id= $(this).attr("data-sid");
-             var my_url = base_url+"/admin/deletedata/"+id;
-			// alert(my_url);     
-               mythis = this;
-          $.ajax({
-              url:my_url,
-              method: "GET",
-              success: function(response){
-				
-				  if(response){
-					 
-                    Toast.fire({
-                            type:'success',
-                            title:'Deleted member successfully.',
-                        });
-					  $(mythis).closest("tr").fadeOut();
-				  } 
-				  else{
-                        Toast.fire({
-                            type:'error',
-                            title:'Unable to delete.',
-                        });
-				  }
-			  },
-              error:function(error){
-
-              }		  
-		  });			   
-		  });
-
-        //   //edit function
-
-        //   $("#tbody").on("click",".btn-edit", function(){
-		// 	 console.log("clicked edit button");
-		// 	 let id= $(this).attr("data-sid");
-        //      var my_url = base_url+"/admin/editdata/"+id;
-		// 	// alert(my_url);     
-        //        mythis = this;
-        //   $.ajax({
-        //       url:my_url,
-        //       method: "GET",
-        //       success: function(response){
-
-        //     //    console.log(response);
-             
-			
-		// 	  },
-        //       error:function(error){
-
-        //       }		  
-		//   });			   
-		//   });
+        });
 
         });
 

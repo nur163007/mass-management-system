@@ -11,7 +11,7 @@
         <div class="card">
             <div class="row">
             <div class="card-header col-md-6 col-6">
-                <h3>Add Members</h3>
+                <h3 class="font-weight-bolder">Add Members</h3>
             </div>
             <div class="card-header col-md-6 col-6 text-right">
                 <a href="{{route('admin.view-member')}}" class="viewall"><i class="fas fa-users"></i> All Members</a>

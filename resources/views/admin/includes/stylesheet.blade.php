@@ -38,3 +38,6 @@
 <!-- DataTables -->
 <link rel="stylesheet" href="{{ asset('assets/admin/plugins/datatables-bs4/css/dataTables.bootstrap4.css') }}">
 
+
+{{-- bootstrap toggle --}}
+<link rel="stylesheet" href="{{ asset('assets/admin/dist/css/bootstrap-toggle.min.css') }}">

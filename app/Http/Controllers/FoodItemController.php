@@ -56,17 +56,19 @@ class FoodItemController extends Controller
     }
 
     public function viewFoodItem(){
-        return view('admin.foodItem.viewItem');
+        $items = DB::table('food_items')->join('food_categories','food_items.food_category_id','food_categories.id')->select('food_items.*','food_categories.category_name')->get();
+//   dd($items);
+        return view('admin.foodItem.viewItem',compact('items'));
     }
     
-    public function showFoodItem(){
+    // public function showFoodItem(){
         
-        // $data['food_categories'] = Category::all();  
-        // $data['food_items'] = FoodItem::all();
-        $items = DB::table('food_items')->join('food_categories','food_items.food_category_id','food_categories.id')->select('food_items.*','food_categories.category_name')->get();
-    //    dd($items);
-        return response()->json($items);
-    }
+    //     // $data['food_categories'] = Category::all();  
+    //     // $data['food_items'] = FoodItem::all();
+    //     $items = DB::table('food_items')->join('food_categories','food_items.food_category_id','food_categories.id')->select('food_items.*','food_categories.category_name')->get();
+    // //    dd($items);
+    //     return response()->json($items);
+    // }
 
     public function deleteFoodItem($id){
         $items = FoodItem::findOrFail($id);
@@ -77,9 +79,10 @@ class FoodItemController extends Controller
             }
            
             $items->delete();
-            return response()->json('success');
+            return redirect()->back()->with('success','Item successfully deleted.');
         }else{
-            return response()->json('error');
+            return redirect()->back()->with('error','Something Error Found !, Please try again.');
+          
         }
      }
 

@@ -9,7 +9,7 @@
         <div class="card">
             <div class="row">
                 <div class="card-header col-md-6 col-6">
-                    <h3>Add Expanse</h3>
+                    <h3 class="font-weight-bolder">Add Expanse</h3>
                 </div>
                 <div class="card-header col-md-6 col-6 text-right">
                     <a href="{{route('admin.view.expanse')}}" class="viewall"><i class="fas fa-money-bill-alt"></i> All Expanses</a>
@@ -83,7 +83,7 @@
                                 <p class="text-danger">{{ $errors->first('weight') }}</p>
                             @endif
                         </div>
-                           <div class="form-group col-md-3">
+                           <div class="form-group col-md-3 col-11">
                                <label for="amount">Price</label>
                                <input class="form-control" type="number" id="amount" name="amount[]"placeholder="Enter Price">
    
@@ -92,7 +92,7 @@
                                @endif
                            </div>
 
-                           <div class="col-md-1 text-center">
+                           <div class="col-md-1 col-1 text-center">
                             <div class="form-group pt-4">
                                 <span style="font-size: 1.5em; color: Tomato;" id="addButton"> 
                                   <i class="far fa-plus-square fa-lg pt-3"></i>
@@ -253,7 +253,7 @@ $(document).ready(function(){
                         <p class="text-danger">{{ $errors->first('weight') }}</p>
                     @endif
                     </div>
-                    <div class="form-group col-md-3">
+                    <div class="form-group col-md-3 col-11">
                         <label for="amount">Price</label>
                         <input class="form-control" type="number" id="amount" name="amount[]"placeholder="Enter Price">
 
@@ -262,7 +262,7 @@ $(document).ready(function(){
                         @endif
                     </div>
 
-                    <div class="col-md-1">
+                    <div class="col-md-1 col-1">
                                                 <div class="form-group pt-4">
                                                     <span style="font-size: 1.2em; color: red;" class="btn_remove" id="`+i+`"> 
                                                     <i class="far fa-trash-alt pt-3"></i>

@@ -15,37 +15,37 @@
                 
                 <div class="col-md-12 mt-3">
                     
-                        <div class="card">
-                            <table class="table table-active">
-                              
-                                <tbody>
-                                    <tr>
-                                        <th style="width: 20%">Total Meal</th>
-                                        <td>{{ $total_meal }}</td>
-                                    </tr>  
-                                    <tr>
-                                        <th style="width: 20%">Total Expanses</th>
-                                        <td>Tk. {{ $total_amount }}</td>
-                                    </tr>  
-                                    <tr>
-                                        <th style="width: 20%">Meal Rate</th>
-                                        <td> Tk. {{ number_format($meal_rate ,2)}}</td>
-                                    </tr>               
-                                    {{-- show data using ajax --}}
-                               
-                                </tbody>
-                            </table>
+                    <div class="row">
+                        <div class="col-12 col-sm-4">
+                          <div class="info-box bg-light">
+                            <div class="info-box-content">
+                              <span class="info-box-text text-center text-muted">Total Meal</span>
+                              <span class="info-box-number text-center text-muted mb-0">{{ $total_meal }}</span>
+                            </div>
+                          </div>
                         </div>
+                        <div class="col-12 col-sm-4">
+                          <div class="info-box bg-light">
+                            <div class="info-box-content">
+                              <span class="info-box-text text-center text-muted">Total Expanses</span>
+                              <span class="info-box-number text-center text-muted mb-0">Tk. {{ $total_amount }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                          <div class="info-box bg-light">
+                            <div class="info-box-content">
+                              <span class="info-box-text text-center text-muted">Total Meal Rate</span>
+                              <span class="info-box-number text-center text-muted mb-0">Tk. {{ number_format($meal_rate ,2)}}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                 </div>
             
-            <div class="col-md-12">
+      
                 <hr>
-                <h4 >Total Summary</h4>
-                <hr>
-            </div>
-
-                
-
+            
                 <div class="card-body">
                     <table id="all-category" class="table table-bordered table-hover">
                         <thead class="bg-success text-white">
@@ -70,13 +70,13 @@
                                
                                 <td>{{ $total->total_meal }}</td>
                                 <td> Tk. {{ number_format(($total->total_meal * $meal_rate),2)}}</td>
-                                <td>Tk. {{ $total->payment_amount }}</td>
+                                <td>Tk. {{ $total->payment_amount ? $total->payment_amount : '00' }}</td>
                                 <td> Tk. {{ number_format(($total->payment_amount -($total->total_meal * $meal_rate)),2) }}</td>
                                 <td>{{ $total->month }}</td>
 
                                 <td style="width: 80px">
-                                    <a href="{{route('admin.editMeal',$total->id)}}" class="btn btn-info btn-xs"> <i class="fa fa-edit"></i> </a>
-                                    <a href="{{route('admin.deleteMeal',$total->id)}}" class="btn btn-danger btn-xs"> <i class="fa fa-trash-alt"></i> </a>
+                                    <a href="{{route('admin.memberDetails',$total->id)}}" class="btn btn-info btn-xs"> <i class="fa fa-eye"></i> </a>
+                                    {{-- <a href="{{route('admin.deleteMeal',$total->id)}}" class="btn btn-danger btn-xs"> <i class="fa fa-trash-alt"></i> </a> --}}
                                 </td>
                             </tr>
                         @endforeach

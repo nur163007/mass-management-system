@@ -9,12 +9,12 @@
         <div class="card">
             <div class="row">
                 <div class="card-header col-md-6 col-6">
-                    <h3>Edit Meal</h3>
+                    <h3 class="font-weight-bolder">Edit Meal</h3>
                 </div>
                 <div class="card-header col-md-6 col-6 text-right">
                     <a href="{{route('admin.view.meal')}}" class="viewall"><i class="fas fa-hamburger"></i> All Meals</a>
                 </div>
-            </div>
+            </div> 
             @include('admin.includes.message')
             <div class="card-body">
                 <form method="POST"  enctype="multipart/form-data" id="form">
@@ -110,7 +110,7 @@ $(document).ready(function(){
            console.log(response);
                
                 if(response === "success"){
-                 window.location.reload(); 
+                //  window.location.reload(); 
                     Toast.fire({
                             type:'success',
                             title:'Meal successfully updated.',

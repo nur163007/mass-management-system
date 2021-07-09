@@ -12,14 +12,30 @@
           <!-- small box -->
           <div class="small-box bg-info">
             <div class="inner">
-              <h3>150</h3>
-
-              <p>New Orders</p>
+              @foreach ($members as $member)
+              <h3>{{ $member->total_member }}</h3>
+              @endforeach
+              <p>Total Members</p>
             </div>
             <div class="icon">
-              <i class="ion ion-bag"></i>
+              <i class="fas fa-users"></i>
             </div>
-            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="{{ route('admin.view-member') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <!-- small box -->
+          <div class="small-box bg-olive">
+            <div class="inner">
+           
+              <h3>{{$total_meal}}</h3>
+           
+              <p>Total Meal</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-hamburger"></i>
+            </div>
+            <a href="{{ route('admin.view.meal') }}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
         <!-- ./col -->
@@ -27,14 +43,14 @@
           <!-- small box -->
           <div class="small-box bg-success">
             <div class="inner">
-              <h3>53<sup style="font-size: 20px">%</sup></h3>
+              <h3>Tk {{number_format($meal_rate,2)}}</h3>
 
-              <p>Bounce Rate</p>
+              <p>Meal Rate</p>
             </div>
             <div class="icon">
               <i class="ion ion-stats-bars"></i>
             </div>
-            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="{{route('admin.view.meal')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
         <!-- ./col -->
@@ -42,29 +58,66 @@
           <!-- small box -->
           <div class="small-box bg-warning">
             <div class="inner">
-              <h3>44</h3>
+              <h3>Tk. {{$fund}}</h3>
 
-              <p>User Registrations</p>
+              <p>Total Payment</p>
             </div>
             <div class="icon">
-              <i class="ion ion-person-add"></i>
+              <i class="fas fa-money-bill"></i>
             </div>
-            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="{{route('admin.view.payment')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
         <!-- ./col -->
         <div class="col-lg-3 col-6">
           <!-- small box -->
-          <div class="small-box bg-danger">
+          <div class="small-box bg-maroon">
             <div class="inner">
-              <h3>65</h3>
+              <h3>Tk. {{$all_ex}}</h3>
 
-              <p>Unique Visitors</p>
+              <p>Total Expanse</p>
             </div>
             <div class="icon">
-              <i class="ion ion-pie-graph"></i>
+              <i class="fas fa-money-bill-wave"></i>
             </div>
-            <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+            <a href="{{route('admin.view.expanse')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+
+         <div class="col-lg-3 col-6">
+          <!-- small box -->
+          <div class="small-box bg-navy">
+            <div class="inner">
+              @if($cash < 0)
+              <h3>Tk {{number_format($cash,2)}}</h3>
+              @else
+              <h3>Tk 0.00</h3>
+              @endif
+              <p>Total Due</p>
+            </div>
+            <div class="icon text-dark">
+              <i class="fas fa-money-check-alt"></i>
+            </div>
+            <a href="{{route('admin.view.expanse')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+          </div>
+        </div>
+
+         <div class="col-lg-3 col-6">
+          <!-- small box -->
+          <div class="small-box bg-purple">
+            <div class="inner">
+              @if($cash > 0)
+              <h3>Tk {{number_format($cash,2)}}</h3>
+              @else
+              <h3>Tk 0.00</h3>
+              @endif
+
+              <p>Remaining</p>
+            </div>
+            <div class="icon">
+              <i class="fas fa-money-bill-alt"></i>
+            </div>
+            <a href="{{route('admin.view.payment')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
           </div>
         </div>
         <!-- ./col -->

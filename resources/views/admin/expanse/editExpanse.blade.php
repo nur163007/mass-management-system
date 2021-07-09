@@ -8,10 +8,10 @@
         <!-- Small boxes (Stat box) -->
         <div class="card">
             <div class="row">
-                <div class="card-header col-md-6 col-6">
-                    <h3>Edit Expanse</h3>
+                <div class="card-header col-md-6 col-5">
+                    <h3 class="font-weight-bolder">Edit Expanse</h3>
                 </div>
-                <div class="card-header col-md-6 col-6 text-right">
+                <div class="card-header col-md-6 col-7 text-right">
                     <a href="{{route('admin.view.expanse')}}" class="viewall"><i class="fas fa-money-bill-alt"></i> Expanse Details</a>
                 </div>
             </div>
@@ -149,6 +149,7 @@ $(document).ready(function(){
     $('#form').on("submit",function(event){
         event.preventDefault();
         var form = new FormData(this);
+        console.log('clicked update button');
         $.ajax({
             url:"{{route('update.expanse')}}",
             data:form,

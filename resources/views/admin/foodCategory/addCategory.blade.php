@@ -9,7 +9,7 @@
         <div class="card">
             <div class="row">
                 <div class="card-header col-md-6 col-6">
-                    <h3>Add Category</h3>
+                    <h3 class="font-weight-bolder">Add Category</h3>
                 </div>
                 <div class="card-header col-md-6 col-6 text-right">
                     <a href="{{route('admin.view.category')}}" class="viewall"><i class="fas fa-dolly-flatbed"></i> All Categories</a>

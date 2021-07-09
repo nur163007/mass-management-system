@@ -40,5 +40,6 @@
 <!-- DataTables -->
 <script src="{{ asset('assets/admin/plugins/datatables/jquery.dataTables.js') }}"></script>
 <script src="{{ asset('assets/admin/plugins/datatables-bs4/js/dataTables.bootstrap4.js') }}"></script>
+<script src="{{ asset('assets/admin/dist/js/bootstrap-toggle.min.js') }}"></script>
 
 @yield('custom_js')

@@ -1,4 +1,4 @@
-<div class="col-md-5 text-center offset-3 mt-2">
+<div class="col-md-5 text-center col-6 offset-3 mt-2">
     @if ($message = Session::get('success'))
         <div class="alert alert-success alert-block text-center">
             <button type="button" class="close" data-dismiss="alert">×</button>
