@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Meal;
 use App\Models\Member;
+use App\Services\EnhancedMealService;
 use Illuminate\Http\Request;
-use DB;
-use PDF;
+use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 class MealController extends Controller
 {
+    protected $mealService;
+
+    public function __construct(EnhancedMealService $mealService)
+    {
+        $this->mealService = $mealService;
+    }
+
     public function addMeal(){
         $members = Member::all();
         return view('admin.meal.addMeal',compact('members'));
@@ -33,10 +41,15 @@ class MealController extends Controller
         $meals->members_id = $request->members_id;
         $meals->date = $convert_date;
         $meals->month = $month;
-        $meals->breakfast = $request->breakfast;
-        $meals->lunch = $request->lunch;
-        $meals->dinner = $request->dinner;
+        $meals->breakfast = $request->breakfast ?? 0;
+        $meals->lunch = $request->lunch ?? 0;
+        $meals->dinner = $request->dinner ?? 0;
+        $meals->lunch_only_curry = $request->lunch_only_curry ?? 0;
+        $meals->dinner_only_curry = $request->dinner_only_curry ?? 0;
         $meals->status = "1";
+        
+        // Calculate total meal count
+        $meals->total_meal_count = $meals->calculateTotalMealCount();
 
         //  dd($meals);
         if ($meals->save()) {
@@ -48,9 +61,16 @@ class MealController extends Controller
     }
 
     public function viewMeal(){
-        $meals = DB::select("SELECT meals.id,meals.members_id,SUM(meals.breakfast + meals.lunch + meals.dinner) as total_meal, meals.month,meals.status,m.full_name
+        // Updated query to use total_meal_count instead of simple addition
+        $meals = DB::select("
+            SELECT meals.id,meals.members_id,
+            COALESCE(SUM(meals.total_meal_count), SUM(meals.breakfast * 0.5 + meals.lunch + meals.dinner + COALESCE(meals.lunch_only_curry, 0) * 0.75 + COALESCE(meals.dinner_only_curry, 0) * 0.75)) as total_meal, 
+            meals.month,meals.status,m.full_name
             FROM meals
-            INNER JOIN members m ON meals.members_id = m.id where meals.status ='1' GROUP BY meals.members_id,meals.month");
+            INNER JOIN members m ON meals.members_id = m.id 
+            WHERE meals.status ='1' 
+            GROUP BY meals.members_id,meals.month
+        ");
          // dd($meals);
         return view('admin.meal.viewMeal',compact('meals'));
     }
@@ -125,9 +145,14 @@ public function updateMeal(Request $request){
     
     $meals->date = $request->date;
     $meals->month = $month;
-    $meals->breakfast = $request->breakfast;
-    $meals->lunch = $request->lunch;
-    $meals->dinner = $request->dinner;
+    $meals->breakfast = $request->breakfast ?? 0;
+    $meals->lunch = $request->lunch ?? 0;
+    $meals->dinner = $request->dinner ?? 0;
+    $meals->lunch_only_curry = $request->lunch_only_curry ?? 0;
+    $meals->dinner_only_curry = $request->dinner_only_curry ?? 0;
+    
+    // Recalculate total meal count
+    $meals->total_meal_count = $meals->calculateTotalMealCount();
     
             //  dd($meals);
     if ($meals->save()) {
@@ -159,7 +184,7 @@ public function individualPdf($member_id){
     $total = DB::select("SELECT SUM(breakfast+lunch+dinner)as total_meal from meals where members_id = '$member_id' and status = '1'");
 
     $pdf = PDF::loadView('admin.meal.everyPdf',compact('meals','members','total'));
-    return $pdf->download('meals.pdf','members.pdf','total.pdf');
+    return $pdf->download('meals.pdf');
 }
 
 }

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Meal;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class UserMealController extends Controller
 {
@@ -67,40 +67,4 @@ class UserMealController extends Controller
     	return view('userpanel.meal.details_meal',compact('meals'));
     }
 
-    public function editMeal($id){
-
-	    $meals = DB::table('meals')->join('members','meals.members_id','members.id')->select('meals.*')->where('meals.id',$id)->first();
-// dd($meals);
-    	return view('userpanel.meal.edit_meal',compact('meals'));
-    }
-
-    public function updateMeal(Request $request){
-    	$this->validate($request,[
-                'date' => 'required',
-                'breakfast' => 'required',
-                'lunch' => 'required',
-                'dinner' => 'required',
-    
-            ]);
-            $id = $request->mealID;
-            // dd($id);
-            $month = date('M',strtotime($request->date));
-            $meals = Meal::findOrFail($id);
-            
-    
-            $meals->date = $request->date;
-            $meals->month = $month;
-            $meals->breakfast = $request->breakfast;
-            $meals->lunch = $request->lunch;
-            $meals->dinner = $request->dinner;
-            $meals->status = "0";
-    
-            //  dd($meals);
-            if ($meals->save()) {
-                return response()->json("success");
-             }
-             else{
-                return response()->json("error");
-             }  
-    }
 }

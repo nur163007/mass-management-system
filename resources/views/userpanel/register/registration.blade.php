@@ -50,12 +50,12 @@
                 </div>
 
             <div class="card-body text-dark">
-                <form method="POST"  action="{{route('register.user')}}"enctype="multipart/form-data" id="form">
+                <form method="POST"  action="{{route('register.user')}}"enctype="multipart/form-data" id="form" autocomplete="off">
                  @csrf
                     <div class="row">
                         <div class="form-group col-md-6">
                             <label for="full_name">Full Name</label>
-                            <input class="form-control" type="text" id="full_name" name="full_name">
+                            <input class="form-control" type="text" id="full_name" name="full_name" placeholder="Enter your full name" autocomplete="off">
                             @if ($errors->has('full_name'))
                                 <p class="text-danger">{{ $errors->first('full_name') }}</p>
                             @endif
@@ -63,7 +63,7 @@
 
                         <div class="form-group col-md-6">
                             <label for="phone_no">Phone No</label>
-                            <input class="form-control" type="text" id="phone_no" name="phone_no">
+                            <input class="form-control" type="text" id="phone_no" name="phone_no" placeholder="Enter your phone number" autocomplete="off">
                             @if ($errors->has('phone_no'))
                                 <p class="text-danger">{{ $errors->first('phone_no') }}</p>
                             @endif
@@ -71,7 +71,7 @@
 
                          <div class="form-group col-md-6">
                             <label for="email">Email</label>
-                            <input class="form-control" type="email" id="email" name="email">
+                            <input class="form-control" type="email" id="email" name="email" placeholder="Enter your email address" autocomplete="off">
                             @if ($errors->has('email'))
                                 <p class="text-danger">{{ $errors->first('email') }}</p>
                             @endif
@@ -79,7 +79,7 @@
 
                          <div class="form-group col-md-6">
                             <label for="password">Password</label>
-                            <input class="form-control" type="password" id="password" name="password">
+                            <input class="form-control" type="password" id="password" name="password" placeholder="Enter your password" autocomplete="new-password">
                             @if ($errors->has('password'))
                                 <p class="text-danger">{{ $errors->first('password') }}</p>
                             @endif
@@ -87,15 +87,15 @@
 
                          <div class="form-group col-md-12">
                             <label for="address">Permanent Address</label>
-                            <input class="form-control" type="text" id="address" name="address">
+                            <input class="form-control" type="text" id="address" name="address" placeholder="Enter your permanent address" autocomplete="off">
                             @if ($errors->has('address'))
                                 <p class="text-danger">{{ $errors->first('address') }}</p>
                             @endif
                         </div>
 
                         <div class="form-group col-md-6">
-                            <label for="photo">Photo</label>
-                            <input class="form-control-file" type="file" id="photo" name="photo">
+                            <label for="photo">Photo <small class="text-muted">(Optional)</small></label>
+                            <input class="form-control-file" type="file" id="photo" name="photo" accept="image/*">
 
                             @if ($errors->has('photo'))
                                 <p class="text-danger">{{ $errors->first('photo') }}</p>
@@ -103,8 +103,8 @@
                         </div>
                         
                         <div class="form-group col-md-6">
-                            <label for="nid_photo">NID Photo</label>
-                            <input class="form-control-file" type="file" id="nid_photo" name="nid_photo">
+                            <label for="nid_photo">NID Photo <small class="text-muted">(Optional)</small></label>
+                            <input class="form-control-file" type="file" id="nid_photo" name="nid_photo" accept="image/*">
 
                             @if ($errors->has('nid_photo'))
                                 <p class="text-danger">{{ $errors->first('nid_photo') }}</p>

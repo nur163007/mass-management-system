@@ -8,67 +8,87 @@ use App\Models\Member;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use App\Services\SmartAnalyticsService;
+use App\Services\SmartNotificationService;
 
 
 class UserController extends Controller
 {
+    protected $analyticsService;
+    protected $notificationService;
+
+    public function __construct(
+        SmartAnalyticsService $analyticsService,
+        SmartNotificationService $notificationService
+    ) {
+        $this->analyticsService = $analyticsService;
+        $this->notificationService = $notificationService;
+    }
+
     public function dashboard(){
         $now = Carbon::now()->isoFormat('MMM');
-        // dd($now);  
-        $id= session()->get('member_id');
-        $meal = DB::select("SELECT * from meals where members_id = '$id' and status = '1' and month = '$now'");
+        $id = session()->get('member_id');
+        
+        // Get smart balance
+        $balance = $this->analyticsService->getMemberBalance($id, $now);
+        
+        // Get notifications
+        $notifications = $this->notificationService->getUserNotifications($id);
+        
+        // Legacy calculations for backward compatibility
+        $meal = DB::select("SELECT * from meals where members_id = ? and status = '1' and month = ?", [$id, $now]);
 
-                $br = 0;
-                $ln = 0;
-                $dn = 0;
+        $br = 0;
+        $ln = 0;
+        $dn = 0;
 
-                foreach($meal as $m){
-                    $br += $m->breakfast;
-                    $ln += $m->lunch;
-                    $dn += $m->dinner;
-                }
+        foreach($meal as $m){
+            $br += $m->breakfast;
+            $ln += $m->lunch;
+            $dn += $m->dinner;
+        }
 
-                $total_meal = $br +  $ln + $dn;
-                // dd($total_meal);
+        $total_meal = $br +  $ln + $dn;
 
-        $payments = DB::select("SELECT * from payments where member_id = '$id' and status ='1' and month = '$now'");
+        $payments = DB::select("SELECT * from payments where member_id = ? and status ='1' and month = ?", [$id, $now]);
 
-                 $fund =0;
-                foreach($payments as $pay){
-                $fund += $pay->payment_amount; 
-                }
+        $fund = 0;
+        foreach($payments as $pay){
+            $fund += $pay->payment_amount; 
+        }
 
-        $all_meal = DB::select("SELECT  breakfast,lunch,dinner from meals where status ='1' and month ='$now'");
-        // dd($all_meal);
-                $b = 0;
-                $l = 0;
-                $d = 0;
+        $all_meal = DB::select("SELECT breakfast,lunch,dinner from meals where status ='1' and month = ?", [$now]);
+        
+        $b = 0;
+        $l = 0;
+        $d = 0;
 
-                foreach($all_meal as $m){
-                    $b += $m->breakfast;
-                    $l += $m->lunch;
-                    $d += $m->dinner;
-                }
+        foreach($all_meal as $m){
+            $b += $m->breakfast;
+            $l += $m->lunch;
+            $d += $m->dinner;
+        }
 
-                $count_meal = $b +  $l + $d;
-        // dd($count_meal);
+        $count_meal = $b +  $l + $d;
 
-        $all_expanse = DB::select("SELECT  total_amount from expanses where status ='1' and month ='$now'");
-            // dd($all_expanse);
-                $all_ex =0;
-                foreach($all_expanse as $exp){
-                $all_ex += $exp->total_amount; 
-                }
-                // dd($all_ex);
+        $all_expanse = DB::select("SELECT total_amount from expanses where status ='1' and month = ?", [$now]);
+        
+        $all_ex = 0;
+        foreach($all_expanse as $exp){
+            $all_ex += $exp->total_amount; 
+        }
 
-                $all_meal_rate = ($all_ex / $count_meal);
-                $my_amount = ($total_meal * $all_meal_rate);
-                // dd($my_amount);
-                $cash = ($fund - $my_amount);
+        $all_meal_rate = $count_meal > 0 ? ($all_ex / $count_meal) : 0;
+        $my_amount = ($total_meal * $all_meal_rate);
+        $cash = ($fund - $my_amount);
 
-                // dd($payable);
-
-        return view('userpanel.dashboard.user_dashboard',compact('total_meal','fund','cash'));
+        return view('userpanel.dashboard.user_dashboard', compact(
+            'total_meal',
+            'fund',
+            'cash',
+            'balance',
+            'notifications'
+        ));
     }
 
 
@@ -84,8 +104,8 @@ class UserController extends Controller
             'phone_no' => 'required',
             'email' => 'required',
             'password' => 'required',
-            'photo' => 'required',
-            'nid_photo' => 'required', 
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'nid_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', 
             'address' => 'required',
         ]);
 
@@ -121,8 +141,10 @@ class UserController extends Controller
         $members->address = $request->address;
         $members->email = $request->email;
         $members->password = Hash::make($request->password);
-        $members->role_id = "0";
+        // All registrations default to User (role_id = 3)
+        $members->role_id = 3;
         $members->role_name = "User";
+        // New users are pending approval
         $members->status = "0";
         
         // return ($members);

@@ -9,17 +9,17 @@
 <div class="wrapper">
 
   <!-- Navbar -->
-   @if(session()->get('role') == 1)
+   @if(session()->get('role') == 1 || session()->get('role') == 2)
  @include('admin.includes.header')
-  @elseif(session()->get('role') == 0)
+  @elseif(session()->get('role') == 3)
  @include('userpanel.includes.header')
  @endif
   <!-- /.navbar -->
 
   <!-- Main Sidebar Container -->
-    @if(session()->get('role') == 1)
+    @if(session()->get('role') == 1 || session()->get('role') == 2)
        @include('admin.includes.sidebar')
-    @elseif(session()->get('role') == 0)
+    @elseif(session()->get('role') == 3)
       @include('userpanel.includes.sidebar')
     @endif
 

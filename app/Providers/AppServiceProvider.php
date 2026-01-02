@@ -23,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        // Register Blade directive for custom amount formatting
+        \Blade::directive('formatAmount', function ($expression) {
+            return "<?php echo App\Helpers\AmountHelper::formatCurrency($expression); ?>";
+        });
     }
 }

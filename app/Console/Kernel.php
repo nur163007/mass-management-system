@@ -24,7 +24,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Generate monthly report on the 1st of each month at 9 AM
+        $schedule->command('mess:generate-monthly-report')
+                 ->monthlyOn(1, '9:00')
+                 ->timezone('Asia/Dhaka');
     }
 
     /**

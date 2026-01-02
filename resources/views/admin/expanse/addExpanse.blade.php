@@ -17,17 +17,24 @@
             </div>
             @include('admin.includes.message')
             <div class="card-body">
-                <form method="POST"  enctype="multipart/form-data" id="form">
+                <form method="POST"  enctype="multipart/form-data" id="form" autocomplete="off">
                     @csrf
                        <div class="row">
                            <div class="form-group col-md-4">
                                <label for="member_id">Member's Name</label>
-                               <select id="member_id" class="custom-select" name="member_id">
-                                   <option value="">--select member name--</option>
-                                   @foreach ($members as $member)
-                                   <option value="{{$member->id}}">{{$member->full_name}}</option>
-                                   @endforeach
-                               </select>
+                               <div class="input-group">
+                                   <select id="member_id" class="custom-select" name="member_id" autocomplete="off">
+                                       <option value="">--select member name--</option>
+                                       @foreach ($members as $member)
+                                       <option value="{{$member->id}}" @if(session('member_id') == $member->id) selected @endif>{{$member->full_name}} @if($member->role_id == 2) (Manager) @endif</option>
+                                       @endforeach
+                                   </select>
+                                   <div class="input-group-append">
+                                       <button type="button" class="btn btn-info" id="selectMyselfExpanse" title="Select Myself">
+                                           <i class="fas fa-user"></i> Me
+                                       </button>
+                                   </div>
+                               </div>
                                @if ($errors->has('member_id'))
                                    <p class="text-danger">{{ $errors->first('member_id') }}</p>
                                @endif
@@ -35,7 +42,7 @@
    
                            <div class="form-group col-md-4">
                                <label for="category_id">Category Name</label>
-                               <select id="category_id" class="custom-select" name="category_id">
+                               <select id="category_id" class="custom-select" name="category_id" autocomplete="off">
                                    <option value="">--select category name--</option>
                                    @foreach ($categories as $category)
                                    <option value="{{$category->id}}">{{$category->category_name}}</option>
@@ -48,7 +55,7 @@
 
                            <div class="form-group col-md-4">
                             <label for="date">Date</label>
-                            <input class="form-control" type="date" id="date" name="date">
+                            <input class="form-control" type="date" id="date" name="date" autocomplete="off">
 
                             @if ($errors->has('date'))
                                 <p class="text-danger">{{ $errors->first('date') }}</p>
@@ -64,7 +71,7 @@
 
                            <div class="form-group col-md-4">
                             <label for="item_name_id">Item Name</label>
-                            <select id="item_name_id" class="custom-select select2bs4" name="item_name_id[]">
+                            <select id="item_name_id" class="custom-select select2bs4" name="item_name_id[]" autocomplete="off">
                                 <option value="">----select item----</option>
                                 @foreach ($items as $item)
                                     <option value="{{ $item->id }}">{{ $item->item_name }}</option>
@@ -77,7 +84,7 @@
 
                         <div class="form-group col-md-4">
                             <label for="weight">Weight</label>
-                            <input class="form-control" type="text" id="weight" name="weight[]"placeholder="Enter Weight">
+                            <input class="form-control" type="text" id="weight" name="weight[]"placeholder="Enter Weight" autocomplete="off">
 
                             @if ($errors->has('weight'))
                                 <p class="text-danger">{{ $errors->first('weight') }}</p>
@@ -85,7 +92,7 @@
                         </div>
                            <div class="form-group col-md-3 col-11">
                                <label for="amount">Price</label>
-                               <input class="form-control" type="number" id="amount" name="amount[]"placeholder="Enter Price">
+                               <input class="form-control" type="number" id="amount" name="amount[]"placeholder="Enter Price" autocomplete="off">
    
                                @if ($errors->has('amount'))
                                    <p class="text-danger">{{ $errors->first('amount') }}</p>
@@ -154,6 +161,12 @@ $('.select2bs4').select2({
         });
 
 $(document).ready(function(){
+    
+    // Select myself (admin) for expanse entry
+    $('#selectMyselfExpanse').on('click', function(){
+        var myMemberId = '{{ session("member_id") }}';
+        $('#member_id').val(myMemberId).trigger('change');
+    });
 
     $('#form').on("submit",function(event){
         event.preventDefault();
@@ -234,7 +247,7 @@ $(document).ready(function(){
 
                     <div class="form-group col-md-4">
                     <label for="item_name_id">Item Name</label>
-                    <select id="item_name_id" class="custom-select select2bs4" name="item_name_id[]">
+                    <select id="item_name_id" class="custom-select select2bs4" name="item_name_id[]" autocomplete="off">
                                 <option value="">----select item----</option>
                                 @foreach ($items as $item)
                                     <option value="{{ $item->id }}">{{ $item->item_name }}</option>
@@ -247,7 +260,7 @@ $(document).ready(function(){
 
                     <div class="form-group col-md-4">
                     <label for="weight">Weight</label>
-                    <input class="form-control" type="text" id="weight" name="weight[]"placeholder="Enter Weight">
+                    <input class="form-control" type="text" id="weight" name="weight[]"placeholder="Enter Weight" autocomplete="off">
 
                     @if ($errors->has('weight'))
                         <p class="text-danger">{{ $errors->first('weight') }}</p>
@@ -255,7 +268,7 @@ $(document).ready(function(){
                     </div>
                     <div class="form-group col-md-3 col-11">
                         <label for="amount">Price</label>
-                        <input class="form-control" type="number" id="amount" name="amount[]"placeholder="Enter Price">
+                        <input class="form-control" type="number" id="amount" name="amount[]"placeholder="Enter Price" autocomplete="off">
 
                         @if ($errors->has('amount'))
                             <p class="text-danger">{{ $errors->first('amount') }}</p>

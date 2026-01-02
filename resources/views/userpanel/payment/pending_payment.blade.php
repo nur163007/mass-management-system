@@ -39,7 +39,7 @@
                                 <td>{{ date('M d, Y', strtotime($pen->date ))}}</td>
            
                                 <td style="width: 80px">
-                                    <a href="{{route('user.edit.payment',$pen->id)}}" class="btn btn-info btn-xs"> <i class="fas fa-pencil-alt"></i> </a>
+                                    <span class="badge badge-warning">Pending</span>
                                 </td>
                             </tr>
                             @endforeach

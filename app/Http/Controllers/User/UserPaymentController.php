@@ -5,7 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Payment;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class UserPaymentController extends Controller
 {
@@ -54,35 +54,4 @@ class UserPaymentController extends Controller
     	return view('userpanel.payment.pending_payment',compact('pending'));
        }
 
-       public function editPayment($id){
-       	// dd($id);
-       	$payment = DB::table('payments')->join('members','payments.member_id','members.id')->select('payments.*')->where('payments.id',$id)->first();
-       	// dd($payment);
-       	return view('userpanel.payment.edit_payment',compact('payment'));
-       }
-
-       public function updatePayment(Request $request){
-       	$this->validate($request,[
-        'amount' => 'required',
-        'date' => 'required',
-    ]);
-
-     $id = $request->paymentID;
-    //  dd($id);
-    $date_convert = date('Y-m-d',strtotime($request->date));
-    $month = date('M',strtotime($request->date));
-
-    $payments = Payment::findOrFail($id);
-
-    $payments->payment_amount = $request->amount;
-    $payments->date = $date_convert;
-    $payments->month = $month;
-
-    if ($payments->save()) {
-        return response()->json('success');
-      }
-       else{
-             return response()->json("error");
-           } 
-   }
 }

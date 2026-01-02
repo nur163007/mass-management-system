@@ -6,7 +6,7 @@ use App\Models\Member;
 use App\Models\Meal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 
 
 class ReportController extends Controller
@@ -46,7 +46,7 @@ class ReportController extends Controller
            $total_amount += $ex->total_amount; 
        }
         // dd($total_amount);
-       $meal_rate = ($total_amount / $total_meal);
+       $meal_rate = $total_meal > 0 ? ($total_amount / $total_meal) : 0;
         // return $meal_rate;
 
        $payments = DB::select("SELECT * from payments where status = '1' and date BETWEEN '$start_month' and '$finish_month'");
@@ -100,7 +100,7 @@ public function downloadPdf($start_month,$finish_month){
        $total_amount += $ex->total_amount; 
    }
         // dd($total_amount);
-   $meal_rate = ($total_amount / $total_meal);
+   $meal_rate = $total_meal > 0 ? ($total_amount / $total_meal) : 0;
         // return $meal_rate;
 
    $payments = DB::select("SELECT * from payments where status = '1' and date BETWEEN '$start_month' and '$finish_month'");
@@ -120,7 +120,7 @@ $data = DB::select("SELECT SUM(payments.payment_amount) as total_amount,m.full_n
 
 $pdf = PDF::loadView('admin.report.reportPdf',compact('data','total_meal','fund','total_amount','meal_rate','total_fund','start_month','finish_month'));
 
-return $pdf->download('data.pdf','total_meal.pdf','fund.pdf','total_amount.pdf','meal_rate.pdf','total_fund.pdf','start_month.pdf','finish_month.pdf');
+return $pdf->download('report.pdf');
 }
 
 }

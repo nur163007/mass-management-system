@@ -8,7 +8,7 @@ use App\Models\Category;
 use App\Models\FoodItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 // use Illuminate\Support\Facades\Str;
 
 class ExpanseController extends Controller

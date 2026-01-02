@@ -29,7 +29,7 @@ class SummaryController extends Controller
             $total_amount += $ex->total_amount; 
             }
             // dd($total_amount);
-            $meal_rate = ($total_amount / $total_meal);
+            $meal_rate = $total_meal > 0 ? ($total_amount / $total_meal) : 0;
             // dd($meal_rate);
             // $date = date('M');
             // dd($date);

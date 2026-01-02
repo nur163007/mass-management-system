@@ -57,6 +57,30 @@
             </ul>
           </li>
 
+          <li class="nav-item has-treeview {{ request()->is('admin/room*') ? 'menu-open' : '' }}">
+            <a href="javascript:void()" class="nav-link">
+              <i class="nav-icon fas fa-door-open text-info"></i>
+              <p>
+                Room Management
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{route('admin.room.index')}}" class="nav-link {{ request()->is('admin/room') && !request()->is('admin/room/assign') && !request()->is('admin/room/*/edit') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>View Rooms</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{route('admin.room.assign')}}" class="nav-link {{ request()->is('admin/room/assign') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Assign Member</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+
           <li class="nav-item has-treeview {{ request()->is('admin/category/*') ? 'menu-open' : '' }}">
             <a href="javascript:void()" class="nav-link">
               <i class="nav-icon fas fa-list text-cyan"></i>
@@ -177,14 +201,68 @@
             </ul>
           </li>
 
-          {{-- <li class="nav-item has-treeview">
-            <a href="{{route('admin.total.summary')}}" class="nav-link">
-              <i class="nav-icon fas fa-database"></i>
+          <li class="nav-item has-treeview {{ request()->is('admin/bill*') ? 'menu-open' : '' }}">
+            <a href="javascript:void()" class="nav-link">
+              <i class="nav-icon fas fa-file-invoice-dollar text-warning"></i>
               <p>
-               Meal Summary
+                Bills Management
+                <i class="right fas fa-angle-left"></i>
               </p>
             </a>
-          </li> --}}
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{route('admin.bill.index')}}" class="nav-link {{ request()->is('admin/bill') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>View Bills</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{route('admin.bill.create')}}" class="nav-link {{ request()->is('admin/bill/create','admin/bill/*/edit') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Add Bill</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item has-treeview {{ request()->is('admin/servicecharge*') || request()->is('admin/extra-payment*') ? 'menu-open' : '' }}">
+            <a href="javascript:void()" class="nav-link">
+              <i class="nav-icon fas fa-wallet text-danger"></i>
+              <p>
+                Financial Management
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{route('admin.servicecharge.index')}}" class="nav-link {{ request()->is('admin/servicecharge') && !request()->is('admin/servicecharge/expenses') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Service Charges</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{route('admin.servicecharge.expenses')}}" class="nav-link {{ request()->is('admin/servicecharge/expenses') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Service Expenses</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{route('admin.extra_payment.index')}}" class="nav-link {{ request()->is('admin/extra-payment*') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Extra Payments</p>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item has-treeview">
+            <a href="{{route('admin.total.summary')}}" class="nav-link {{ request()->is('admin/totalSummary','admin/memberDetails/*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-chart-bar text-teal"></i>
+              <p>
+               Summary
+              </p>
+            </a>
+          </li>
 
           <li class="nav-item has-treeview">
             <a href="{{route('admin.total.report')}}" class="nav-link {{ request()->is('admin/totalReports','admin/viewReports') ? 'active' : '' }} ">

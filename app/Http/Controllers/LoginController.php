@@ -38,10 +38,12 @@ class LoginController extends Controller
 
                             ]);
                             // return view('home.dashboard');
-                           if($user->role_id == 1){
+                           // Super Admin (1) and Manager (2) go to admin dashboard
+                           if($user->role_id == 1 || $user->role_id == 2){
                             return redirect('admin/dashboard');
                             }
-                           elseif ($user->role_id == 0 ) {
+                           // User (3) goes to user dashboard
+                           elseif ($user->role_id == 3 ) {
                             if($user->status == 1){
                                  return redirect('user/dashboard');
                             }

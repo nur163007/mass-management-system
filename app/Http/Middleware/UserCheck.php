@@ -18,8 +18,8 @@ class UserCheck
     {
         $user_role = session('role');
         $user_status = session('user_status');
-        // dd($user_role);
-        if($user_role == 0 && $user_status == 1){
+        // User role_id = 3
+        if($user_role == 3 && $user_status == 1){
             // dd("ok");
              return $next($request);
         }

@@ -18,24 +18,31 @@
             </div> 
             @include('admin.includes.message')
             <div class="card-body">
-                <form method="POST"  enctype="multipart/form-data" id="form">
+                <form method="POST"  enctype="multipart/form-data" id="form" autocomplete="off">
                  @csrf
                     <div class="row">
                         <div class="form-group col-md-6">
                             <label for="members_id">Member's Name</label>
-                            <select id="members_id" class="custom-select" name="members_id">
-                                <option value="">--select name--</option>
-                                @foreach ($members as $member)
-                                <option value="{{$member->id}}">{{$member->full_name}}</option>
-                                @endforeach
-                            </select>
+                            <div class="input-group">
+                                <select id="members_id" class="custom-select" name="members_id" autocomplete="off">
+                                    <option value="">--select name--</option>
+                                    @foreach ($members as $member)
+                                    <option value="{{$member->id}}" @if(session('member_id') == $member->id) selected @endif>{{$member->full_name}} @if($member->role_id == 2) (Manager) @endif</option>
+                                    @endforeach
+                                </select>
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-info" id="selectMyselfMeal" title="Select Myself">
+                                        <i class="fas fa-user"></i> Me
+                                    </button>
+                                </div>
+                            </div>
                             @if ($errors->has('members_id'))
                                 <p class="text-danger">{{ $errors->first('members_id') }}</p>
                             @endif
                         </div>
                         <div class="form-group col-md-6">
                             <label for="date">Date</label>
-                            <input type="date" id="date" class="custom-select" name="date" >
+                            <input type="date" id="date" class="custom-select" name="date" autocomplete="off">
                                 
                             @if ($errors->has('date'))
                                 <p class="text-danger">{{ $errors->first('date') }}</p>
@@ -43,7 +50,7 @@
                         </div>
                         <div class="form-group col-md-4">
                             <label for="breakfast">Breakfast</label>
-                            <input class="form-control" type="number" id="breakfast" name="breakfast">
+                            <input class="form-control" type="number" id="breakfast" name="breakfast" autocomplete="off">
                             @if ($errors->has('breakfast'))
                                 <p class="text-danger">{{ $errors->first('breakfast') }}</p>
                             @endif
@@ -51,7 +58,7 @@
 
                         <div class="form-group col-md-4">
                             <label for="lunch">Lunch</label>
-                            <input class="form-control" type="number" id="lunch" name="lunch">
+                            <input class="form-control" type="number" id="lunch" name="lunch" autocomplete="off">
                             @if ($errors->has('lunch'))
                                 <p class="text-danger">{{ $errors->first('lunch') }}</p>
                             @endif
@@ -59,7 +66,7 @@
 
                         <div class="form-group col-md-4">
                             <label for="dinner">Dinner</label>
-                            <input class="form-control" type="number" id="dinner" name="dinner">
+                            <input class="form-control" type="number" id="dinner" name="dinner" autocomplete="off">
                             @if ($errors->has('dinner'))
                                 <p class="text-danger">{{ $errors->first('dinner') }}</p>
                             @endif
@@ -99,6 +106,12 @@
         });
 
 $(document).ready(function(){
+    
+    // Select myself (admin) for meal entry
+    $('#selectMyselfMeal').on('click', function(){
+        var myMemberId = '{{ session("member_id") }}';
+        $('#members_id').val(myMemberId).trigger('change');
+    });
 
     $('#form').on("submit",function(event){
         event.preventDefault();

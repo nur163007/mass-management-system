@@ -4,8 +4,8 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use DB;
-use PDF;
+use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf as PDF;
 class UserReportController extends Controller
 {
     public function index(){
@@ -43,7 +43,7 @@ class UserReportController extends Controller
       $total_amount += $ex->total_amount; 
   }
 	        // dd($total_amount);
-  $meal_rate = ($total_amount / $total_meal);
+  $meal_rate = $total_meal > 0 ? ($total_amount / $total_meal) : 0;
 	        // dd($meal_rate);
 
   $data = DB::select("SELECT SUM(payments.payment_amount) as total_amount,m.id as mem_id FROM payments
@@ -82,7 +82,7 @@ public function downloadPdf($start_month,$finish_month){
       $total_amount += $ex->total_amount; 
   }
             // dd($total_amount);
-  $meal_rate = ($total_amount / $total_meal);
+  $meal_rate = $total_meal > 0 ? ($total_amount / $total_meal) : 0;
             // dd($meal_rate);
 
   $data = DB::select("SELECT SUM(payments.payment_amount) as total_amount,m.id as mem_id FROM payments
@@ -93,6 +93,6 @@ public function downloadPdf($start_month,$finish_month){
 
   $pdf = PDF::loadView('userpanel.report.userReportPdf',compact('data','total_amount','meal_rate','start_month','finish_month'));
 
-  return $pdf->download('data.pdf','total_amount.pdf','meal_rate.pdf','start_month.pdf','finish_month.pdf');
+  return $pdf->download('user_report.pdf');
 }
 }

@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Category;
-use App\Models\foodItem;
+use App\Models\FoodItem;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class FoodItemController extends Controller
 {

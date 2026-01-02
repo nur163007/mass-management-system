@@ -42,7 +42,7 @@
                                 <td>{{ $pen->dinner }}</td>
                                 <td>{{ $pen->month }}</td> 
                                 <td style="width: 80px">
-                                    <a href="{{route('user.editMeal',$pen->id)}}" class="btn btn-info btn-xs"> <i class="fas fa-pencil-alt"></i> </a>
+                                    <span class="badge badge-warning">Pending</span>
                                 </td>
                             </tr>
                         	@endforeach

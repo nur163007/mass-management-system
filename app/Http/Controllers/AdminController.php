@@ -7,47 +7,66 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Member;
 use Carbon\Carbon;
+use App\Services\SmartAnalyticsService;
+use App\Services\MemberBalanceService;
+use App\Services\SmartNotificationService;
 
 class AdminController extends Controller
 {
+    protected $analyticsService;
+    protected $balanceService;
+    protected $notificationService;
+
+    public function __construct(
+        SmartAnalyticsService $analyticsService,
+        MemberBalanceService $balanceService,
+        SmartNotificationService $notificationService
+    ) {
+        $this->analyticsService = $analyticsService;
+        $this->balanceService = $balanceService;
+        $this->notificationService = $notificationService;
+    }
+
     public function dashboard(){
         $now = Carbon::now()->isoFormat('MMM');
 
-        $members = DB::select("SELECT count('id')as total_member from members where status = '1' and role_id ='0'");
+        // Get smart analytics
+        $analytics = $this->analyticsService->getDashboardAnalytics($now);
+        
+        // Get member balances
+        $memberBalances = $this->balanceService->getAllMembersBalance($now);
+        $membersSummary = $this->balanceService->getMembersSummary($now);
+        
+        // Get optimization suggestions
+        $suggestions = $this->analyticsService->getOptimizationSuggestions($now);
+        
+        // Get notifications
+        $notifications = $this->notificationService->getAdminNotifications();
+        
+        // Legacy data for backward compatibility - Exclude Super Admin (role_id = 1), only count Manager (2) and User (3)
+        $members = DB::select("SELECT count('id')as total_member from members where status = '1' AND role_id IN (2, 3)");
 
-        $meal = DB::select("SELECT * from meals where status = '1' and month = '$now'");
+        // Extract individual variables for backward compatibility with existing views
+        $total_meal = $analytics['current']['total_meal'];
+        $fund = $analytics['current']['fund'];
+        $all_ex = $analytics['current']['expense'];
+        $meal_rate = $analytics['current']['meal_rate'];
+        $cash = $analytics['current']['cash'];
 
-                $br = 0;
-                $ln = 0;
-                $dn = 0;
-
-                foreach($meal as $m){
-                    $br += $m->breakfast;
-                    $ln += $m->lunch;
-                    $dn += $m->dinner;
-                }
-
-                $total_meal = $br +  $ln + $dn;
-
-                $payments = DB::select("SELECT * from payments where status ='1' and month = '$now'");
-
-                 $fund =0;
-                foreach($payments as $pay){
-                $fund += $pay->payment_amount; 
-                }
-
-                $all_expanse = DB::select("SELECT  total_amount from expanses where status ='1' and month ='$now'");
-            // dd($all_expanse);
-                $all_ex =0;
-                foreach($all_expanse as $exp){
-                $all_ex += $exp->total_amount; 
-                }
-
-                $meal_rate = ($all_ex / $total_meal);
-
-                $cash = ($fund - $all_ex);
-
-                return view ('admin.dashboard',compact('members','total_meal','fund','all_ex','meal_rate','cash'));
+        return view('admin.dashboard', compact(
+            'analytics',
+            'memberBalances',
+            'membersSummary',
+            'suggestions',
+            'notifications',
+            'members',
+            // Legacy variables for backward compatibility
+            'total_meal',
+            'fund',
+            'all_ex',
+            'meal_rate',
+            'cash'
+        ));
     }
 
     public function viewProfile(){
