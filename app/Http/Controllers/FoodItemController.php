@@ -11,17 +11,32 @@ use Illuminate\Support\Facades\DB;
 class FoodItemController extends Controller
 {
     public function addFoodItem(){
-        $categories = Category::all();
-        return view('admin.foodItem.addItem',compact('categories'));
+        return view('admin.foodItem.addItem');
     }
 
     public function storeFoodItem(Request $request){
         $this->validate($request,[
-            'food_category_id' => 'required',
+            'food_category_id' => 'nullable',
             'item_name' => 'required',
-            'item_description' => 'required',
-            'item_photo' => 'required',
+            'item_description' => 'nullable',
+            'item_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        // Check if item already exists (with or without category)
+        $query = FoodItem::where('item_name', $request->item_name);
+        if ($request->food_category_id) {
+            $query->where('food_category_id', $request->food_category_id);
+        } else {
+            $query->whereNull('food_category_id');
+        }
+        $existingItem = $query->first();
+        
+        if ($existingItem) {
+            return response()->json([
+                'success' => true,
+                'item' => $existingItem
+            ]);
+        }
 
         $items = new FoodItem;
 
@@ -41,22 +56,28 @@ class FoodItemController extends Controller
             
             $items->item_photo = "null";
         }
-        $items->food_category_id = $request->food_category_id;
+        $items->food_category_id = $request->food_category_id ?? null;
         $items->item_name = $request->item_name;
-        $items->item_description = $request->item_description;
+        $items->item_description = $request->item_description ?? "Quick created from expense form";
       
 
         
         if ($items->save()) {
-            return response()->json($items);
+            return response()->json([
+                'success' => true,
+                'item' => $items
+            ]);
          }
          else{
-            return response()->json("error");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create item'
+            ]);
          }  
     }
 
     public function viewFoodItem(){
-        $items = DB::table('food_items')->join('food_categories','food_items.food_category_id','food_categories.id')->select('food_items.*','food_categories.category_name')->get();
+        $items = DB::table('food_items')->select('food_items.*')->get();
 //   dd($items);
         return view('admin.foodItem.viewItem',compact('items'));
     }
@@ -87,16 +108,14 @@ class FoodItemController extends Controller
      }
 
      public function editFoodItem($id){
-        $items = DB::table('food_items')->join('food_categories','food_items.food_category_id','food_categories.id')->select('food_items.*','food_categories.category_name')->where('food_items.id',$id)->first();
+        $items = DB::table('food_items')->select('food_items.*')->where('food_items.id',$id)->first();
     // dd($items);
-       $categories = Category::all();
-        return view('admin.foodItem.editItem',compact('items','categories'));
+        return view('admin.foodItem.editItem',compact('items'));
     }
 
     public function updateFoodItem(Request $request){
          // dd($request);
          $this->validate($request,[
-            'food_category_id' => 'required',
             'item_name' => 'required',
             'item_description' => 'required',
         ]);
@@ -129,7 +148,6 @@ class FoodItemController extends Controller
             $items->item_photo = $items->item_photo;
         }
         
-        $items->food_category_id = $request->food_category_id;
         $items->item_name = $request->item_name;
         $items->item_description = $request->item_description;
         // dd($foods);

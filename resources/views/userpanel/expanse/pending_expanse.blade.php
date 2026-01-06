@@ -6,14 +6,14 @@
 @section('main-content')
      <section class="content">
         <div class="container-fluid">
-            <div class="card col-md-8 offset-md-2">
+            <div class="card">
                 <div class="row">
-                    <div class="card-header col-md-4 col-12">
+                    <div class="card-header col-md-6 col-6">
                         <h3 class="font-weight-bolder">Pending Expanses</h3>
                     </div>
-                    <div class="card-header col-md-8 col-9 text-xs text-right">
+                    <div class="card-header col-md-6 col-6 text-right">
                         <a href="{{route('user.add.expanse')}}" class="viewall"><i class="far fa-money-bill-alt"></i> Add Expanse</a>
-                        <a href="{{route('user.viewExpanse')}}" class="viewall"><i class="far fa-money-bill-alt"></i> All Expanse</a>
+                        <a href="{{route('user.viewExpanse')}}" class="viewall"><i class="fas fa-list"></i> All Expanse</a>
                     </div>
                 </div>
 

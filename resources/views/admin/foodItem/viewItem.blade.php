@@ -23,7 +23,6 @@
                         <thead class="bg-cyan">
                             <tr>
                                 <th>SL NO</th>
-                                <th> Category Name</th>
                                 <th> Item Name</th>
                                 <th> Item Description</th>
                                 <th>Item Photo</th>
@@ -37,7 +36,6 @@
                             @foreach ($items as $item)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
-                                <td>{{ $item->category_name }}</td>
                                 <td>{{ $item->item_name }}</td>
                                 <td>{{ $item->item_description }}</td>
                                

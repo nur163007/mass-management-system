@@ -23,13 +23,12 @@
                     <table id="all-category" class="table table-bordered table-hover">
                         <thead class="bg-olive">
                             <tr>
-                                <th>SL NO</th>
-                                <th>Member's Name</th>
-                               
-                                <th>Total Amount</th>
-                                <th>Date</th>
-                                <th>Status</th>
-                                <th>Action</th>
+                                <th style="white-space: nowrap;">SL NO</th>
+                                <th style="white-space: nowrap;">Member's Name</th>
+                                <th style="white-space: nowrap;">Total Amount</th>
+                                <th style="white-space: nowrap;">Date</th>
+                                <th style="white-space: nowrap;">Status</th>
+                                <th style="white-space: nowrap;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="tbody">
@@ -37,17 +36,26 @@
                             {{-- show data using ajax --}}
                         @foreach ($bazars as $item)
                             <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $item->full_name }}</td>
-                               
-                                <td>Tk. {{ $item->total }}</td>
-                                <td>{{ $item->expanse_date }}</td>
-                                <td>
-                                    <input type="checkbox" data-size="medium" data-toggle="toggle" data-on="Active" data-off="Request" id="expanseStatus" data-id="{{ $item->id}}" {{ $item->status == 1 ? 'checked' : '' }} >
+                                <td style="white-space: nowrap;">{{ $loop->iteration }}</td>
+                                <td style="white-space: nowrap;">{{ $item->full_name }}</td>
+                                <td style="white-space: nowrap;">Tk. {{ $item->total }}</td>
+                                <td style="white-space: nowrap;">{{ $item->expanse_date }}</td>
+                                <td style="white-space: nowrap;">
+                                    @if($item->status == 1)
+                                        <span class="badge badge-success">Approved</span>
+                                    @else
+                                        <span class="badge badge-warning">Pending</span>
+                                    @endif
                                 </td>
-                                <td style="width: 80px">
-                                    <a href="{{route('details.expanse',$item->invoice_no)}}" class="btn btn-info btn-xs"> <i class="fa fa-eye"></i> </a>
-                                    <a href="{{route('delete.expanse',$item->invoice_no)}}" class="btn btn-danger btn-xs"> <i class="fa fa-trash-alt"></i> </a>
+                                <td style="width: 180px; white-space: nowrap;">
+                                    <a href="{{route('details.expanse',$item->invoice_no)}}" class="btn btn-info btn-xs" title="View" style="border-radius: 5px; padding: 5px 10px;"> 
+                                        <i class="fa fa-eye"></i> 
+                                    </a>
+                                    @if($item->status == 0)
+                                        <button type="button" class="btn btn-success btn-xs approve-expanse-btn" data-id="{{ $item->id }}" title="Approve" style="border-radius: 5px; padding: 5px 10px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; margin-left: 5px;">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
@@ -62,48 +70,64 @@
 
 @section('custom_js')
     <script>
-     
-     $(document).ready(function(){
-           $('body').on('change','#expanseStatus',function(){
-               // alert('ok');
-          var id=$(this).attr('data-id');
-
-        //   alert(id);
-          if(this.checked){
-            var status = 1;
-          }
-          else{
-            var status = 0;
-          }
-          // console.log(status);
-        $.ajax({
-          // url:'mealStatus/'+id+'/'+status,
-            url:"{{url('admin/expanse/expanseStatus')}}/"+id+'/'+status,
-          // data:{status:status},
-          method:'get',
-          success:function(success){
-            // window.location.reload(); 
-            console.log(success);
-          },
-        });
-
-        });
-
-        });
-        $(function() {
+        $(document).ready(function() {
             $("#all-category").DataTable();
-            // scrollX: '100vh',
-            // scrollY: '100vh'
 
-            //   $('#example2').DataTable({
-            //     "paging": true,
-            //     "lengthChange": false,
-            //     "searching": false,
-            //     "ordering": true,
-            //     "info": true,
-            //     "autoWidth": false,
-            //   });
+            //  SweetAlert2 Toast
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                showConfirmbutton: false,
+                timer: 3000
+            });
+
+            // Use event delegation for approve button
+            $(document).on('click', '.approve-expanse-btn', function(e) {
+                e.preventDefault();
+                var id = $(this).attr('data-id');
+
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: "Do you want to approve this expanse?",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, approve it!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed || result.value === true) {
+                        $.ajax({
+                            url: "{{ url('admin/expanse/expanseStatus') }}/" + id + '/1',
+                            type: 'GET',
+                            dataType: 'json',
+                            success: function(response) {
+                                if (response && response.message == 'Success') {
+                                    Toast.fire({
+                                        type: 'success',
+                                        title: 'Expanse successfully approved.',
+                                    });
+                                    setTimeout(function() {
+                                        window.location.reload();
+                                    }, 1500);
+                                } else {
+                                    Toast.fire({
+                                        type: 'error',
+                                        title: (response && response.message) ? response.message : 'Something Error Found, Please try again.',
+                                    });
+                                }
+                            },
+                            error: function(xhr) {
+                                Toast.fire({
+                                    type: 'error',
+                                    title: 'Something Error Found, Please try again.',
+                                });
+                            }
+                        });
+                    }
+                });
+            });
         });
-
     </script>
 @endsection

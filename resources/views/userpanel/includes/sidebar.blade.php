@@ -63,7 +63,16 @@
             <a href="{{route('user.viewExpanse')}}" class="nav-link {{ request()->is('user/expanse/*') ? 'active' : '' }} ">
               <i class="nav-icon fas fa-money-bill-alt text-lightblue"></i>
               <p>
-               View Expanses
+               View Food Expanse
+              </p>
+            </a>
+          </li>
+
+          <li class="nav-item has-treeview">
+            <a href="{{route('user.foodAdvance.index')}}" class="nav-link {{ request()->is('user/foodAdvance*') ? 'active' : '' }} ">
+              <i class="nav-icon fas fa-hand-holding-usd text-info"></i>
+              <p>
+               Food Advance
               </p>
             </a>
           </li>

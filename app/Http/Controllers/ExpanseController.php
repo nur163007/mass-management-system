@@ -6,6 +6,7 @@ use App\Models\Expanse;
 use App\Models\Member;
 use App\Models\Category;
 use App\Models\FoodItem;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf as PDF;
@@ -14,10 +15,10 @@ use Barryvdh\DomPDF\Facade\Pdf as PDF;
 class ExpanseController extends Controller
 {
     public function addExpanse(){
-        $members = Member::all();
-        $categories= Category::all();
+        // Exclude Super Admin (role_id = 1), only include Manager (2) and User (3)
+        $members = Member::whereIn('role_id', [2, 3])->get();
         $items= FoodItem::all();
-        return view('admin.expanse.addExpanse',compact('members','categories','items'));
+        return view('admin.expanse.addExpanse',compact('members','items'));
     }
 
     public function storeExpanse(Request $request){
@@ -27,7 +28,7 @@ class ExpanseController extends Controller
         // dd($test);
         $this->validate($request,[
             'member_id' => 'required',
-            'category_id' => 'required',
+            'cost_bearer' => 'required|in:food_advance,user',
             'item_name_id' => 'required',
             'weight' => 'required',
             'amount' => 'required',
@@ -58,17 +59,31 @@ class ExpanseController extends Controller
                     $expanses_details->save();
                 }
 
-                $month = date('M',strtotime($request->date));
+                $month = date('F',strtotime($request->date));
                 $expanses = new Expanse;
                 $expanses->invoice_no = $invoice;
                 $expanses->member_id = $request->member_id;
-                $expanses->category_id = $request->category_id;
+                $expanses->category_id = $request->category_id ?? null;
                 $expanses->total_amount= $total;
                 $expanses->date = $date_convert;
                 $expanses->month = $month;
                 $expanses->status = "1";
+                $expanses->cost_bearer = $request->cost_bearer;
 
                 $expanses->save();
+
+                // If cost_bearer is 'user', create payment entry immediately (admin expanses are directly approved)
+                if($request->cost_bearer == 'user'){
+                    $payment = new Payment;
+                    $payment->member_id = $request->member_id;
+                    $payment->payment_amount = $total;
+                    $payment->payment_type = 'food_advance';
+                    $payment->date = $date_convert;
+                    $payment->month = $month;
+                    $payment->status = "1";
+                    $payment->notes = "Auto-generated from admin expanse invoice: " . $invoice;
+                    $payment->save();
+                }
 
                 return response()->json('success');
 
@@ -92,6 +107,7 @@ class ExpanseController extends Controller
     return response()->json($items);
 }
 
+
 public function viewExpanse(){
         // $bazars = DB::table('expanses')
         // ->join('members','expanses.member_id','members.id')
@@ -102,9 +118,10 @@ public function viewExpanse(){
         // ->get();
 
         // dd("ok");
- $bazars = DB::select("SELECT ex.id,ex.invoice_no,ex.total_amount as total, ex.date as expanse_date,ex.status,m.full_name
+ $bazars = DB::select("SELECT ex.id,ex.invoice_no,ex.total_amount as total, ex.date as expanse_date,ex.status,ex.created_at,m.full_name
     FROM expanses ex
-    INNER JOIN members m ON ex.member_id = m.id");
+    INNER JOIN members m ON ex.member_id = m.id
+    ORDER BY ex.created_at DESC, ex.id DESC");
         // dd($bazars);
  return view('admin.expanse.viewExpanse',compact('bazars'));
 }
@@ -112,9 +129,23 @@ public function viewExpanse(){
 public function expanseStatus($id, $status){
         // dd($id);
     $active = Expanse::findOrFail($id);
+    $prev_status = $active->status;
     $active->status= $status; 
 
     if($active->save()){
+        // If status changed from 0 (pending) to 1 (approved) and cost_bearer is 'user', create payment entry
+        if($prev_status == 0 && $status == 1 && $active->cost_bearer == 'user'){
+            $payment = new Payment;
+            $payment->member_id = $active->member_id;
+            $payment->payment_amount = $active->total_amount;
+            $payment->payment_type = 'food_advance';
+            $payment->date = $active->date;
+            $payment->month = $active->month;
+            $payment->status = "1";
+            $payment->notes = "Auto-generated from expanse invoice: " . $active->invoice_no;
+            $payment->save();
+        }
+        
         return response()->json(['message'=> 'Success']);
     }
 }
@@ -151,7 +182,8 @@ public function editExpanse($id){
     ->first();
         // dd($expanses);
 
-    $members = Member::all();
+    // Exclude Super Admin (role_id = 1), only include Manager (2) and User (3)
+    $members = Member::whereIn('role_id', [2, 3])->get();
     $categories= Category::all();
     $items= FoodItem::all();
     return view('admin.expanse.editExpanse',compact('expanses','members','categories','items'));
@@ -163,7 +195,7 @@ public function updateExpanse(Request $request){
     $id = $request->exDetailID;
         // dd($id);
     $date_convert = date('y-m-d',strtotime($request->date));
-    $month = date('M',strtotime($request->date));
+    $month = date('F',strtotime($request->date));
     $expanses = ExpanseDetails::findOrFail($id);
 
     $invoice = $expanses->invoice_no;

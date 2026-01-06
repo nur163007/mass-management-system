@@ -34,7 +34,7 @@ class MealController extends Controller
 
         ]);
         
-        $month = date('M',strtotime($request->date));
+        $month = date('F',strtotime($request->date));
         $convert_date = date('Y-m-d',strtotime($request->date));
         $meals = new Meal();
 
@@ -62,14 +62,17 @@ class MealController extends Controller
 
     public function viewMeal(){
         // Updated query to use total_meal_count instead of simple addition
+        // Exclude Super Admin (role_id = 1) and show all meals (pending and approved)
+        // Group by status as well to show pending and approved separately
         $meals = DB::select("
             SELECT meals.id,meals.members_id,
             COALESCE(SUM(meals.total_meal_count), SUM(meals.breakfast * 0.5 + meals.lunch + meals.dinner + COALESCE(meals.lunch_only_curry, 0) * 0.75 + COALESCE(meals.dinner_only_curry, 0) * 0.75)) as total_meal, 
             meals.month,meals.status,m.full_name
             FROM meals
             INNER JOIN members m ON meals.members_id = m.id 
-            WHERE meals.status ='1' 
-            GROUP BY meals.members_id,meals.month
+            WHERE m.role_id != 1
+            GROUP BY meals.members_id,meals.month,meals.status
+            ORDER BY FIELD(meals.month, 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'), m.full_name, meals.status DESC
         ");
          // dd($meals);
         return view('admin.meal.viewMeal',compact('meals'));
@@ -139,7 +142,7 @@ public function updateMeal(Request $request){
     ]);
     $id = $request->mealID;
             // dd($id);
-    $month = date('M',strtotime($request->date));
+    $month = date('F',strtotime($request->date));
     $meals = Meal::findOrFail($id);
 
     

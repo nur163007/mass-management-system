@@ -97,7 +97,7 @@
                                 <select class="form-control" id="month" name="month" required autocomplete="off">
                                     <option value="">--Select Month--</option>
                                     @php
-                                        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                        $months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
                                     @endphp
                                     @foreach($months as $m)
                                         <option value="{{ $m }}" {{ $bill->month == $m ? 'selected' : '' }}>

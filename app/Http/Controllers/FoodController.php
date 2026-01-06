@@ -16,36 +16,34 @@ class FoodController extends Controller
         // dd($request);
         $this->validate($request,[
             'category_name' => 'required',
-            'photo' => 'required',
         ]);
 
-        $categories = new Category;
-
-        $date = Carbon::now()->format('his')+rand(10000,99999);
-
-        // item photo 
-        
-        if($image = $request->file('photo')){
-            $extention = $request->file('photo')->getClientOriginalExtension();
-            $imageName = $date.'.'.$extention;
-            $path = public_path('uploads/category');
-            $image->move($path,$imageName);
-            $categories->photo = $imageName;
-            
-        }  
-        else{
-            
-            $categories->photo = "null";
+        // Check if category already exists
+        $existingCategory = Category::where('category_name', $request->category_name)->first();
+        if ($existingCategory) {
+            return response()->json([
+                'success' => true,
+                'category' => $existingCategory
+            ]);
         }
+
+        $categories = new Category;
         $categories->category_name = $request->category_name;
+        $categories->photo = "null"; // Set default value
       
 
         // dd($categories);
         if ($categories->save()) {
-            return response()->json($categories);
+            return response()->json([
+                'success' => true,
+                'category' => $categories
+            ]);
          }
          else{
-            return response()->json("error");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create category'
+            ]);
          }  
     }
 
@@ -94,30 +92,6 @@ class FoodController extends Controller
         $id = $request->categoryID;
         // dd($id);
         $categories = Category::findOrFail($id);
-
-
-        $date = Carbon::now()->format('his')+rand(10000,99999);
-
-        // item photo 
-        
-        if($image = $request->file('photo')){
-            $extention = $request->file('photo')->getClientOriginalExtension();
-            $imageName = $date.'.'.$extention;
-            $path = public_path('uploads/category');
-            $image->move($path,$imageName);
-
-            if($categories){
-                if(file_exists('uploads/category/'.$categories->photo) AND !empty($categories->photo)){
-                    unlink('uploads/category/'.$categories->photo);
-                }
-            }
-            $categories->photo = $imageName;
-            
-        }  
-        else{
-            
-            $categories->photo = $categories->photo;
-        }
         $categories->category_name = $request->category_name;
 
         // dd($foods);

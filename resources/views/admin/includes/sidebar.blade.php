@@ -80,7 +80,7 @@
               </li>
             </ul>
           </li>
-
+{{-- 
           <li class="nav-item has-treeview {{ request()->is('admin/category/*') ? 'menu-open' : '' }}">
             <a href="javascript:void()" class="nav-link">
               <i class="nav-icon fas fa-list text-cyan"></i>
@@ -103,7 +103,7 @@
                 </a>
               </li>
             </ul>
-          </li>
+          </li> --}}
 
           <li class="nav-item has-treeview {{ request()->is('admin/food/*') ? 'menu-open' : '' }}">
             <a href="javascript:void()" class="nav-link">
@@ -157,7 +157,7 @@
             <a href="javascript:void()" class="nav-link">
               <i class="nav-icon fas fa-money-bill-alt text-lightblue"></i>
               <p>
-                Manage Expanses
+                Manage Expanse
                 <i class="right fas fa-angle-left"></i>
               </p>
             </a>
@@ -165,13 +165,13 @@
               <li class="nav-item">
                 <a href="{{route('admin.add.expanse')}}" class="nav-link {{ request()->is('admin/expanse/addExpanse','admin/expanse/editExpanse/*') ? 'active' : '' }}">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>Add Expanse</p>
+                  <p>Add Food Expanse</p>
                 </a>
               </li>
               <li class="nav-item">
                 <a href="{{route('admin.view.expanse')}}" class="nav-link {{ request()->is('admin/expanse/viewExpanse','admin/expanse/detailsExpanse/*') ? 'active' : '' }}">
                   <i class="far fa-circle nav-icon"></i>
-                  <p>View Expanse</p>
+                  <p>View Food Expanse</p>
                 </a>
               </li>
             </ul>
@@ -199,6 +199,15 @@
                 </a>
               </li>
             </ul>
+          </li>
+
+          <li class="nav-item has-treeview {{ request()->is('admin/foodAdvance/*') ? 'menu-open' : '' }}">
+            <a href="{{route('admin.foodAdvance.index')}}" class="nav-link {{ request()->is('admin/foodAdvance*') ? 'active' : '' }}">
+              <i class="nav-icon fas fa-hand-holding-usd text-info"></i>
+              <p>
+                Food Advance
+              </p>
+            </a>
           </li>
 
           <li class="nav-item has-treeview {{ request()->is('admin/bill*') ? 'menu-open' : '' }}">
@@ -259,7 +268,7 @@
             <a href="{{route('admin.total.summary')}}" class="nav-link {{ request()->is('admin/totalSummary','admin/memberDetails/*') ? 'active' : '' }}">
               <i class="nav-icon fas fa-chart-bar text-teal"></i>
               <p>
-               Summary
+               Meal Summary
               </p>
             </a>
           </li>
@@ -268,7 +277,7 @@
             <a href="{{route('admin.total.report')}}" class="nav-link {{ request()->is('admin/totalReports','admin/viewReports') ? 'active' : '' }} ">
               <i class="nav-icon fas fa-database text-purple"></i>
               <p>
-               Reports
+               Meal rate Calculate
               </p>
             </a>
           </li>

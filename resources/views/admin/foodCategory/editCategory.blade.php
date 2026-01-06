@@ -17,7 +17,7 @@
             </div>
             @include('admin.includes.message')
             <div class="card-body">
-                <form method="POST"  enctype="multipart/form-data" id="form">
+                <form method="POST" id="form">
                  @csrf
                  <input type="hidden" value="{{ $categories->id}}" id="categoryID" name="categoryID">
                     <div class="row">
@@ -28,20 +28,6 @@
                                 <p class="text-danger">{{ $errors->first('category_name') }}</p>
                             @endif
                         </div>
-
-                       
-                        <div class="form-group col-md-4">
-                            <label for="photo"> Photos</label>
-                            <input class="form-control-file" type="file" id="photo" name="photo">
-
-                            @if ($errors->has('photo'))
-                                <p class="text-danger">{{ $errors->first('photo') }}</p>
-                            @endif
-                        </div>
-                        <div class="form-group col-md-2">
-                            <img style="width: 60px; height: 60px" src="{{asset('uploads/category/'.$categories->photo)}}">
-                         </div>
-                     
                     </div>
                     <input class="btn btn-success" type="submit" id="submit" name="submit" value="Update">
                 </form>
@@ -81,14 +67,11 @@ var base_url = window.location.origin;
 $('#form').on("submit",function(event){
     // console.log("clicked");
     event.preventDefault();
-    var form = new FormData(this);
+    var formData = $(this).serialize();
     var my_url = "{{route('update.category')}}";
     $.ajax({
         url:my_url,
-        data:form,
-        contentType:false,
-        cache:false,
-        processData:false,
+        data:formData,
         method:"POST",
         success:function(response){
            

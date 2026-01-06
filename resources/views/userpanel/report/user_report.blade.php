@@ -6,7 +6,7 @@
 @section('main-content')
 
 <div class="col-md-12">
-    <div class="card card-secondary col-md-8 offset-md-2" id="generatepanel">
+    <div class="card card-secondary" id="generatepanel">
       <div class="card-header p-3">
         <h3 class="card-title font-weight-bolder">User Report</h3>
       </div>
@@ -21,7 +21,18 @@
         <select class="form-control select2bs4" name="month" required="" id="month">
         <option value="" data-select2-id="2">--Select Month--</option>
         @foreach ($meals as $meal)
-        <option value="{{$meal->month}}">{{$meal->month}}</option>
+            @php
+                // Convert short month names to full month names
+                $monthMap = [
+                    'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+                    'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+                    'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+                ];
+                $displayMonth = $monthMap[$meal->month] ?? $meal->month;
+                // Use full month name for value if it was short, otherwise use original
+                $valueMonth = $monthMap[$meal->month] ?? $meal->month;
+            @endphp
+        <option value="{{$valueMonth}}">{{$displayMonth}}</option>
         @endforeach
         </select> 
         </div>
@@ -58,3 +69,62 @@
   </div>
 @endsection
 
+@section('custom_js')
+<script>
+$(document).ready(function() {
+    // Month name to number mapping
+    const monthMap = {
+        'January': 1,
+        'February': 2,
+        'March': 3,
+        'April': 4,
+        'May': 5,
+        'June': 6,
+        'July': 7,
+        'August': 8,
+        'September': 9,
+        'October': 10,
+        'November': 11,
+        'December': 12
+    };
+
+    // Function to get last day of month
+    function getLastDayOfMonth(year, month) {
+        return new Date(year, month, 0).getDate();
+    }
+
+    // Function to set dates based on selected month
+    function setDatesForMonth(selectedMonth) {
+        if (selectedMonth && monthMap[selectedMonth]) {
+            const currentYear = new Date().getFullYear();
+            const monthNumber = monthMap[selectedMonth];
+            
+            // Set from date to 1st of the month (format: YYYY-MM-DD for HTML date input)
+            const fromDate = currentYear + '-' + String(monthNumber).padStart(2, '0') + '-01';
+            $('#from_date').val(fromDate);
+            
+            // Set to date to last day of the month
+            const lastDay = getLastDayOfMonth(currentYear, monthNumber);
+            const toDate = currentYear + '-' + String(monthNumber).padStart(2, '0') + '-' + String(lastDay).padStart(2, '0');
+            $('#to_date').val(toDate);
+        } else {
+            // Clear dates if no month is selected
+            $('#from_date').val('');
+            $('#to_date').val('');
+        }
+    }
+
+    // Handle month dropdown change (works with both regular select and Select2)
+    $('#month').on('change', function() {
+        const selectedMonth = $(this).val();
+        setDatesForMonth(selectedMonth);
+    });
+
+    // Also handle Select2 specific events
+    $('#month').on('select2:select', function(e) {
+        const selectedMonth = $(this).val();
+        setDatesForMonth(selectedMonth);
+    });
+});
+</script>
+@endsection

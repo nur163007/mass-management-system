@@ -44,7 +44,18 @@
                                 </tr>  
                                 <tr>
                                     <th style="width: 20%">Meal Month</th>
-                                    <td> {{ $members->month }}</td>
+                                    <td>
+                                        @php
+                                            // Convert short month names to full month names
+                                            $monthMap = [
+                                                'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+                                                'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+                                                'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+                                            ];
+                                            $displayMonth = $monthMap[$members->month] ?? $members->month;
+                                        @endphp
+                                        {{ $displayMonth }}
+                                    </td>
                                     
                                 </tr>               
                                 {{-- show data using ajax --}}

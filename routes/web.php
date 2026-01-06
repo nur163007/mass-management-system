@@ -21,6 +21,8 @@ use App\Http\Controllers\User\UserMealController;
 use App\Http\Controllers\User\UserPaymentController;
 use App\Http\Controllers\User\UserExpanseController;
 use App\Http\Controllers\User\UserReportController;
+use App\Http\Controllers\Admin\FoodAdvanceController;
+use App\Http\Controllers\User\FoodAdvanceController as UserFoodAdvanceController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -41,6 +43,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [LoginController::class,'showLoginForm']);
 Route::post('loginCheck', [LoginController::class,'loginCheck'])->name('loginCheck');
 Route::get('user_logout', [LoginController::class,'userLogout'])->name('user_logout');
+
+// Shared routes accessible by both admin and user
+Route::post('admin/category/storeCategory',[FoodController::class,'storeCategory'])->name('store.category');
+Route::post('admin/food/storeFoodItem',[FoodItemController::class,'storeFoodItem'])->name('store.foodItem');
+Route::get('admin/expanse/onChangeExpanse',[ExpanseController::class,'onChange'])->name('expanse.onChange');
 
 Route::middleware('admin')->group(function(){
 
@@ -113,7 +120,6 @@ Route::post('admin/profile/updatePicture',[AdminController::class,'updatePicture
 
 //===============================CATEGORY ROUTE START=======================================================
 Route::get('admin/category/addCategory',[FoodController::class,'addCategory'])->name('admin.add.category');
-Route::post('admin/category/storeCategory',[FoodController::class,'storeCategory'])->name('store.category');
 Route::get('admin/category/viewCategory',[FoodController::class,'viewCategory'])->name('admin.view.category');
 // Route::get('admin/showCategory',[FoodController::class,'showCategory'])->name('admin.showCategory');
 Route::get('admin/category/deleteCategory/{id}',[FoodController::class,'deleteCategory'])->name('admin.deleteCategory');
@@ -124,7 +130,6 @@ Route::post('admin/category/updateCategory',[FoodController::class,'updateCatego
 
 //===============================FOOD ITEM ROUTE START==================================================
 Route::get('admin/food/addFoodItem', [FoodItemController::class,'addFoodItem'])->name('admin.add.foodItem');
-Route::post('admin/food/storeFoodItem',[FoodItemController::class,'storeFoodItem'])->name('store.foodItem');
 Route::get('admin/food/viewFoodItem',[FoodItemController::class,'viewFoodItem'])->name('admin.view.foodItem');
 // Route::get('admin/showFoodItem',[FoodItemController::class,'showFoodItem'])->name('admin.showFoodItem');
 Route::get('admin/food/deleteFoodItem/{id}',[FoodItemController::class,'deleteFoodItem'])->name('admin.deleteFoodItem');
@@ -153,7 +158,6 @@ Route::get('admin/meal/individual/downloadPdf/{id}',[MealController::class,'indi
 Route::get('admin/expanse/addExpanse',[ExpanseController::class,'addExpanse'])->name('admin.add.expanse');
 Route::get('admin/expanse/viewExpanse',[ExpanseController::class,'viewExpanse'])->name('admin.view.expanse');
 Route::post('admin/expanse/storeExpanse',[ExpanseController::class,'storeExpanse'])->name('store.expanse');
-Route::get('admin/expanse/onChangeExpanse',[ExpanseController::class,'onChange'])->name('expanse.onChange');
 // Route::get('admin/showExpanse',[ExpanseController::class,'showExpanse'])->name('admin.showExpanse');
 Route::get('admin/expanse/deleteExpanse/{id}',[ExpanseController::class,'deleteExpanse'])->name('delete.expanse');
 // Route::get('admin/deleteExpanseDetails/{id}',[ExpanseController::class,'deleteDetails'])->name('delete.expanseDetails');
@@ -163,6 +167,16 @@ Route::get('admin/expanse/detailsExpanse/{invoice_no}',[ExpanseController::class
 Route::get('admin/expanse/expanseStatus/{id}/{status}',[ExpanseController::class,'expanseStatus'])->name('expanseStatus');
 Route::get('admin/expanse/downloadPdf',[ExpanseController::class,'downloadPdf'])->name('admin.expanse.downloadPdf');
 //========================================EXPANSES ROUTE END=================================================
+
+//=======================================FOOD ADVANCE ROUTE START=============================================
+Route::get('admin/foodAdvance',[FoodAdvanceController::class,'index'])->name('admin.foodAdvance.index');
+Route::get('admin/foodAdvance/create',[FoodAdvanceController::class,'create'])->name('admin.foodAdvance.create');
+Route::post('admin/foodAdvance/store',[FoodAdvanceController::class,'store'])->name('admin.foodAdvance.store');
+Route::get('admin/foodAdvance/approve/{id}',[FoodAdvanceController::class,'approve'])->name('admin.foodAdvance.approve');
+Route::get('admin/foodAdvance/edit/{id}',[FoodAdvanceController::class,'edit'])->name('admin.foodAdvance.edit');
+Route::post('admin/foodAdvance/update',[FoodAdvanceController::class,'update'])->name('admin.foodAdvance.update');
+Route::get('admin/foodAdvance/view/{id}',[FoodAdvanceController::class,'view'])->name('admin.foodAdvance.view');
+//========================================FOOD ADVANCE ROUTE END=================================================
 
 
 //=======================================PAYMENT ROUTE START=============================================
@@ -174,6 +188,7 @@ Route::get('admin/payment/deletePayment/{id}',[PaymentController::class,'deleteP
 Route::get('admin/payment/editPayment/{id}',[PaymentController::class,'editPayment'])->name('admin.edit.payment');
 Route::post('admin/payment/updatePayment',[PaymentController::class,'updatePayment'])->name('admin.update.payment');
 Route::get('admin/payment/paymentStatus/{id}/{status}',[PaymentController::class,'paymentStatus'])->name('paymentStatus');
+Route::get('admin/payment/viewDetails/{id}',[PaymentController::class,'viewPaymentDetails'])->name('admin.view.payment.details');
 Route::get('admin/payment/downloadPdf',[PaymentController::class,'downloadPdf'])->name('admin.payment.downloadPdf');
 
 
@@ -228,6 +243,7 @@ Route::get('user/payment/viewPayment',[UserPaymentController::class,'index'])->n
 Route::get('user/payment/addPayment',[UserPaymentController::class,'addPayment'])->name('user.addPayment');
 Route::post('user/payment/storePayment',[UserPaymentController::class,'storePayment'])->name('user.store.payment');
 Route::get('user/payment/pendingPayment',[UserPaymentController::class,'pendingPayment'])->name('user.pendingPayment');
+Route::get('user/payment/details/{month}',[UserPaymentController::class,'getPaymentDetails'])->name('user.payment.details');
 // ====================================USER PAYMENT ROUTE END=======================================
 
 
@@ -237,6 +253,17 @@ Route::get('user/expanse/detailsExpanse/{invoice}/{id}',[UserExpanseController::
 Route::get('user/expanse/addExpanse',[UserExpanseController::class,'addExpanse'])->name('user.add.expanse');
 Route::post('user/expanse/storeExpanse',[UserExpanseController::class,'storeExpanse'])->name('user.store.expanse');
 Route::get('user/expanse/pendingExpanse',[UserExpanseController::class,'pendingExpanse'])->name('user.pending.expanse');
+Route::get('user/expanse/editExpanse/{id}',[UserExpanseController::class,'editExpanse'])->name('user.edit.expanse');
+Route::post('user/expanse/updateExpanse',[UserExpanseController::class,'updateExpanse'])->name('user.update.expanse');
+
+//=======================================USER FOOD ADVANCE ROUTE START=============================================
+Route::get('user/foodAdvance',[UserFoodAdvanceController::class,'index'])->name('user.foodAdvance.index');
+Route::get('user/foodAdvance/create',[UserFoodAdvanceController::class,'create'])->name('user.foodAdvance.create');
+Route::post('user/foodAdvance/store',[UserFoodAdvanceController::class,'store'])->name('user.foodAdvance.store');
+Route::get('user/foodAdvance/edit/{id}',[UserFoodAdvanceController::class,'edit'])->name('user.foodAdvance.edit');
+Route::post('user/foodAdvance/update',[UserFoodAdvanceController::class,'update'])->name('user.foodAdvance.update');
+Route::get('user/foodAdvance/view/{id}',[UserFoodAdvanceController::class,'view'])->name('user.foodAdvance.view');
+//========================================USER FOOD ADVANCE ROUTE END=================================================
 // =============================USER EXPANSE ROUTE END=============================================
 
 //======================================= USER REPORT ROUTE START============================================

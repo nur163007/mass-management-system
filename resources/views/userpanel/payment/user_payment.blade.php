@@ -6,12 +6,12 @@
 @section('main-content')
      <section class="content">
         <div class="container-fluid">
-            <div class="card col-md-8 offset-md-2">
+            <div class="card">
                 <div class="row">
-                <div class="card-header col-md-4 col-12">
+                <div class="card-header col-md-6 col-6">
                     <h3 class="font-weight-bolder">View Payment</h3>
                 </div>
-                <div class="card-header col-md-8 col-10 text-xs text-right">
+                <div class="card-header col-md-6 col-6 text-right">
                     <a href="{{route('user.addPayment')}}" class="viewall bg-cyan"><i class="far fa-money-bill-alt"></i> Add Payment</a>
                       <a href="{{route('user.pendingPayment')}}" class="viewall bg-olive"><i class="fas fa-parking"></i> Pending Payment</a>
                 </div>
@@ -23,23 +23,25 @@
                         <thead class="bg-olive">
                             <tr>
                                 <th>SL NO</th>
-                                <th>Payment Amount</th>
-                                <th>Date</th>
+                                <th>Month</th>
+                                <th>Total Payment Amount</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="tbody">
-                                                
+                                                 
                             {{-- show data using ajax --}}
                         
                      @foreach ($payments as $payment)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
-                                <td>Tk. {{ $payment->payment_amount }}</td>
-                                <td>{{ date('M d, Y', strtotime($payment->date ))}}</td>
+                                <td><strong>{{ $payment->month }}</strong></td>
+                                <td><strong>Tk. {{ number_format($payment->total_amount, 2) }}</strong></td>
            
-                                <td style="width: 80px">
-                                    <a href="{{route('user.edit.payment',$payment->id)}}" class="btn btn-info btn-xs"> <i class="fas fa-pencil-alt"></i> </a>
+                                <td style="width: 120px">
+                                    <button type="button" class="btn btn-info btn-xs view-payment-details" data-month="{{ $payment->month }}">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
                                 </td>
                             </tr>
                             @endforeach
@@ -50,6 +52,46 @@
             </div>
         </div>
     </section>
+
+    <!-- Payment Details Modal -->
+    <div class="modal fade" id="paymentDetailsModal" tabindex="-1" role="dialog" aria-labelledby="paymentDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title" id="paymentDetailsModalLabel">Payment Details - <span id="modalMonth"></span></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Payment Type</th>
+                                    <th class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentDetailsBody">
+                                <tr>
+                                    <td colspan="2" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="bg-light">
+                                <tr>
+                                    <th class="text-right">Total:</th>
+                                    <th class="text-right" id="paymentTotal">Tk. 0.00</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('custom_js')
@@ -67,16 +109,47 @@
      
         $(function() {
             $("#all-category").DataTable();
-            //   $('#example2').DataTable({
-            //     "paging": true,
-            //     "lengthChange": false,
-            //     "searching": false,
-            //     "ordering": true,
-            //     "info": true,
-            //     "autoWidth": false,
-            //   });
+        });
+
+        // Handle view payment details button click
+        $(document).on('click', '.view-payment-details', function() {
+            var month = $(this).data('month');
+            $('#modalMonth').text(month);
+            $('#paymentDetailsModal').modal('show');
+            
+            // Load payment details via AJAX
+            var url = "{{ url('user/payment/details') }}/" + month;
+            $.ajax({
+                url: url,
+                method: 'GET',
+                success: function(response) {
+                    if (response.success) {
+                        var html = '';
+                        if (response.payments && response.payments.length > 0) {
+                            response.payments.forEach(function(payment) {
+                                html += '<tr>';
+                                html += '<td>' + payment.type + '</td>';
+                                html += '<td class="text-right">Tk. ' + parseFloat(payment.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</td>';
+                                html += '</tr>';
+                            });
+                        } else {
+                            html = '<tr><td colspan="2" class="text-center">No payments found for this month.</td></tr>';
+                        }
+                        $('#paymentDetailsBody').html(html);
+                        $('#paymentTotal').text('Tk. ' + parseFloat(response.total).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    } else {
+                        $('#paymentDetailsBody').html('<tr><td colspan="2" class="text-center text-danger">Failed to load payment details.</td></tr>');
+                    }
+                },
+                error: function() {
+                    $('#paymentDetailsBody').html('<tr><td colspan="2" class="text-center text-danger">Error loading payment details. Please try again.</td></tr>');
+                    Toast.fire({
+                        type: 'error',
+                        title: 'Failed to load payment details.'
+                    });
+                }
+            });
         });
 
     </script>
 @endsection
-

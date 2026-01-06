@@ -96,7 +96,10 @@
   
       @foreach ($data as $total)
       @php
-      $meal =  \DB::select("SELECT * FROM meals WHERE status = '1' and date BETWEEN '$start_month' and '$finish_month' and members_id = '$total->member_id'");
+      // Exclude Super Admin (role_id = 1) from meals
+      $meal =  \DB::select("SELECT meals.* FROM meals 
+          INNER JOIN members ON meals.members_id = members.id 
+          WHERE meals.status = '1' and members.role_id != 1 and meals.date BETWEEN '$start_month' and '$finish_month' and meals.members_id = '$total->member_id'");
       $br = 0;
       $ln = 0;
       $dn = 0;

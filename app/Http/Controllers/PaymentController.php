@@ -61,13 +61,43 @@ class PaymentController extends Controller
         } 
     }
 
-    public function viewPayment(){
-        $payments = DB::table('payments')
+    public function viewPayment(Request $request){
+        $query = DB::table('payments')
         ->join('members','payments.member_id','members.id')
-        ->select('payments.*','members.full_name')
-        ->get();
-        // dd($payments);
-        return view('admin.payment.viewPayment',compact('payments'));
+        ->select('payments.*','members.full_name');
+        
+        // Filter by member if provided
+        if($request->has('member_id') && $request->member_id != ''){
+            $query->where('payments.member_id', $request->member_id);
+        }
+        
+        // Filter by payment type if provided
+        if($request->has('payment_type') && $request->payment_type != ''){
+            $query->where('payments.payment_type', $request->payment_type);
+        }
+        
+        $payments = $query->orderBy('payments.created_at', 'DESC')
+            ->orderBy('payments.id', 'DESC')
+            ->get();
+        
+        // Get members for dropdown (exclude Super Admin)
+        $members = Member::whereIn('role_id', [2, 3])->orderBy('full_name')->get();
+        
+        $paymentTypes = [
+            'food_advance' => 'Food Advance',
+            'room_rent' => 'Room Rent',
+            'room_advance' => 'Room Advance',
+            'water' => 'Water Bill',
+            'internet' => 'Internet Bill',
+            'electricity' => 'Electricity Bill',
+            'gas' => 'Gas Bill',
+            'bua_moyla' => 'Bua & Moyla Bill',
+        ];
+        
+        $selectedMemberId = $request->member_id ?? '';
+        $selectedPaymentType = $request->payment_type ?? '';
+        
+        return view('admin.payment.viewPayment',compact('payments', 'members', 'paymentTypes', 'selectedMemberId', 'selectedPaymentType'));
     }
 
     public function paymentStatus($id, $status){
@@ -101,7 +131,8 @@ class PaymentController extends Controller
         ->first();
         // dd($payments);
 
-        $members = Member::all();
+        // Exclude Super Admin (role_id = 1), only include Manager (2) and User (3)
+        $members = Member::whereIn('role_id', [2, 3])->where('status', 1)->get();
         return view('admin.payment.editPayment',compact('payments','members'));
     }
 
@@ -117,7 +148,7 @@ class PaymentController extends Controller
         $id = $request->paymentID;
     //  dd($id);
         $date_convert = date('Y-m-d',strtotime($request->date));
-        $month = date('M',strtotime($request->date));
+        $month = date('F',strtotime($request->date));
 
         $payments = Payment::findOrFail($id);
 
@@ -133,6 +164,20 @@ class PaymentController extends Controller
         else{
             return response()->json("error");
         } 
+    }
+
+    public function viewPaymentDetails($id){
+        $payment = DB::table('payments')
+            ->join('members', 'payments.member_id', '=', 'members.id')
+            ->select('payments.*', 'members.full_name', 'members.phone_no', 'members.email')
+            ->where('payments.id', $id)
+            ->first();
+        
+        if(!$payment){
+            return redirect()->route('admin.view.payment')->with('error', 'Payment not found.');
+        }
+
+        return view('admin.payment.viewDetails', compact('payment'));
     }
 
     public function downloadPdf(){

@@ -26,8 +26,8 @@
                                     <select name="month" class="form-control" onchange="this.form.submit()">
                                         <option value="">Select Month</option>
                                         @php
-                                            $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                            $currentMonth = \Carbon\Carbon::now()->isoFormat('MMM');
+                                            $months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                            $currentMonth = \Carbon\Carbon::now()->format('F');
                                         @endphp
                                         @foreach($months as $m)
                                             <option value="{{ $m }}" {{ ($month ?? $currentMonth) == $m ? 'selected' : '' }}>
@@ -107,8 +107,8 @@
                                         <select class="form-control" id="month" name="month" required autocomplete="off">
                                             <option value="">--Select Month--</option>
                                             @php
-                                                $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                                $currentMonth = \Carbon\Carbon::now()->isoFormat('MMM');
+                                                $months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                                $currentMonth = \Carbon\Carbon::now()->format('F');
                                             @endphp
                                             @foreach($months as $m)
                                                 <option value="{{ $m }}" {{ ($month ?? $currentMonth) == $m ? 'selected' : '' }}>

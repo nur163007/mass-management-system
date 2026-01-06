@@ -32,7 +32,7 @@ class UserMealController extends Controller
 
         ]);
         
-        $month = date('M',strtotime($request->date));
+        $month = date('F',strtotime($request->date));
         $convert_date = date('Y-m-d',strtotime($request->date));
         $meals = new Meal();
 

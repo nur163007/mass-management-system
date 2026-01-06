@@ -3,6 +3,8 @@
 @section('title', 'report')
 
 @section('main-content')
+<section class="content">
+    <div class="container-fluid">
 <div class="col-md-12">
 <div class="card" id="printpanel">
     <div class="head text-center mb-4">
@@ -83,4 +85,6 @@
 
 </div>
 </div>
+    </div>
+</section>
 @endsection

@@ -72,7 +72,18 @@
                                 <td> Tk. {{ number_format(($total->total_meal * $meal_rate),2)}}</td>
                                 <td>Tk. {{ $total->payment_amount ? $total->payment_amount : '00' }}</td>
                                 <td> Tk. {{ number_format(($total->payment_amount -($total->total_meal * $meal_rate)),2) }}</td>
-                                <td>{{ $total->month }}</td>
+                                <td>
+                                    @php
+                                        // Convert short month names to full month names
+                                        $monthMap = [
+                                            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+                                            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+                                            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+                                        ];
+                                        $displayMonth = $monthMap[$total->month] ?? $total->month;
+                                    @endphp
+                                    {{ $displayMonth }}
+                                </td>
 
                                 <td style="width: 80px">
                                     <a href="{{route('admin.memberDetails',$total->id)}}" class="btn btn-info btn-xs"> <i class="fa fa-eye"></i> </a>

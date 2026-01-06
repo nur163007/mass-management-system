@@ -6,12 +6,12 @@
 @section('main-content')
      <section class="content">
         <div class="container-fluid">
-            <div class="card col-md-8 offset-md-2">
+            <div class="card">
                 <div class="row">
-                    <div class="card-header col-md-4 col-12">
+                    <div class="card-header col-md-6 col-6">
                         <h3 class="font-weight-bolder">All Expanses</h3>
                     </div>
-                    <div class="card-header col-md-8 col-10 text-xs text-right">
+                    <div class="card-header col-md-6 col-6 text-right">
                         <a href="{{route('user.add.expanse')}}" class="viewall"><i class="far fa-money-bill-alt"></i> Add Expanse</a>
                         <a href="{{route('user.pending.expanse')}}" class="viewall"><i class="far fa-money-bill-alt"></i> Pending Expanse</a>
                     </div>
@@ -26,6 +26,7 @@
                                 <th>SL NO</th>
                                 <th>Total Amount</th>
                                 <th>Date</th>
+                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -37,6 +38,13 @@
                                 <td>{{ $loop->iteration }}</td>
                                 <td>Tk. {{ $item->total }}</td>
                                 <td>{{ $item->date }}</td>
+                                <td>
+                                    @if($item->status == 1)
+                                        <span class="badge badge-success">Approved</span>
+                                    @else
+                                        <span class="badge badge-warning">Pending</span>
+                                    @endif
+                                </td>
                                 <td style="width: 80px">
                                     <a href="{{route('user.details.expanse',[$item->invoice_no,$item->id])}}" class="btn btn-info btn-xs"> <i class="fa fa-eye"></i> </a>
                                 </td>

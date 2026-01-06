@@ -21,21 +21,8 @@
                  @csrf
                     <div class="row">
                         <div class="form-group col-md-6">
-                            <label for="food_category_id">Category Name</label>
-
-                            <select id="" class="custom-select" name="food_category_id">
-                                <option value="">--select category name--</option>
-                                @foreach ($categories as $category)
-                                <option value="{{$category->id}}">{{$category->category_name}}</option>
-                                @endforeach
-                            </select>
-                            @if ($errors->has('food_category_id'))
-                                <p class="text-danger">{{ $errors->first('food_category_id') }}</p>
-                            @endif
-                        </div>
-                        <div class="form-group col-md-6">
                             <label for="item_name">Item Name</label>
-                            <input class="form-control" type="text" id="item_name" name="item_name">
+                            <input class="form-control" type="text" id="item_name" name="item_name" placeholder="Enter Item Name">
                             @if ($errors->has('item_name'))
                                 <p class="text-danger">{{ $errors->first('item_name') }}</p>
                             @endif

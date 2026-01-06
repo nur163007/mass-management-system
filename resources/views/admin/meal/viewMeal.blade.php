@@ -27,6 +27,7 @@
                                 <th> Member's Name</th>
                                 <th> Total Meal</th>
                                 <th>Month</th>
+                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -39,8 +40,25 @@
                                 <td>{{ $details->full_name}}</td>
                                
                                 <td>{{ $details->total_meal }}</td>
-                                <td>{{ $details->month }}</td>
-                                
+                                <td>
+                                    @php
+                                        // Convert short month names to full month names
+                                        $monthMap = [
+                                            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+                                            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+                                            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+                                        ];
+                                        $displayMonth = $monthMap[$details->month] ?? $details->month;
+                                    @endphp
+                                    {{ $displayMonth }}
+                                </td>
+                                <td>
+                                    @if($details->status == 1)
+                                        <span class="badge badge-success">Approved</span>
+                                    @else
+                                        <span class="badge badge-warning">Pending</span>
+                                    @endif
+                                </td>
                                 <td style="width: 80px">
                                     <a href="{{route('admin.mealDetails',$details->members_id)}}" class="btn btn-info btn-xs"> <i class="fas fa-eye"></i> </a>
                                 </td>

@@ -6,12 +6,12 @@
 @section('main-content')
      <section class="content">
         <div class="container-fluid">
-            <div class="card col-md-8 offset-md-2">
+            <div class="card">
                 <div class="row">
-                <div class="card-header col-md-5 col-4">
-                    <h3 class="font-weight-bolder">View Meal</h3>
+                <div class="card-header col-md-6 col-6">
+                    <h3 class="font-weight-bolder">Pending Meal</h3>
                 </div>
-                <div class="card-header col-md-7 col-8 text-xs text-right">
+                <div class="card-header col-md-6 col-6 text-right">
                     <a href="{{route('user.addMeal')}}" class="viewall bg-cyan"><i class="fas fa-hamburger"></i> Add Meal</a>
                       <a href="{{route('user.viewMeal')}}" class="viewall bg-olive"><i class="fas fa-hamburger"></i> All Meal</a>
                 </div>

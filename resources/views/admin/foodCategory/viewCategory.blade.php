@@ -24,7 +24,6 @@
                             <tr>
                                 <th>SL NO</th>
                                 <th> Category Name</th>
-                                <th>Item Photo</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -36,10 +35,6 @@
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ $category->category_name }}</td>
-                               
-                                <td><img style="width: 60px; height:60px"
-                                            src="{{ asset('uploads/category/' . $category->photo) }}" alt=""></td>
-                               
                                 <td style="width: 80px">
                                     <a href="{{route('admin.editCategory',$category->id)}}" class="btn btn-info btn-xs"> <i class="fas fa-pencil-alt"></i> </a>
                                     <a href="{{route('admin.deleteCategory',$category->id)}}" class="btn btn-danger btn-xs"> <i class="fa fa-trash-alt"></i> </a>

@@ -22,19 +22,6 @@
                  <input type="hidden" value="{{ $items->id}}" id="itemID" name="itemID">
                     <div class="row">
                         <div class="form-group col-md-6">
-                            <label for="food_category_id">Category Name</label>
-
-                            <select id="" class="custom-select" name="food_category_id">
-                                <option value="{{$items->food_category_id}}">{{$items->category_name}}</option>
-                                @foreach ($categories as $item)
-                                <option value="{{$item->id}}">{{$item->category_name}}</option>
-                                @endforeach
-                            </select>
-                            @if ($errors->has('food_category_id'))
-                                <p class="text-danger">{{ $errors->first('food_category_id') }}</p>
-                            @endif
-                        </div>
-                        <div class="form-group col-md-6">
                             <label for="item_name">Item Name</label>
                             <input class="form-control" type="text" id="item_name" name="item_name" value="{{ $items->item_name }}">
                             @if ($errors->has('item_name'))

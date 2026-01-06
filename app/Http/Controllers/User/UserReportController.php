@@ -9,7 +9,11 @@ use Barryvdh\DomPDF\Facade\Pdf as PDF;
 class UserReportController extends Controller
 {
     public function index(){
-      $meals = DB::table('meals')->select('meals.*')->groupBy('month')->get();
+      $meals = DB::table('meals')
+          ->select('meals.*')
+          ->groupBy('month')
+          ->orderByRaw("FIELD(month, 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December')")
+          ->get();
       return view('userpanel.report.user_report',compact('meals'));
   }
 
