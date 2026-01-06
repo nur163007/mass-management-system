@@ -47,7 +47,7 @@
             <tr class="text-center">
                 <th>SL NO</th>
                 <th>Total Meal</th>
-                <th>Total Expanses</th>
+                <th>Total Cost</th>
                 <th>Payment</th>
                 <th>Dues / Cashback</th>
             </tr>

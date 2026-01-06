@@ -26,7 +26,7 @@ class UserController extends Controller
     }
 
     public function dashboard(){
-        $now = Carbon::now()->isoFormat('MMM');
+        $now = Carbon::now()->format('F'); // Full month name (January, February, etc.)
         $id = session()->get('member_id');
         
         // Get smart balance
@@ -35,7 +35,7 @@ class UserController extends Controller
         // Get notifications
         $notifications = $this->notificationService->getUserNotifications($id);
         
-        // Legacy calculations for backward compatibility
+        // Calculate total meal for logged-in user
         $meal = DB::select("SELECT * from meals where members_id = ? and status = '1' and month = ?", [$id, $now]);
 
         $br = 0;
@@ -50,14 +50,19 @@ class UserController extends Controller
 
         $total_meal = $br +  $ln + $dn;
 
-        $payments = DB::select("SELECT * from payments where member_id = ? and status ='1' and month = ?", [$id, $now]);
+        // Calculate total payment - only food_advance payments
+        $payments = DB::select("SELECT * from payments where member_id = ? and status ='1' and payment_type = 'food_advance' and month = ?", [$id, $now]);
 
         $fund = 0;
         foreach($payments as $pay){
             $fund += $pay->payment_amount; 
         }
 
-        $all_meal = DB::select("SELECT breakfast,lunch,dinner from meals where status ='1' and month = ?", [$now]);
+        // Calculate meal rate from all meals and expanses (excluding Super Admin)
+        $all_meal = DB::select("SELECT meals.breakfast, meals.lunch, meals.dinner 
+            from meals 
+            INNER JOIN members ON meals.members_id = members.id 
+            where meals.status ='1' and members.role_id != 1 and meals.month = ?", [$now]);
         
         $b = 0;
         $l = 0;
@@ -71,7 +76,11 @@ class UserController extends Controller
 
         $count_meal = $b +  $l + $d;
 
-        $all_expanse = DB::select("SELECT total_amount from expanses where status ='1' and month = ?", [$now]);
+        // Get expanses excluding Super Admin
+        $all_expanse = DB::select("SELECT expanses.total_amount 
+            from expanses 
+            INNER JOIN members ON expanses.member_id = members.id 
+            where expanses.status ='1' and members.role_id != 1 and expanses.month = ?", [$now]);
         
         $all_ex = 0;
         foreach($all_expanse as $exp){
@@ -80,12 +89,18 @@ class UserController extends Controller
 
         $all_meal_rate = $count_meal > 0 ? ($all_ex / $count_meal) : 0;
         $my_amount = ($total_meal * $all_meal_rate);
-        $cash = ($fund - $my_amount);
+        
+        // Meal due = meal cost - food_advance payment (if negative, show as due)
+        $meal_due = $my_amount - $fund;
+        
+        // Cashback = food_advance payment - meal cost (if positive)
+        $cashback = $fund > $my_amount ? ($fund - $my_amount) : 0;
 
         return view('userpanel.dashboard.user_dashboard', compact(
             'total_meal',
             'fund',
-            'cash',
+            'meal_due',
+            'cashback',
             'balance',
             'notifications'
         ));

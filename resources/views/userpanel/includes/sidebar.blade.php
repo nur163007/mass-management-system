@@ -78,6 +78,15 @@
           </li>
 
           <li class="nav-item has-treeview">
+            <a href="{{route('user.bill.index')}}" class="nav-link {{ request()->is('user/bill*') ? 'active' : '' }} ">
+              <i class="nav-icon fas fa-file-invoice-dollar text-warning"></i>
+              <p>
+               Bills
+              </p>
+            </a>
+          </li>
+
+          <li class="nav-item has-treeview">
             <a href="{{route('user.viewReport')}}" class="nav-link {{ request()->is('user/report/*') ? 'active' : '' }} ">
               <i class="nav-icon fas fa-database text-purple"></i>
               <p>

@@ -50,9 +50,10 @@ class UserReportController extends Controller
   $meal_rate = $total_meal > 0 ? ($total_amount / $total_meal) : 0;
 	        // dd($meal_rate);
 
+  // Only include food_advance payments for logged-in user
   $data = DB::select("SELECT SUM(payments.payment_amount) as total_amount,m.id as mem_id FROM payments
     INNER JOIN members as m ON payments.member_id = m.id
-    where payments.status = '1' and m.id = '$id' and payments.date BETWEEN '$start_month' and '$finish_month'");
+    where payments.status = '1' and payments.payment_type = 'food_advance' and m.id = '$id' and payments.date BETWEEN '$start_month' and '$finish_month'");
 
         // dd($data);
 
@@ -89,9 +90,10 @@ public function downloadPdf($start_month,$finish_month){
   $meal_rate = $total_meal > 0 ? ($total_amount / $total_meal) : 0;
             // dd($meal_rate);
 
+  // Only include food_advance payments for logged-in user
   $data = DB::select("SELECT SUM(payments.payment_amount) as total_amount,m.id as mem_id FROM payments
     INNER JOIN members as m ON payments.member_id = m.id
-    where payments.status = '1' and m.id = '$id' and payments.date BETWEEN '$start_month' and '$finish_month'");
+    where payments.status = '1' and payments.payment_type = 'food_advance' and m.id = '$id' and payments.date BETWEEN '$start_month' and '$finish_month'");
 
         // dd($data);
 

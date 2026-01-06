@@ -23,6 +23,7 @@ use App\Http\Controllers\User\UserExpanseController;
 use App\Http\Controllers\User\UserReportController;
 use App\Http\Controllers\Admin\FoodAdvanceController;
 use App\Http\Controllers\User\FoodAdvanceController as UserFoodAdvanceController;
+use App\Http\Controllers\User\UserBillController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -90,6 +91,7 @@ Route::get('admin/bill/create',[BillController::class,'create'])->name('admin.bi
 Route::post('admin/bill',[BillController::class,'store'])->name('admin.bill.store');
 Route::get('admin/bill/{id}/edit',[BillController::class,'edit'])->name('admin.bill.edit');
 Route::post('admin/bill/{id}',[BillController::class,'update'])->name('admin.bill.update');
+Route::get('admin/bill/{id}/view',[BillController::class,'view'])->name('admin.bill.view');
 Route::get('admin/bill/{id}/delete',[BillController::class,'destroy'])->name('admin.bill.delete');
 //===============================BILL MANAGEMENT ROUTES END====================================
 
@@ -270,6 +272,11 @@ Route::get('user/foodAdvance/view/{id}',[UserFoodAdvanceController::class,'view'
 Route::get('user/report/viewReport',[UserReportController::class,'index'])->name('user.viewReport');
 Route::get('user/report/detailsReport',[UserReportController::class,'detailsReport'])->name('user.details.report');
 Route::get('user/report/downloadPdf/{one}/{two}',[UserReportController::class,'downloadPdf'])->name('user.report.downloadPdf');
+
+//======================================= USER BILL ROUTE START============================================
+Route::get('user/bill',[UserBillController::class,'index'])->name('user.bill.index');
+Route::get('user/bill/view/{id}',[UserBillController::class,'view'])->name('user.bill.view');
+//======================================= USER BILL ROUTE END==============================================
 
 });
 

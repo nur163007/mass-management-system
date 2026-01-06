@@ -28,9 +28,9 @@
           <!-- small box -->
           <div class="small-box bg-success">
             <div class="inner">
-              <h3>Tk. {{$fund}}</h3>
+              <h3>Tk. {{ number_format($fund,2)}}</h3>
 
-              <p>Total Payment</p>
+              <p>Total Payment (Food Advance)</p>
             </div>
             <div class="icon">
               <i class="fas fa-comment-dollar"></i>
@@ -43,12 +43,12 @@
           <!-- small box -->
           <div class="small-box bg-warning">
             <div class="inner">
-              @if($cash < 0)
-              <h3>Tk {{ number_format($cash,2)}}</h3>
+              @if($meal_due > 0)
+              <h3>Tk {{ number_format($meal_due,2)}}</h3>
               @else
               <h3>Tk 0.00</h3>
               @endif
-              <p>Total Due</p>
+              <p>Meal Due</p>
             </div>
             <div class="icon">
               <i class="fas fa-money-bill"></i>
@@ -61,12 +61,8 @@
           <!-- small box -->
           <div class="small-box bg-danger">
             <div class="inner">
-              @if($cash > 0)
-              <h3>Tk {{ number_format($cash,2)}}</h3>
-              @else
-              <h3>Tk 0.00</h3>
-              @endif
-              <p>Cash Back</p>
+              <h3>Tk {{ number_format($cashback,2)}}</h3>
+              <p>Cashback</p>
             </div>
             <div class="icon">
               <i class="fas fa-money-bill-alt"></i>

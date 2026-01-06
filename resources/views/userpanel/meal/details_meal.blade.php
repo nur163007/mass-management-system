@@ -27,7 +27,7 @@
                                 <th> Lunch</th>
                                 <th> Dinner</th>
                                 <th>Month</th>
-                                <th>Action</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="tbody">
@@ -41,8 +41,12 @@
                                 <td>{{ $meal->lunch }}</td>
                                 <td>{{ $meal->dinner }}</td>
                                 <td>{{ $meal->month }}</td> 
-                                <td style="width: 80px">
-                                    <a href="{{route('user.editMeal',$meal->id)}}" class="btn btn-info btn-xs"> <i class="fas fa-pencil-alt"></i> </a>
+                                <td>
+                                    @if($meal->status == 1)
+                                        <span class="badge badge-success">Approved</span>
+                                    @else
+                                        <span class="badge badge-warning">Pending</span>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach
