@@ -83,13 +83,61 @@
                         </div>
                     </div>
 
+                    <!-- Month Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="card card-warning">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-calendar-alt"></i> Filter by Month</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form method="GET" action="{{ route('admin.bill.view', $bill->id) }}" id="monthFilterForm">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label for="month_filter">Select Month:</label>
+                                                <select class="form-control" id="month_filter" name="month" onchange="document.getElementById('monthFilterForm').submit();">
+                                                    <option value="{{ $bill->month }}">Bill Month: {{ $selectedMonthFull }}</option>
+                                                    @foreach($availableMonths as $month)
+                                                        @if($month != $selectedMonthFull)
+                                                            <option value="{{ $month }}" {{ $selectedMonthFull == $month ? 'selected' : '' }}>
+                                                                {{ $month }}
+                                                            </option>
+                                                        @endif
+                                                    @endforeach
+                                                    @php
+                                                        $allMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                                    @endphp
+                                                    @foreach($allMonths as $month)
+                                                        @if(!$availableMonths->contains($month) && $month != $selectedMonthFull)
+                                                            <option value="{{ $month }}">{{ $month }}</option>
+                                                        @endif
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="alert alert-info mt-4 mb-0">
+                                                    <i class="fas fa-info-circle"></i> 
+                                                    <strong>Showing data for:</strong> 
+                                                    <span class="badge badge-primary">{{ $selectedMonthFull }}</span>
+                                                    @if($selectedMonthFull != $billMonthFull)
+                                                        <span class="text-muted">(Bill Month: {{ $billMonthFull }})</span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Payment Summary Cards -->
                     <div class="row mb-4">
                         <div class="col-lg-3 col-6">
                             <div class="small-box bg-info">
                                 <div class="inner">
                                     <h3>{{ $uniquePaidMembers }}</h3>
-                                    <p>Members Paid</p>
+                                    <p>Members Paid ({{ $selectedMonthFull }})</p>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-users"></i>
@@ -100,7 +148,7 @@
                             <div class="small-box bg-success">
                                 <div class="inner">
                                     <h3>{{ $totalPaidCount }}</h3>
-                                    <p>Total Payments</p>
+                                    <p>Total Payments ({{ $selectedMonthFull }})</p>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-money-check-alt"></i>
@@ -111,7 +159,7 @@
                             <div class="small-box bg-warning">
                                 <div class="inner">
                                     <h3>Tk. {{ number_format($totalPaid, 2) }}</h3>
-                                    <p>Total Paid Amount</p>
+                                    <p>Total Paid Amount ({{ $selectedMonthFull }})</p>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-coins"></i>
@@ -134,7 +182,10 @@
                     <!-- Payment Details Table -->
                     <div class="card card-success">
                         <div class="card-header">
-                            <h3 class="card-title"><i class="fas fa-list"></i> Payment Details by Member</h3>
+                            <h3 class="card-title">
+                                <i class="fas fa-list"></i> Payment Details by Member 
+                                <span class="badge badge-primary">({{ $selectedMonthFull }})</span>
+                            </h3>
                         </div>
                         <div class="card-body">
                             <table id="payment-table" class="table table-bordered table-hover">
@@ -158,17 +209,29 @@
                                         </td>
                                         <td>{{ $memberData['phone_no'] ?? 'N/A' }}</td>
                                         <td>
-                                            <span class="badge badge-success" style="font-size: 14px;">
-                                                Tk. {{ number_format($memberData['total_paid'], 2) }}
-                                            </span>
+                                            @if($memberData['total_paid'] > 0)
+                                                <span class="badge badge-success" style="font-size: 14px;">
+                                                    Tk. {{ number_format($memberData['total_paid'], 2) }}
+                                                </span>
+                                            @else
+                                                <span class="badge badge-danger" style="font-size: 14px;">
+                                                    Tk. 0.00
+                                                </span>
+                                            @endif
                                         </td>
                                         <td>
-                                            <span class="badge badge-info">{{ $memberData['payment_count'] }} time(s)</span>
+                                            @if($memberData['payment_count'] > 0)
+                                                <span class="badge badge-info">{{ $memberData['payment_count'] }} time(s)</span>
+                                            @else
+                                                <span class="badge badge-warning">0 time(s)</span>
+                                            @endif
                                         </td>
                                         <td>
-                                            @foreach($memberData['payments'] as $payment)
+                                            @forelse($memberData['payments'] as $payment)
                                                 <span class="badge badge-secondary">{{ date('d M Y', strtotime($payment->date)) }}</span><br>
-                                            @endforeach
+                                            @empty
+                                                <span class="text-muted">No payment yet</span>
+                                            @endforelse
                                         </td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#paymentModal{{ $memberId }}">
@@ -190,20 +253,25 @@
                                                     </button>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <table class="table table-bordered">
+                                                    @php
+                                                        $hasNotes = $memberData['payments']->filter(function($p) {
+                                                            return !empty($p->notes);
+                                                        })->count() > 0;
+                                                    @endphp
+                                                    <table class="table table-bordered table-striped">
                                                         <thead class="bg-light">
                                                             <tr>
                                                                 <th>SL</th>
                                                                 <th>Payment Date</th>
                                                                 <th>Amount</th>
                                                                 <th>Month</th>
-                                                                @if($memberData['payments']->first()->notes)
+                                                                @if($hasNotes)
                                                                 <th>Notes</th>
                                                                 @endif
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            @foreach($memberData['payments'] as $index => $payment)
+                                                            @forelse($memberData['payments'] as $index => $payment)
                                                             <tr>
                                                                 <td>{{ $index + 1 }}</td>
                                                                 <td>{{ date('d M Y', strtotime($payment->date)) }}</td>
@@ -218,16 +286,24 @@
                                                                         echo $monthMap[$payment->month] ?? $payment->month;
                                                                     @endphp
                                                                 </td>
-                                                                @if($payment->notes)
-                                                                <td>{{ $payment->notes }}</td>
+                                                                @if($hasNotes)
+                                                                <td>{{ $payment->notes ?? '-' }}</td>
                                                                 @endif
                                                             </tr>
-                                                            @endforeach
+                                                            @empty
+                                                            <tr>
+                                                                <td colspan="{{ $hasNotes ? '5' : '4' }}" class="text-center text-muted">
+                                                                    No payment details available.
+                                                                </td>
+                                                            </tr>
+                                                            @endforelse
+                                                            @if($memberData['payments']->count() > 0)
                                                             <tr class="bg-light font-weight-bold">
                                                                 <td colspan="2" class="text-right">Total:</td>
                                                                 <td class="text-success">Tk. {{ number_format($memberData['total_paid'], 2) }}</td>
-                                                                <td colspan="{{ $memberData['payments']->first()->notes ? '2' : '1' }}"></td>
+                                                                <td colspan="{{ $hasNotes ? '2' : '1' }}"></td>
                                                             </tr>
+                                                            @endif
                                                         </tbody>
                                                     </table>
                                                 </div>
@@ -241,12 +317,60 @@
                                     <tr>
                                         <td colspan="7" class="text-center">
                                             <div class="alert alert-warning">
-                                                <i class="fas fa-exclamation-triangle"></i> No payments found for this bill.
+                                                <i class="fas fa-exclamation-triangle"></i> No members found for this bill.
                                             </div>
                                         </td>
                                     </tr>
                                     @endforelse
                                 </tbody>
+                                <tfoot class="bg-light font-weight-bold">
+                                    <tr>
+                                        <td colspan="3" class="text-right">
+                                            <strong>Total:</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-success" style="font-size: 14px;">
+                                                Tk. {{ number_format($paymentsByMember->sum('total_paid'), 2) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">
+                                                {{ $paymentsByMember->sum('payment_count') }} time(s)
+                                            </span>
+                                        </td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-right">
+                                            <strong>Total Members:</strong>
+                                        </td>
+                                        <td colspan="4">
+                                            <span class="badge badge-primary">
+                                                {{ $paymentsByMember->count() }} Members
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-right">
+                                            <strong>Members Paid:</strong>
+                                        </td>
+                                        <td colspan="4">
+                                            <span class="badge badge-success">
+                                                {{ $paymentsByMember->filter(function($m) { return $m['total_paid'] > 0; })->count() }} Members
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="text-right">
+                                            <strong>Members Not Paid:</strong>
+                                        </td>
+                                        <td colspan="4">
+                                            <span class="badge badge-danger">
+                                                {{ $paymentsByMember->filter(function($m) { return $m['total_paid'] == 0; })->count() }} Members
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>
@@ -263,7 +387,11 @@
             "responsive": true,
             "lengthChange": true,
             "autoWidth": false,
-            "order": [[0, "asc"]]
+            "order": [[0, "asc"]],
+            "footerCallback": function (row, data, start, end, display) {
+                // Footer is already rendered in HTML, so we don't need to calculate here
+                // But we ensure footer is visible
+            }
         });
     });
 </script>

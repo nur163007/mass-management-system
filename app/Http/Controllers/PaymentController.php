@@ -253,9 +253,31 @@ class PaymentController extends Controller
         // Handle bill payments (water, internet, electricity, gas, bua_moyla)
         $billType = $paymentType;
         
-        // Get the bill for this month and type
+        // Month format conversion map
+        $monthMap = [
+            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+        ];
+        
+        // Convert month to full form
+        $monthFull = $monthMap[$month] ?? $month;
+        
+        // Get abbreviated form if month is in full form
+        $reverseMap = array_flip($monthMap);
+        $monthAbbr = $reverseMap[$monthFull] ?? null;
+        
+        // Get the bill for this month and type (check both full and abbreviated forms)
         $bill = Bill::where('bill_type', $billType)
-            ->where('month', $month)
+            ->where(function($query) use ($month, $monthFull, $monthAbbr) {
+                $query->where('month', $month);
+                if ($monthFull != $month) {
+                    $query->orWhere('month', $monthFull);
+                }
+                if ($monthAbbr && $monthAbbr != $month && $monthAbbr != $monthFull) {
+                    $query->orWhere('month', $monthAbbr);
+                }
+            })
             ->where('status', 1)
             ->first();
 
@@ -268,12 +290,21 @@ class PaymentController extends Controller
         }
 
         // Get amount for this specific member (handles gas bill extra users)
+        // This calculates: total_amount / applicable_members (or special logic for gas)
         $amount = $bill->getPerPersonAmountForMember($memberId);
 
-        // Get already paid amount for this bill type
+        // Get already paid amount for this bill type (check both month formats)
         $paidAmount = Payment::where('member_id', $memberId)
             ->where('payment_type', $billType)
-            ->where('month', $month)
+            ->where(function($query) use ($month, $monthFull, $monthAbbr) {
+                $query->where('month', $month);
+                if ($monthFull != $month) {
+                    $query->orWhere('month', $monthFull);
+                }
+                if ($monthAbbr && $monthAbbr != $month && $monthAbbr != $monthFull) {
+                    $query->orWhere('month', $monthAbbr);
+                }
+            })
             ->where('status', 1)
             ->sum('payment_amount');
 

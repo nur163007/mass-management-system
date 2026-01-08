@@ -204,6 +204,13 @@ $(document).ready(function(){
         var paymentType = $('#payment_type').val();
         var month = $('#month').val();
 
+        // If month is not selected, use current month
+        if (!month && paymentType && paymentType !== 'food_advance' && memberId) {
+            var currentMonth = new Date().toLocaleString('default', { month: 'long' });
+            $('#month').val(currentMonth);
+            month = currentMonth;
+        }
+
         // Show amount info for bill payments, room rent, and room advance
         if (paymentType && paymentType !== 'food_advance' && memberId && month) {
             $.ajax({
@@ -331,8 +338,19 @@ $(document).ready(function(){
         }
     });
 
-    // Trigger bill amount lookup when member, payment type, or month changes
-    $('#member_id, #payment_type, #month').on('change', function() {
+    // Trigger bill amount lookup when member or payment type changes
+    $('#member_id, #payment_type').on('change', function() {
+        // Hide checkbox field when payment type changes to non-room-rent
+        if ($('#payment_type').val() !== 'room_rent') {
+            $('#use_extra_reduction_field').hide();
+            $('#use_extra_reduction').prop('checked', false);
+        }
+        // Auto-load amount when member and payment type are selected
+        getBillAmount();
+    });
+
+    // Trigger bill amount lookup when month changes (to update amount for different month)
+    $('#month').on('change', function() {
         // Hide checkbox field when payment type changes to non-room-rent
         if ($('#payment_type').val() !== 'room_rent') {
             $('#use_extra_reduction_field').hide();
