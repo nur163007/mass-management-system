@@ -19,12 +19,56 @@
                 @include('admin.includes.message')
 
                 <div class="card-body">
+                    <!-- Month Filter (Moved to Top) -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="card card-warning">
+                                <div class="card-header">
+                                    <h3 class="card-title"><i class="fas fa-calendar-alt"></i> Filter by Month</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form method="GET" action="{{ route('admin.bill.view', $bill->id) }}" id="monthFilterForm">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <label for="month_filter">Select Month:</label>
+                                                <select class="form-control" id="month_filter" name="month" onchange="document.getElementById('monthFilterForm').submit();">
+                                                    @php
+                                                        $allMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                                                        $currentMonth = \Carbon\Carbon::now()->format('F');
+                                                    @endphp
+                                                    @foreach($allMonths as $month)
+                                                        <option value="{{ $month }}" {{ $selectedMonthFull == $month ? 'selected' : '' }}>
+                                                            {{ $month }}
+                                                            @if($month == $currentMonth)
+                                                                (Current)
+                                                            @endif
+                                                            @if($month == $billMonthFull)
+                                                                (Bill Month)
+                                                            @endif
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="alert alert-info mt-4 mb-0">
+                                                    <i class="fas fa-info-circle"></i> 
+                                                    <strong>Showing data for:</strong> 
+                                                    <span class="badge badge-primary">{{ $selectedMonthFull }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Bill Information Card -->
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <div class="card card-primary">
                                 <div class="card-header">
-                                    <h3 class="card-title"><i class="fas fa-file-invoice-dollar"></i> Bill Information</h3>
+                                    <h3 class="card-title"><i class="fas fa-file-invoice-dollar"></i> Bill Information ({{ $selectedMonthFull }})</h3>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
@@ -52,80 +96,17 @@
                                         </div>
                                         <div class="col-md-3">
                                             <strong>Month:</strong><br>
-                                            <span class="font-weight-bold" style="font-size: 16px;">
-                                                @php
-                                                    $monthMap = [
-                                                        'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
-                                                        'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
-                                                        'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
-                                                    ];
-                                                    echo $monthMap[$bill->month] ?? $bill->month;
-                                                @endphp
-                                            </span>
+                                            <span class="font-weight-bold" style="font-size: 16px;">{{ $selectedMonthFull }}</span>
                                         </div>
                                     </div>
-                                    @if($bill->bill_date)
+                                    @if($bill->notes)
                                     <div class="row mt-3">
-                                        <div class="col-md-3">
-                                            <strong>Bill Date:</strong><br>
-                                            <span>{{ date('d M Y', strtotime($bill->bill_date)) }}</span>
-                                        </div>
-                                        @if($bill->notes)
-                                        <div class="col-md-9">
+                                        <div class="col-md-12">
                                             <strong>Notes:</strong><br>
                                             <span>{{ $bill->notes }}</span>
                                         </div>
-                                        @endif
                                     </div>
                                     @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Month Filter -->
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <div class="card card-warning">
-                                <div class="card-header">
-                                    <h3 class="card-title"><i class="fas fa-calendar-alt"></i> Filter by Month</h3>
-                                </div>
-                                <div class="card-body">
-                                    <form method="GET" action="{{ route('admin.bill.view', $bill->id) }}" id="monthFilterForm">
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <label for="month_filter">Select Month:</label>
-                                                <select class="form-control" id="month_filter" name="month" onchange="document.getElementById('monthFilterForm').submit();">
-                                                    <option value="{{ $bill->month }}">Bill Month: {{ $selectedMonthFull }}</option>
-                                                    @foreach($availableMonths as $month)
-                                                        @if($month != $selectedMonthFull)
-                                                            <option value="{{ $month }}" {{ $selectedMonthFull == $month ? 'selected' : '' }}>
-                                                                {{ $month }}
-                                                            </option>
-                                                        @endif
-                                                    @endforeach
-                                                    @php
-                                                        $allMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-                                                    @endphp
-                                                    @foreach($allMonths as $month)
-                                                        @if(!$availableMonths->contains($month) && $month != $selectedMonthFull)
-                                                            <option value="{{ $month }}">{{ $month }}</option>
-                                                        @endif
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-md-8">
-                                                <div class="alert alert-info mt-4 mb-0">
-                                                    <i class="fas fa-info-circle"></i> 
-                                                    <strong>Showing data for:</strong> 
-                                                    <span class="badge badge-primary">{{ $selectedMonthFull }}</span>
-                                                    @if($selectedMonthFull != $billMonthFull)
-                                                        <span class="text-muted">(Bill Month: {{ $billMonthFull }})</span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -170,7 +151,7 @@
                             <div class="small-box bg-danger">
                                 <div class="inner">
                                     <h3>Tk. {{ number_format($bill->total_amount - $totalPaid, 2) }}</h3>
-                                    <p>Remaining Amount</p>
+                                    <p>Due Amount</p>
                                 </div>
                                 <div class="icon">
                                     <i class="fas fa-exclamation-triangle"></i>
@@ -196,8 +177,7 @@
                                         <th>Phone</th>
                                         <th>Total Paid</th>
                                         <th>Payment Count</th>
-                                        <th>Payment Dates</th>
-                                        <th>Action</th>
+                                        <th>Payment Details</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -228,94 +208,27 @@
                                         </td>
                                         <td>
                                             @forelse($memberData['payments'] as $payment)
-                                                <span class="badge badge-secondary">{{ date('d M Y', strtotime($payment->date)) }}</span><br>
+                                                @php
+                                                    $monthMap = [
+                                                        'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+                                                        'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+                                                        'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+                                                    ];
+                                                    $paymentMonth = $monthMap[$payment->month] ?? $payment->month;
+                                                @endphp
+                                                <div class="mb-2 p-2 border rounded">
+                                                    <strong>Date:</strong> {{ date('d M Y', strtotime($payment->date)) }}<br>
+                                                    <strong>Amount:</strong> <span class="text-success font-weight-bold">Tk. {{ number_format($payment->payment_amount, 2) }}</span><br>
+                                                    <strong>Month:</strong> {{ $paymentMonth }}
+                                                </div>
                                             @empty
                                                 <span class="text-muted">No payment yet</span>
                                             @endforelse
                                         </td>
-                                        <td>
-                                            <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#paymentModal{{ $memberId }}">
-                                                <i class="fas fa-eye"></i> Details
-                                            </button>
-                                        </td>
                                     </tr>
-
-                                    <!-- Payment Details Modal -->
-                                    <div class="modal fade" id="paymentModal{{ $memberId }}" tabindex="-1" role="dialog">
-                                        <div class="modal-dialog modal-lg" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header bg-info">
-                                                    <h5 class="modal-title">
-                                                        <i class="fas fa-user"></i> Payment Details - {{ $memberData['member_name'] }}
-                                                    </h5>
-                                                    <button type="button" class="close" data-dismiss="modal">
-                                                        <span>&times;</span>
-                                                    </button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    @php
-                                                        $hasNotes = $memberData['payments']->filter(function($p) {
-                                                            return !empty($p->notes);
-                                                        })->count() > 0;
-                                                    @endphp
-                                                    <table class="table table-bordered table-striped">
-                                                        <thead class="bg-light">
-                                                            <tr>
-                                                                <th>SL</th>
-                                                                <th>Payment Date</th>
-                                                                <th>Amount</th>
-                                                                <th>Month</th>
-                                                                @if($hasNotes)
-                                                                <th>Notes</th>
-                                                                @endif
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @forelse($memberData['payments'] as $index => $payment)
-                                                            <tr>
-                                                                <td>{{ $index + 1 }}</td>
-                                                                <td>{{ date('d M Y', strtotime($payment->date)) }}</td>
-                                                                <td><strong class="text-success">Tk. {{ number_format($payment->payment_amount, 2) }}</strong></td>
-                                                                <td>
-                                                                    @php
-                                                                        $monthMap = [
-                                                                            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
-                                                                            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
-                                                                            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
-                                                                        ];
-                                                                        echo $monthMap[$payment->month] ?? $payment->month;
-                                                                    @endphp
-                                                                </td>
-                                                                @if($hasNotes)
-                                                                <td>{{ $payment->notes ?? '-' }}</td>
-                                                                @endif
-                                                            </tr>
-                                                            @empty
-                                                            <tr>
-                                                                <td colspan="{{ $hasNotes ? '5' : '4' }}" class="text-center text-muted">
-                                                                    No payment details available.
-                                                                </td>
-                                                            </tr>
-                                                            @endforelse
-                                                            @if($memberData['payments']->count() > 0)
-                                                            <tr class="bg-light font-weight-bold">
-                                                                <td colspan="2" class="text-right">Total:</td>
-                                                                <td class="text-success">Tk. {{ number_format($memberData['total_paid'], 2) }}</td>
-                                                                <td colspan="{{ $hasNotes ? '2' : '1' }}"></td>
-                                                            </tr>
-                                                            @endif
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                     @empty
                                     <tr>
-                                        <td colspan="7" class="text-center">
+                                        <td colspan="6" class="text-center">
                                             <div class="alert alert-warning">
                                                 <i class="fas fa-exclamation-triangle"></i> No members found for this bill.
                                             </div>
@@ -383,16 +296,8 @@
 @section('custom_js')
 <script>
     $(function() {
-        $("#payment-table").DataTable({
-            "responsive": true,
-            "lengthChange": true,
-            "autoWidth": false,
-            "order": [[0, "asc"]],
-            "footerCallback": function (row, data, start, end, display) {
-                // Footer is already rendered in HTML, so we don't need to calculate here
-                // But we ensure footer is visible
-            }
-        });
+        // DataTable disabled - using plain table to avoid DOM manipulation issues
+        // All data will be displayed in the table without pagination
     });
 </script>
 @endsection

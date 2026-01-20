@@ -13,10 +13,25 @@ class BillService
      */
     public function getBillPerPerson($billType, $month = null)
     {
-        $month = $month ?? Carbon::now()->isoFormat('MMM');
+        // Use full month format (F = January, February, etc.)
+        $month = $month ?? Carbon::now()->format('F');
+        
+        // Month format conversion map (for backward compatibility)
+        $monthMap = [
+            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+        ];
+        $monthFull = $monthMap[$month] ?? $month;
         
         $bill = Bill::where('bill_type', $billType)
-            ->where('month', $month)
+            ->where(function($query) use ($month, $monthFull) {
+                $query->where('month', $monthFull);
+                // For backward compatibility, also check abbreviated form
+                if ($monthFull != $month) {
+                    $query->orWhere('month', $month);
+                }
+            })
             ->where('status', 1)
             ->first();
             
@@ -32,9 +47,24 @@ class BillService
      */
     public function getMonthlyBills($month = null)
     {
-        $month = $month ?? Carbon::now()->isoFormat('MMM');
+        // Use full month format (F = January, February, etc.)
+        $month = $month ?? Carbon::now()->format('F');
         
-        return Bill::where('month', $month)
+        // Month format conversion map (for backward compatibility)
+        $monthMap = [
+            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+        ];
+        $monthFull = $monthMap[$month] ?? $month;
+        
+        return Bill::where(function($query) use ($month, $monthFull) {
+                $query->where('month', $monthFull);
+                // For backward compatibility, also check abbreviated form
+                if ($monthFull != $month) {
+                    $query->orWhere('month', $month);
+                }
+            })
             ->where('status', 1)
             ->get();
     }
@@ -44,7 +74,8 @@ class BillService
      */
     public function getTotalBillsPerPerson($month = null)
     {
-        $month = $month ?? Carbon::now()->isoFormat('MMM');
+        // Use full month format (F = January, February, etc.)
+        $month = $month ?? Carbon::now()->format('F');
         
         $bills = $this->getMonthlyBills($month);
         $total = 0;

@@ -93,8 +93,8 @@ class BillController extends Controller
     {
         $validationRules = [
             'bill_type' => 'required|in:water,internet,electricity,gas,bua_moyla',
-            'bill_date' => 'required|date',
-            'month' => 'required',
+            // Month and bill_date are not required for master data creation
+            // They will be set automatically to current month and date
         ];
 
         // For gas bills, validate cylinder fields instead of total_amount
@@ -107,16 +107,37 @@ class BillController extends Controller
             $validationRules['total_amount'] = 'required|numeric|min:0';
         }
 
+        // Validate applicable members
+        $validationRules['applicable_member_ids'] = 'required|array|min:1';
+        $validationRules['applicable_member_ids.*'] = 'exists:members,id';
+
         $this->validate($request, $validationRules);
+        
+        // Additional validation: extra gas users must be in applicable members
+        if ($request->bill_type === Bill::TYPE_GAS && $request->has('extra_gas_users')) {
+            $applicableMemberIds = $request->applicable_member_ids ?? [];
+            $extraGasUsers = $request->extra_gas_users ?? [];
+            
+            $invalidExtraUsers = array_diff($extraGasUsers, $applicableMemberIds);
+            if (!empty($invalidExtraUsers)) {
+                return redirect()->back()
+                    ->with('error', 'Extra gas users must be selected from applicable members.')
+                    ->withInput();
+            }
+        }
 
         $data = $request->all();
         
-        // Set applicable members based on bill type
-        if ($request->bill_type === Bill::TYPE_INTERNET) {
-            $data['applicable_members'] = 6;
-        } else {
-            $data['applicable_members'] = 7;
-        }
+        // Set default month and bill_date for master data (current month and date)
+        // These can be updated later when needed
+        $data['month'] = Carbon::now()->format('F'); // Current month in full form (January, February, etc.)
+        $data['bill_date'] = Carbon::now()->toDateString(); // Current date
+        
+        // Store selected member IDs
+        $data['applicable_member_ids'] = $request->applicable_member_ids ?? [];
+        
+        // Set applicable members count based on selected members
+        $data['applicable_members'] = count($data['applicable_member_ids']);
 
         // Handle gas bill special fields
         if ($request->bill_type === Bill::TYPE_GAS) {
@@ -170,8 +191,8 @@ class BillController extends Controller
         
         $validationRules = [
             'bill_type' => 'required|in:water,internet,electricity,gas,bua_moyla',
-            'bill_date' => 'required|date',
-            'month' => 'required',
+            // Month and bill_date are not required for master data update
+            // Existing values will be preserved
         ];
 
         // For gas bills, validate cylinder fields instead of total_amount
@@ -184,23 +205,47 @@ class BillController extends Controller
             $validationRules['total_amount'] = 'required|numeric|min:0';
         }
 
+        // Validate applicable members
+        $validationRules['applicable_member_ids'] = 'required|array|min:1';
+        $validationRules['applicable_member_ids.*'] = 'exists:members,id';
+
         $this->validate($request, $validationRules);
+        
+        // Additional validation: extra gas users must be in applicable members
+        if ($request->bill_type === Bill::TYPE_GAS && $request->has('extra_gas_users')) {
+            $applicableMemberIds = $request->applicable_member_ids ?? [];
+            $extraGasUsers = $request->extra_gas_users ?? [];
+            
+            $invalidExtraUsers = array_diff($extraGasUsers, $applicableMemberIds);
+            if (!empty($invalidExtraUsers)) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'error' => 'Extra gas users must be selected from applicable members.'
+                    ], 422);
+                }
+                return redirect()->back()
+                    ->with('error', 'Extra gas users must be selected from applicable members.')
+                    ->withInput();
+            }
+        }
 
         $data = $request->only([
             'bill_type',
             'total_amount',
-            'bill_date',
-            'month',
             'notes',
             'status'
         ]);
         
-        // Set applicable members
-        if ($request->bill_type === Bill::TYPE_INTERNET) {
-            $data['applicable_members'] = 6;
-        } else {
-            $data['applicable_members'] = 7;
-        }
+        // Preserve existing month and bill_date (master data - don't update)
+        $data['month'] = $bill->month;
+        $data['bill_date'] = $bill->bill_date;
+        
+        // Store selected member IDs
+        $data['applicable_member_ids'] = $request->applicable_member_ids ?? [];
+        
+        // Set applicable members count based on selected members
+        $data['applicable_members'] = count($data['applicable_member_ids']);
 
         // Handle gas bill
         if ($request->bill_type === Bill::TYPE_GAS) {
@@ -253,8 +298,9 @@ class BillController extends Controller
             'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
         ];
         
-        // Get selected month from request, default to bill's month
-        $selectedMonth = $request->input('month', $bill->month);
+        // Get selected month from request, default to current month (not bill's month)
+        $currentMonth = Carbon::now()->format('F'); // Current month in full form
+        $selectedMonth = $request->input('month', $currentMonth);
         
         // Convert selected month to full form
         $selectedMonthFull = $monthMap[$selectedMonth] ?? $selectedMonth;
@@ -313,14 +359,24 @@ class BillController extends Controller
         
         $billTypeName = $billTypeNames[$bill->bill_type] ?? ucfirst($bill->bill_type);
         
-        // Get all applicable members (Manager and User roles, status = 1)
-        // For Internet bill: 6 members, for others: 7 members
-        $applicableMembersCount = $bill->bill_type === Bill::TYPE_INTERNET ? 6 : 7;
-        $allMembers = Member::whereIn('role_id', [2, 3])
-            ->where('status', 1)
-            ->orderBy('full_name')
-            ->limit($applicableMembersCount)
-            ->get();
+        // Get applicable members from stored member IDs
+        $applicableMemberIds = is_array($bill->applicable_member_ids) ? $bill->applicable_member_ids : [];
+        
+        // If no member IDs stored (old bills), fallback to old logic
+        if (empty($applicableMemberIds)) {
+            $applicableMembersCount = $bill->bill_type === Bill::TYPE_INTERNET ? 6 : 7;
+            $allMembers = Member::whereIn('role_id', [2, 3])
+                ->where('status', 1)
+                ->orderBy('full_name')
+                ->limit($applicableMembersCount)
+                ->get();
+        } else {
+            // Get only the selected members
+            $allMembers = Member::whereIn('id', $applicableMemberIds)
+                ->where('status', 1)
+                ->orderBy('full_name')
+                ->get();
+        }
         
         // Group payments by member for quick lookup
         $paymentsByMemberId = $payments->groupBy('member_id')->map(function ($memberPayments) {

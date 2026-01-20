@@ -42,8 +42,6 @@
                                 <th>SL NO</th>
                                 <th>Bill Type</th>
                                 <th>Total Amount</th>
-                                <th>Bill Date</th>
-                                <th>Month</th>
                                 <th>Per Person</th>
                                 <th>Action</th>
                             </tr>
@@ -68,17 +66,6 @@
                                     @endif
                                 </td>
                                 <td>Tk. {{ number_format($bill->total_amount, 2) }}</td>
-                                <td>{{ $bill->bill_date ? date('d M Y', strtotime($bill->bill_date)) : 'N/A' }}</td>
-                                <td>
-                                    @php
-                                        $monthMap = [
-                                            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
-                                            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
-                                            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
-                                        ];
-                                        echo $monthMap[$bill->month] ?? $bill->month;
-                                    @endphp
-                                </td>
                                 <td>Tk. {{ number_format($bill->per_person_amount, 2) }}</td>
                                 <td style="width: 150px">
                                     <a href="{{ route('admin.bill.view', $bill->id) }}" class="btn btn-success btn-xs" title="View Details">
@@ -97,7 +84,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center">No bills found for this month.</td>
+                                <td colspan="5" class="text-center">No bills found for this month.</td>
                             </tr>
                             @endforelse
                         </tbody>
