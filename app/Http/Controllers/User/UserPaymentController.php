@@ -23,11 +23,34 @@ class UserPaymentController extends Controller
 
     public function getPaymentDetails($month){
     	$id = session()->get('member_id');
-    	$payments = DB::select("SELECT payments.payment_type, SUM(payments.payment_amount) as total_amount
-	        FROM payments
-	        WHERE payments.status ='1' and payments.member_id = '$id' and payments.month = '$month'
-	        GROUP BY payments.payment_type
-	        ORDER BY payments.payment_type");
+    	
+    	// Month format conversion map
+    	$monthMap = [
+            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+        ];
+        
+        // Convert month to full form if abbreviated
+        $monthFull = $monthMap[$month] ?? $month;
+        $reverseMap = array_flip($monthMap);
+        $monthAbbr = $reverseMap[$monthFull] ?? null;
+    	
+    	// Get all individual payments with dates for the selected month (check both formats)
+    	$payments = Payment::where('member_id', $id)
+    		->where(function($query) use ($month, $monthFull, $monthAbbr) {
+    			$query->where('month', $month);
+    			if ($monthFull != $month) {
+    				$query->orWhere('month', $monthFull);
+    			}
+    			if ($monthAbbr && $monthAbbr != $month && $monthAbbr != $monthFull) {
+    				$query->orWhere('month', $monthAbbr);
+    			}
+    		})
+    		->where('status', 1)
+    		->orderBy('date', 'DESC')
+    		->orderBy('payment_type', 'ASC')
+    		->get();
     	
     	$paymentTypes = [
             'food_advance' => 'Food Advance',
@@ -48,9 +71,11 @@ class UserPaymentController extends Controller
     		$typeName = $paymentTypes[$payment->payment_type] ?? ucfirst(str_replace('_', ' ', $payment->payment_type));
     		$formattedPayments[] = [
     			'type' => $typeName,
-    			'amount' => $payment->total_amount
+    			'amount' => $payment->payment_amount,
+    			'date' => date('d M Y', strtotime($payment->date)),
+    			'notes' => $payment->notes ?? ''
     		];
-    		$grandTotal += $payment->total_amount;
+    		$grandTotal += $payment->payment_amount;
     	}
     	
     	return response()->json([

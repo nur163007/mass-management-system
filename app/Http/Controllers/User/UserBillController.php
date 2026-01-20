@@ -64,7 +64,7 @@ class UserBillController extends Controller
     /**
      * Display bill details with payment information
      */
-    public function view($id)
+    public function view($id, Request $request)
     {
         $bill = Bill::findOrFail($id);
         
@@ -75,33 +75,43 @@ class UserBillController extends Controller
             'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
         ];
         
-        // Convert bill month to full form
+        // Get selected month from request, default to current month (not bill's month)
+        $currentMonth = Carbon::now()->format('F'); // Current month in full form
+        $selectedMonth = $request->input('month', $currentMonth);
+        
+        // Convert selected month to full form
+        $selectedMonthFull = $monthMap[$selectedMonth] ?? $selectedMonth;
+        
+        // Get abbreviated form if selected month is in full form
+        $reverseMap = array_flip($monthMap);
+        $selectedMonthAbbr = $reverseMap[$selectedMonthFull] ?? null;
+        
+        // If selected month is abbreviated, get full form
+        if (isset($monthMap[$selectedMonth])) {
+            $selectedMonthFull = $monthMap[$selectedMonth];
+        }
+        
+        // Convert bill month to full form (for display)
         $billMonth = $bill->month;
         $billMonthFull = $monthMap[$billMonth] ?? $billMonth;
-        
-        // Get abbreviated form if bill month is in full form
-        $reverseMap = array_flip($monthMap);
-        $billMonthAbbr = $reverseMap[$billMonthFull] ?? null;
-        
-        // If bill month is abbreviated, get full form
         if (isset($monthMap[$billMonth])) {
             $billMonthFull = $monthMap[$billMonth];
         }
         
-        // Query payments: Filter by payment_type AND month (check both formats)
+        // Query payments: Filter by payment_type AND selected month (check both formats)
         $payments = Payment::where('payment_type', $bill->bill_type)
-            ->where(function($query) use ($billMonth, $billMonthFull, $billMonthAbbr) {
-                // Check original bill month format
-                $query->where('payments.month', $billMonth);
+            ->where(function($query) use ($selectedMonth, $selectedMonthFull, $selectedMonthAbbr) {
+                // Check original selected month format
+                $query->where('payments.month', $selectedMonth);
                 
                 // Check full form if different
-                if ($billMonthFull != $billMonth) {
-                    $query->orWhere('payments.month', $billMonthFull);
+                if ($selectedMonthFull != $selectedMonth) {
+                    $query->orWhere('payments.month', $selectedMonthFull);
                 }
                 
                 // Check abbreviated form if different
-                if ($billMonthAbbr && $billMonthAbbr != $billMonth && $billMonthAbbr != $billMonthFull) {
-                    $query->orWhere('payments.month', $billMonthAbbr);
+                if ($selectedMonthAbbr && $selectedMonthAbbr != $selectedMonth && $selectedMonthAbbr != $selectedMonthFull) {
+                    $query->orWhere('payments.month', $selectedMonthAbbr);
                 }
             })
             ->where('payments.status', 1)
@@ -126,8 +136,27 @@ class UserBillController extends Controller
         
         $billTypeName = $billTypeNames[$bill->bill_type] ?? ucfirst($bill->bill_type);
         
-        // Group payments by member
-        $paymentsByMember = $payments->groupBy('member_id')->map(function ($memberPayments) {
+        // Get applicable members from stored member IDs
+        $applicableMemberIds = is_array($bill->applicable_member_ids) ? $bill->applicable_member_ids : [];
+        
+        // If no member IDs stored (old bills), fallback to old logic
+        if (empty($applicableMemberIds)) {
+            $applicableMembersCount = $bill->bill_type === Bill::TYPE_INTERNET ? 6 : 7;
+            $allMembers = \App\Models\Member::whereIn('role_id', [2, 3])
+                ->where('status', 1)
+                ->orderBy('full_name')
+                ->limit($applicableMembersCount)
+                ->get();
+        } else {
+            // Get only the selected members
+            $allMembers = \App\Models\Member::whereIn('id', $applicableMemberIds)
+                ->where('status', 1)
+                ->orderBy('full_name')
+                ->get();
+        }
+        
+        // Group payments by member for quick lookup
+        $paymentsByMemberId = $payments->groupBy('member_id')->map(function ($memberPayments) {
             return [
                 'member_name' => $memberPayments->first()->full_name,
                 'phone_no' => $memberPayments->first()->phone_no,
@@ -137,6 +166,29 @@ class UserBillController extends Controller
             ];
         });
         
+        // Create list with all applicable members, including those who haven't paid
+        $paymentsByMember = $allMembers->mapWithKeys(function ($member) use ($paymentsByMemberId, $bill) {
+            $memberId = $member->id;
+            
+            // Check if member has made payments
+            if ($paymentsByMemberId->has($memberId)) {
+                // Member has paid - use existing data
+                $data = $paymentsByMemberId->get($memberId);
+                $data['member_id'] = $memberId; // Ensure member_id is set
+                return [$memberId => $data];
+            } else {
+                // Member hasn't paid yet
+                return [$memberId => [
+                    'member_id' => $memberId,
+                    'member_name' => $member->full_name,
+                    'phone_no' => $member->phone_no ?? 'N/A',
+                    'total_paid' => 0,
+                    'payment_count' => 0,
+                    'payments' => collect([])
+                ]];
+            }
+        });
+        
         return view('userpanel.bill.view', compact(
             'bill',
             'billTypeName',
@@ -144,7 +196,9 @@ class UserBillController extends Controller
             'paymentsByMember',
             'totalPaid',
             'totalPaidCount',
-            'uniquePaidMembers'
+            'uniquePaidMembers',
+            'selectedMonthFull',
+            'billMonthFull'
         ));
     }
 }
