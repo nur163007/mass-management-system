@@ -18,8 +18,8 @@ class UserCheck
     {
         $user_role = session('role');
         $user_status = session('user_status');
-        // User role_id = 3
-        if($user_role == 3 && $user_status == 1){
+        // Allow Manager (role_id = 2) and User (role_id = 3) to access user routes
+        if(($user_role == 2 || $user_role == 3) && $user_status == 1){
             // dd("ok");
              return $next($request);
         }

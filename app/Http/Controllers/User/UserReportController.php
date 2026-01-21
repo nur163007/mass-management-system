@@ -24,16 +24,37 @@ class UserReportController extends Controller
      $start_month = date('Y-m-d',strtotime($request->from_date));
      $finish_month = date('Y-m-d',strtotime($request->to_date));
 
-     $meals = DB::select("SELECT * from meals where status = '1' and date BETWEEN '$start_month' and '$finish_month'");
+     // Calculate meals: Start date dinner to End date lunch
+     // - Start date: Only dinner
+     // - Dates between: All meals (breakfast, lunch, dinner)
+     // - End date: Only breakfast and lunch (not dinner)
+     $meals = DB::select("SELECT * from meals where status = '1' and members_id = '$id'
+        and (
+            (date = '$start_month' and dinner > 0) OR
+            (date > '$start_month' and date < '$finish_month') OR
+            (date = '$finish_month' and (breakfast > 0 OR lunch > 0))
+        )");
         // dd($meals);
      $br = 0;
      $ln = 0;
      $dn = 0;
 
      foreach($meals as $m){
-        $br += $m->breakfast;
-        $ln += $m->lunch;
-        $dn += $m->dinner;
+        // For start date: count only dinner
+        if ($m->date == $start_month) {
+            $dn += $m->dinner;
+        }
+        // For end date: count only breakfast and lunch
+        elseif ($m->date == $finish_month) {
+            $br += $m->breakfast;
+            $ln += $m->lunch;
+        }
+        // For dates in between: count all meals
+        else {
+            $br += $m->breakfast;
+            $ln += $m->lunch;
+            $dn += $m->dinner;
+        }
     }
 
     $total_meal = $br +  $ln + $dn;

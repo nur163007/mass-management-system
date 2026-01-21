@@ -12,8 +12,12 @@
                         <h3 class="font-weight-bolder">All Payments</h3>
                     </div>
                     <div class="card-header col-md-6 col-6 text-right">
-                        <a href="{{route('admin.add.payment')}}" class="viewall"><i class="far fa-money-bill-alt"></i> Add Payment</a>
-                         <a href="{{route('admin.payment.downloadPdf')}}" class="viewall bg-cyan"><i class="far fa-file-pdf"></i> Download pdf</a>
+                        @if($isSuperAdmin || $isManager || !empty($myResponsibilities))
+                            <a href="{{route('admin.add.payment')}}" class="viewall"><i class="far fa-money-bill-alt"></i> Add Payment</a>
+                        @endif
+                        @if($isSuperAdmin || $isManager || !empty($myResponsibilities))
+                            <a href="{{route('admin.payment.downloadPdf')}}" class="viewall bg-cyan"><i class="far fa-file-pdf"></i> Download pdf</a>
+                        @endif
                     </div>
                 </div>
  
@@ -61,70 +65,94 @@
                     <table id="all-category" class="table table-bordered table-hover">
                         <thead class="bg-olive">
                             <tr>
-                                <th style="white-space: nowrap;">SL NO</th>
-                                <th style="white-space: nowrap;">Member's Name</th>
-                                <th style="white-space: nowrap;">Payment Type</th>
-                                <th style="white-space: nowrap;">Payment Amount</th>
-                                <th style="white-space: nowrap;">Date</th>
-                                <th style="white-space: nowrap;">Status</th>
-                                <th style="white-space: nowrap;">Action</th>
+                                <th>SL NO</th>
+                                <th>Member's Name</th>
+                                <th>Month</th>
+                                <th>Total Payment Amount</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="tbody">
-                                                 
-                            {{-- show data using ajax --}}
-                        @foreach ($payments as $payment)
-                            <tr>
-                                <td style="white-space: nowrap;">{{ $loop->iteration }}</td>
-                                <td style="white-space: nowrap;">{{ $payment->full_name }}</td>
-                                <td style="white-space: nowrap;">
-                                    @php
-                                        $paymentTypes = [
-                                            'food_advance' => 'Food Advance',
-                                            'room_rent' => 'Room Rent',
-                                            'room_advance' => 'Room Advance',
-                                            'water' => 'Water Bill',
-                                            'internet' => 'Internet Bill',
-                                            'electricity' => 'Electricity Bill',
-                                            'gas' => 'Gas Bill',
-                                            'bua_moyla' => 'Bua & Moyla Bill',
-                                        ];
-                                        $typeName = $paymentTypes[$payment->payment_type] ?? ucfirst(str_replace('_', ' ', $payment->payment_type));
-                                    @endphp
-                                    {{ $typeName }}
-                                </td>
-                                <td style="white-space: nowrap;">Tk. {{ number_format($payment->payment_amount, 2) }}</td>
-                                <td style="white-space: nowrap;">{{ date('M d, Y', strtotime($payment->date ))}}</td>
-                                <td style="white-space: nowrap;">
-                                    @if($payment->status == 1)
-                                        <span class="badge badge-success">Paid</span>
-                                    @else
-                                        <span class="badge badge-warning">Pending</span>
-                                    @endif
-                                </td>
-                                <td style="width: 180px; white-space: nowrap;">
-                                    <a href="{{route('admin.view.payment.details', $payment->id)}}" class="btn btn-info btn-xs" title="View" style="border-radius: 5px; padding: 5px 10px;"> 
-                                        <i class="fa fa-eye"></i> 
-                                    </a>
-                                    <a href="{{route('admin.edit.payment',$payment->id)}}" class="btn btn-warning btn-xs" title="Edit" style="border-radius: 5px; padding: 5px 10px; margin-left: 5px;"> 
-                                        <i class="fas fa-pencil-alt"></i> 
-                                    </a>
-                                    @if($payment->status == 0)
-                                        <button type="button" class="btn btn-success btn-xs approve-payment-btn" data-id="{{ $payment->id }}" title="Approve" style="border-radius: 5px; padding: 5px 10px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; margin-left: 5px;">
-                                            <i class="fas fa-check-circle"></i>
+                            @php
+                                $monthMap = [
+                                    'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+                                    'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+                                    'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+                                ];
+                            @endphp
+                            @forelse($payments as $payment)
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td><strong>{{ $payment['full_name'] }}</strong></td>
+                                    <td><strong>{{ $monthMap[$payment['month']] ?? $payment['month'] }}</strong></td>
+                                    <td><strong>Tk. {{ number_format($payment['total_amount'], 2) }}</strong></td>
+                                    <td style="width: 120px">
+                                        <button type="button" class="btn btn-info btn-xs view-payment-details" 
+                                                data-member-id="{{ $payment['member_id'] }}" 
+                                                data-member-name="{{ $payment['full_name'] }}"
+                                                data-month="{{ $monthMap[$payment['month']] ?? $payment['month'] }}">
+                                            <i class="fas fa-eye"></i> View
                                         </button>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center">No payments found.</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </section>
-@endsection
 
+    <!-- Payment Details Modal -->
+    <div class="modal fade" id="paymentDetailsModal" tabindex="-1" role="dialog" aria-labelledby="paymentDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title" id="paymentDetailsModalLabel">Payment Details - <span id="modalMemberName"></span> (<span id="modalMonth"></span>)</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>SL</th>
+                                    <th>Bill Type</th>
+                                    <th>Payment Date</th>
+                                    <th class="text-right">Amount</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                    <th class="text-nowrap">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentDetailsBody">
+                                <tr>
+                                    <td colspan="7" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="bg-light font-weight-bold">
+                                <tr>
+                                    <td colspan="3" class="text-right">Total:</td>
+                                    <td class="text-right" id="paymentTotal">Tk. 0.00</td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
 
 @section('custom_js')
     <script>
@@ -140,53 +168,175 @@
         $(document).ready(function(){
             $("#all-category").DataTable();
 
-            // Handle approve button click
-            $(document).on('click', '.approve-payment-btn', function(e) {
-                e.preventDefault();
-                var id = $(this).attr('data-id');
-                var btn = $(this);
+            // Store current member ID and month for reload
+            var currentMemberId = null;
+            var currentMonth = null;
 
+            // Handle view payment details button click
+            $(document).on('click', '.view-payment-details', function() {
+                var memberId = $(this).data('member-id');
+                var memberName = $(this).data('member-name');
+                var month = $(this).data('month');
+                
+                // Store for reload
+                currentMemberId = memberId;
+                currentMonth = month;
+                
+                $('#modalMemberName').text(memberName);
+                $('#modalMonth').text(month);
+                $('#paymentDetailsModal').modal('show');
+                
+                // Load payment details via AJAX
+                var url = "{{ url('admin/payment/details') }}/" + memberId + "/" + encodeURIComponent(month);
+                $.ajax({
+                    url: url,
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            var html = '';
+                            if (response.payments && response.payments.length > 0) {
+                                response.payments.forEach(function(payment, index) {
+                                    var statusBadge = payment.status == 1 
+                                        ? '<span class="badge badge-success">Paid</span>' 
+                                        : '<span class="badge badge-warning">Pending</span>';
+                                    
+                                    // Action buttons (icon only)
+                                    var actionButtons = '';
+                                    if (payment.status == 0 && payment.can_approve) {
+                                        actionButtons += '<button type="button" class="btn btn-success btn-xs approve-payment" data-id="' + payment.id + '" title="Approve Payment"><i class="fas fa-check"></i></button>';
+                                    }
+                                    if (payment.can_edit) {
+                                        if (actionButtons) actionButtons += ' ';
+                                        actionButtons += '<button type="button" class="btn btn-primary btn-xs edit-payment" data-id="' + payment.id + '" title="Edit Payment"><i class="fas fa-edit"></i></button>';
+                                    }
+                                    if (!actionButtons) {
+                                        actionButtons = '-';
+                                    }
+                                    
+                                    html += '<tr>';
+                                    html += '<td>' + (index + 1) + '</td>';
+                                    html += '<td><strong>' + payment.type + '</strong></td>';
+                                    html += '<td><span class="badge badge-secondary">' + payment.date + '</span></td>';
+                                    html += '<td class="text-right"><strong class="text-success">Tk. ' + parseFloat(payment.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong></td>';
+                                    html += '<td>' + statusBadge + '</td>';
+                                    html += '<td>' + (payment.notes ? payment.notes : '-') + '</td>';
+                                    html += '<td class="text-nowrap">' + actionButtons + '</td>';
+                                    html += '</tr>';
+                                });
+                            } else {
+                                html = '<tr><td colspan="7" class="text-center">No payments found for this month.</td></tr>';
+                            }
+                            $('#paymentDetailsBody').html(html);
+                            $('#paymentTotal').text('Tk. ' + parseFloat(response.total).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                        } else {
+                            $('#paymentDetailsBody').html('<tr><td colspan="7" class="text-center text-danger">Failed to load payment details.</td></tr>');
+                        }
+                    },
+                    error: function() {
+                        $('#paymentDetailsBody').html('<tr><td colspan="7" class="text-center text-danger">Error loading payment details. Please try again.</td></tr>');
+                        Toast.fire({
+                            type: 'error',
+                            title: 'Failed to load payment details.'
+                        });
+                    }
+                });
+            });
+
+            // Handle approve payment button click
+            $(document).on('click', '.approve-payment', function() {
+                var paymentId = $(this).data('id');
+                var row = $(this).closest('tr');
+                
                 Swal.fire({
                     title: 'Are you sure?',
-                    text: "Do you want to approve this payment?",
+                    text: 'Do you want to approve this payment?',
                     icon: 'question',
                     showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Yes, approve it!',
+                    confirmButtonColor: '#28a745',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, Approve!',
                     cancelButtonText: 'Cancel'
                 }).then((result) => {
-                    if (result.isConfirmed || result.value === true) {
+                    if (result.isConfirmed) {
                         $.ajax({
-                            url: "{{ url('admin/payment/paymentStatus') }}/" + id + '/1',
-                            type: 'GET',
-                            dataType: 'json',
+                            url: "{{ url('admin/payment/paymentStatus') }}/" + paymentId + "/1",
+                            method: 'GET',
                             success: function(response) {
-                                if (response && response.message == 'Success') {
-                                    Toast.fire({
-                                        type: 'success',
-                                        title: 'Payment successfully approved.',
-                                    });
-                                    setTimeout(function() {
-                                        window.location.reload();
-                                    }, 1500);
-                                } else {
-                                    Toast.fire({
-                                        type: 'error',
-                                        title: (response && response.message) ? response.message : 'Something Error Found, Please try again.',
+                                Toast.fire({
+                                    type: 'success',
+                                    title: 'Payment approved successfully!'
+                                });
+                                
+                                // Reload payment details
+                                if (currentMemberId && currentMonth) {
+                                    var url = "{{ url('admin/payment/details') }}/" + currentMemberId + "/" + encodeURIComponent(currentMonth);
+                                    $.ajax({
+                                        url: url,
+                                        method: 'GET',
+                                        success: function(response) {
+                                            if (response.success) {
+                                                var html = '';
+                                                if (response.payments && response.payments.length > 0) {
+                                                    response.payments.forEach(function(payment, index) {
+                                                        var statusBadge = payment.status == 1 
+                                                            ? '<span class="badge badge-success">Paid</span>' 
+                                                            : '<span class="badge badge-warning">Pending</span>';
+                                                        
+                                                        var actionButtons = '';
+                                                        if (payment.status == 0 && payment.can_approve) {
+                                                            actionButtons += '<button type="button" class="btn btn-success btn-xs approve-payment" data-id="' + payment.id + '" title="Approve Payment"><i class="fas fa-check"></i></button>';
+                                                        }
+                                                        if (payment.can_edit) {
+                                                            if (actionButtons) actionButtons += ' ';
+                                                            actionButtons += '<button type="button" class="btn btn-primary btn-xs edit-payment" data-id="' + payment.id + '" title="Edit Payment"><i class="fas fa-edit"></i></button>';
+                                                        }
+                                                        if (!actionButtons) {
+                                                            actionButtons = '-';
+                                                        }
+                                                        
+                                                        html += '<tr>';
+                                                        html += '<td>' + (index + 1) + '</td>';
+                                                        html += '<td><strong>' + payment.type + '</strong></td>';
+                                                        html += '<td><span class="badge badge-secondary">' + payment.date + '</span></td>';
+                                                        html += '<td class="text-right"><strong class="text-success">Tk. ' + parseFloat(payment.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong></td>';
+                                                        html += '<td>' + statusBadge + '</td>';
+                                                        html += '<td>' + (payment.notes ? payment.notes : '-') + '</td>';
+                                                        html += '<td class="text-nowrap">' + actionButtons + '</td>';
+                                                        html += '</tr>';
+                                                    });
+                                                }
+                                                $('#paymentDetailsBody').html(html);
+                                                $('#paymentTotal').text('Tk. ' + parseFloat(response.total).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                                            }
+                                        }
                                     });
                                 }
+                                
+                                // Reload main table
+                                location.reload();
                             },
                             error: function(xhr) {
-                                Toast.fire({
-                                    type: 'error',
-                                    title: 'Something Error Found, Please try again.',
+                                var errorMsg = 'Failed to approve payment.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMsg = xhr.responseJSON.message;
+                                }
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: errorMsg
                                 });
                             }
                         });
                     }
                 });
             });
+
+            // Handle edit payment button click
+            $(document).on('click', '.edit-payment', function() {
+                var paymentId = $(this).data('id');
+                window.location.href = "{{ url('admin/payment/editPayment') }}/" + paymentId;
+            });
+
         });
     </script>
 @endsection

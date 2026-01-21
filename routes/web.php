@@ -13,6 +13,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\SmartDashboardController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\BillController;
+use App\Http\Controllers\Admin\BillResponsibilityController;
 use App\Http\Controllers\ServiceChargeController;
 use App\Http\Controllers\MemberExtraPaymentController;
 use App\Http\Controllers\User\UserController;
@@ -93,6 +94,12 @@ Route::get('admin/bill/{id}/edit',[BillController::class,'edit'])->name('admin.b
 Route::post('admin/bill/{id}',[BillController::class,'update'])->name('admin.bill.update');
 Route::get('admin/bill/{id}/view',[BillController::class,'view'])->name('admin.bill.view');
 Route::get('admin/bill/{id}/delete',[BillController::class,'destroy'])->name('admin.bill.delete');
+
+// Bill Responsibility Routes
+Route::get('admin/bill-responsibility',[BillResponsibilityController::class,'index'])->name('admin.billResponsibility.index');
+Route::post('admin/bill-responsibility',[BillResponsibilityController::class,'store'])->name('admin.billResponsibility.store');
+Route::put('admin/bill-responsibility/{id}',[BillResponsibilityController::class,'update'])->name('admin.billResponsibility.update');
+Route::get('admin/bill-responsibility/{id}/delete',[BillResponsibilityController::class,'destroy'])->name('admin.billResponsibility.destroy');
 //===============================BILL MANAGEMENT ROUTES END====================================
 
 //===============================SERVICE CHARGE ROUTES START====================================
@@ -182,18 +189,8 @@ Route::get('admin/foodAdvance/view/{id}',[FoodAdvanceController::class,'view'])-
 
 
 //=======================================PAYMENT ROUTE START=============================================
-Route::get('admin/payment/addPayment',[PaymentController::class,'addPayment'])->name('admin.add.payment');
-Route::get('admin/payment/viewPayment',[PaymentController::class,'viewPayment'])->name('admin.view.payment');
-Route::post('admin/payment/storePayment',[PaymentController::class,'storePayment'])->name('admin.store.payment');
-Route::post('admin/payment/getBillAmount',[PaymentController::class,'getBillAmount'])->name('admin.payment.getBillAmount');
-Route::get('admin/payment/deletePayment/{id}',[PaymentController::class,'deletePayment'])->name('admin.delete.payment');
-Route::get('admin/payment/editPayment/{id}',[PaymentController::class,'editPayment'])->name('admin.edit.payment');
-Route::post('admin/payment/updatePayment',[PaymentController::class,'updatePayment'])->name('admin.update.payment');
-Route::get('admin/payment/paymentStatus/{id}/{status}',[PaymentController::class,'paymentStatus'])->name('paymentStatus');
-Route::get('admin/payment/viewDetails/{id}',[PaymentController::class,'viewPaymentDetails'])->name('admin.view.payment.details');
-Route::get('admin/payment/downloadPdf',[PaymentController::class,'downloadPdf'])->name('admin.payment.downloadPdf');
-
-
+// Payment routes accessible to admin and responsible members (moved outside admin middleware)
+// Authorization checked in controllers
 //=======================================PAYMENT ROUTE END====================================================
 
 
@@ -218,6 +215,19 @@ Route::get('user_registration', [UserController::class,'userRegistration'])->nam
 Route::post('member/register',[UserController::class,'register'])->name('register.user');
 //=======================================USER REGISTRATION ROUTE END============================================
 
+
+// Payment routes accessible to admin and responsible members
+Route::get('admin/payment/viewPayment',[PaymentController::class,'viewPayment'])->name('admin.view.payment');
+Route::get('admin/payment/viewDetails/{id}',[PaymentController::class,'viewPaymentDetails'])->name('admin.view.payment.details');
+Route::get('admin/payment/details/{memberId}/{month}',[PaymentController::class,'getPaymentDetails'])->name('admin.payment.details');
+Route::get('admin/payment/paymentStatus/{id}/{status}',[PaymentController::class,'paymentStatus'])->name('paymentStatus');
+Route::get('admin/payment/addPayment',[PaymentController::class,'addPayment'])->name('admin.add.payment');
+Route::post('admin/payment/storePayment',[PaymentController::class,'storePayment'])->name('admin.store.payment');
+Route::post('admin/payment/getBillAmount',[PaymentController::class,'getBillAmount'])->name('admin.payment.getBillAmount');
+Route::get('admin/payment/editPayment/{id}',[PaymentController::class,'editPayment'])->name('admin.edit.payment');
+Route::post('admin/payment/updatePayment',[PaymentController::class,'updatePayment'])->name('admin.update.payment');
+Route::get('admin/payment/downloadPdf',[PaymentController::class,'downloadPdf'])->name('admin.payment.downloadPdf');
+Route::get('admin/payment/deletePayment/{id}',[PaymentController::class,'deletePayment'])->name('admin.delete.payment');
 
 Route::middleware('user')->group(function(){
 
@@ -244,6 +254,7 @@ Route::get('user/meal/detailsMeal/{id}/{month}',[UserMealController::class,'deta
 Route::get('user/payment/viewPayment',[UserPaymentController::class,'index'])->name('user.viewPayment');
 Route::get('user/payment/addPayment',[UserPaymentController::class,'addPayment'])->name('user.addPayment');
 Route::post('user/payment/storePayment',[UserPaymentController::class,'storePayment'])->name('user.store.payment');
+Route::post('user/payment/getBillAmount',[UserPaymentController::class,'getBillAmount'])->name('user.payment.getBillAmount');
 Route::get('user/payment/pendingPayment',[UserPaymentController::class,'pendingPayment'])->name('user.pendingPayment');
 Route::get('user/payment/details/{month}',[UserPaymentController::class,'getPaymentDetails'])->name('user.payment.details');
 // ====================================USER PAYMENT ROUTE END=======================================

@@ -27,18 +27,39 @@ class ReportController extends Controller
         $finish_month = date('Y-m-d',strtotime($request->to_date));
 
         // Exclude Super Admin (role_id = 1) from meals
+        // Calculate meals: Start date dinner to End date lunch
+        // - Start date: Only dinner
+        // - Dates between: All meals (breakfast, lunch, dinner)
+        // - End date: Only breakfast and lunch (not dinner)
         $meals = DB::select("SELECT meals.* from meals 
             INNER JOIN members ON meals.members_id = members.id 
-            where meals.status = '1' and members.role_id != 1 and meals.date BETWEEN '$start_month' and '$finish_month'");
+            where meals.status = '1' and members.role_id != 1 
+            and (
+                (meals.date = '$start_month' and meals.dinner > 0) OR
+                (meals.date > '$start_month' and meals.date < '$finish_month') OR
+                (meals.date = '$finish_month' and (meals.breakfast > 0 OR meals.lunch > 0))
+            )");
         // return $meals;
         $br = 0;
         $ln = 0;
         $dn = 0;
 
         foreach($meals as $m){
-            $br += $m->breakfast;
-            $ln += $m->lunch;
-            $dn += $m->dinner;
+            // For start date: count only dinner
+            if ($m->date == $start_month) {
+                $dn += $m->dinner;
+            }
+            // For end date: count only breakfast and lunch
+            elseif ($m->date == $finish_month) {
+                $br += $m->breakfast;
+                $ln += $m->lunch;
+            }
+            // For dates in between: count all meals
+            else {
+                $br += $m->breakfast;
+                $ln += $m->lunch;
+                $dn += $m->dinner;
+            }
         }
 
         $total_meal = $br +  $ln + $dn;
@@ -110,18 +131,39 @@ public function downloadPdf($start_month,$finish_month){
     // $finish_month = date('Y-m-d',strtotime($request->to_date));
 
     // Exclude Super Admin (role_id = 1) from meals
+    // Calculate meals: Start date dinner to End date lunch
+    // - Start date: Only dinner
+    // - Dates between: All meals (breakfast, lunch, dinner)
+    // - End date: Only breakfast and lunch (not dinner)
     $meals = DB::select("SELECT meals.* from meals 
         INNER JOIN members ON meals.members_id = members.id 
-        where meals.status = '1' and members.role_id != 1 and meals.date BETWEEN '$start_month' and '$finish_month'");
+        where meals.status = '1' and members.role_id != 1 
+        and (
+            (meals.date = '$start_month' and meals.dinner > 0) OR
+            (meals.date > '$start_month' and meals.date < '$finish_month') OR
+            (meals.date = '$finish_month' and (meals.breakfast > 0 OR meals.lunch > 0))
+        )");
         // return $meals;
     $br = 0;
     $ln = 0;
     $dn = 0;
 
     foreach($meals as $m){
-        $br += $m->breakfast;
-        $ln += $m->lunch;
-        $dn += $m->dinner;
+        // For start date: count only dinner
+        if ($m->date == $start_month) {
+            $dn += $m->dinner;
+        }
+        // For end date: count only breakfast and lunch
+        elseif ($m->date == $finish_month) {
+            $br += $m->breakfast;
+            $ln += $m->lunch;
+        }
+        // For dates in between: count all meals
+        else {
+            $br += $m->breakfast;
+            $ln += $m->lunch;
+            $dn += $m->dinner;
+        }
     }
 
     $total_meal = $br +  $ln + $dn;

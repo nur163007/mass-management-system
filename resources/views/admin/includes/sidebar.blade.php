@@ -198,6 +198,12 @@
                   <p>View Payment</p>
                 </a>
               </li>
+              <li class="nav-item">
+                <a href="{{route('user.viewPayment')}}" class="nav-link {{ request()->is('user/payment/viewPayment') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>My Payments</p>
+                </a>
+              </li>
             </ul>
           </li>
 
@@ -229,6 +235,12 @@
                 <a href="{{route('admin.bill.create')}}" class="nav-link {{ request()->is('admin/bill/create','admin/bill/*/edit') ? 'active' : '' }}">
                   <i class="far fa-circle nav-icon"></i>
                   <p>Add Bill</p>
+                </a>
+              </li>
+              <li class="nav-item">
+                <a href="{{route('admin.billResponsibility.index')}}" class="nav-link {{ request()->is('admin/bill-responsibility*') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Bill Responsibilities</p>
                 </a>
               </li>
             </ul>

@@ -44,17 +44,36 @@
                                <label for="payment_type">Payment Type</label>
                                <select class="form-control" id="payment_type" name="payment_type" required autocomplete="off">
                                    <option value="">--Select Payment Type--</option>
-                                   <option value="food_advance">Meal Payment</option>
-                                   <option value="room_rent">House Rent Payment</option>
-                                   <option value="room_advance">Member Ways Amount (Room Advance)</option>
-                                   <option value="water">Water Bill Payment</option>
-                                   <option value="internet">Internet Bill Payment</option>
-                                   <option value="electricity">Electricity Bill Payment</option>
-                                   <option value="gas">Gas Bill Payment</option>
-                                   <option value="bua_moyla">Bua & Moyla Bill Payment</option>
+                                   @php
+                                       $allPaymentTypes = [
+                                           'food_advance' => 'Meal Payment',
+                                           'room_rent' => 'House Rent Payment',
+                                           'room_advance' => 'Member Ways Amount (Room Advance)',
+                                           'water' => 'Water Bill Payment',
+                                           'internet' => 'Internet Bill Payment',
+                                           'electricity' => 'Electricity Bill Payment',
+                                           'gas' => 'Gas Bill Payment',
+                                           'bua_moyla' => 'Bua & Moyla Bill Payment',
+                                       ];
+                                       
+                                       // Super Admin and Manager can add all payment types
+                                       // Regular users can add only their responsible bill types
+                                       $allowedTypes = $allPaymentTypes;
+                                       if (!$isSuperAdmin && !$isManager && !empty($myResponsibilities)) {
+                                           $allowedTypes = array_filter($allPaymentTypes, function($key) use ($myResponsibilities) {
+                                               return in_array($key, $myResponsibilities);
+                                           }, ARRAY_FILTER_USE_KEY);
+                                       }
+                                   @endphp
+                                   @foreach($allowedTypes as $key => $label)
+                                       <option value="{{$key}}">{{$label}}</option>
+                                   @endforeach
                                </select>
                                @if ($errors->has('payment_type'))
                                    <p class="text-danger">{{ $errors->first('payment_type') }}</p>
+                               @endif
+                               @if (!$isSuperAdmin && !$isManager && empty($myResponsibilities))
+                                   <small class="text-warning">You are not assigned to any bill type. Please contact admin.</small>
                                @endif
                            </div>
 
@@ -109,8 +128,8 @@
                            </div>
 
                            <div class="form-group col-md-6">
-                               <label for="amount">Payment Amount</label>
-                               <input class="form-control" type="number" id="amount" name="amount" placeholder="Enter amount" step="0.01" min="0" autocomplete="off">
+                               <label for="amount">Payment Amount <span class="text-danger">*</span></label>
+                               <input class="form-control" type="number" id="amount" name="amount" placeholder="Enter amount" step="0.01" min="0.01" required autocomplete="off">
    
                                @if ($errors->has('amount'))
                                    <p class="text-danger">{{ $errors->first('amount') }}</p>
@@ -361,6 +380,18 @@ $(document).ready(function(){
 
     $('#form').on("submit",function(event){
         event.preventDefault();
+        
+        // Validate amount
+        var amount = parseFloat($('#amount').val()) || 0;
+        if (amount <= 0 || isNaN(amount)) {
+            Toast.fire({
+                type:'error',
+                title:'Payment amount must be greater than 0.',
+            });
+            $('#amount').focus();
+            return false;
+        }
+        
         var form = new FormData(this);
     
         $.ajax({
@@ -371,22 +402,24 @@ $(document).ready(function(){
             processData:false,
             method:"POST",
             success:function(response){
-            // alert(response);
-                // alert('successfully stored');
+               var message = 'Payment successfully saved.';
                
-                              
-              // console.lo()
-               if(response == "success"){
-                Toast.fire({
-                            type:'success',
-                            title:'Payment successfully saved.',
-                        });
+               // Check if response contains auto-approval message
+               if (typeof response === 'string' && response !== 'success' && response !== 'error') {
+                   message = response;
+               } else if (response == "success") {
+                   message = 'Payment successfully saved.';
                }
+               
+               Toast.fire({
+                   type:'success',
+                   title: message,
+               });
+               
                $("#form")[0].reset();
                $('#bill_amount_info').hide();
-
-            //   msg ="<div class='alert alert-dark'>"+response+"</div>";
-			// 	      $("#msg").html(msg);
+               $('#use_extra_reduction_field').hide();
+               $('#use_extra_reduction').prop('checked', false);
             },
             error:function(error){
                 Toast.fire({

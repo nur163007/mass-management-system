@@ -36,8 +36,8 @@
    
                         
                            <div class="form-group col-md-6">
-                            <label for="amount">Payment Amount</label>
-                            <input class="form-control" type="number" id="amount" name="amount" value="{{ $payments->payment_amount }}">
+                            <label for="amount">Payment Amount <span class="text-danger">*</span></label>
+                            <input class="form-control" type="number" id="amount" name="amount" value="{{ $payments->payment_amount }}" step="0.01" min="0.01" required>
 
                             @if ($errors->has('amount'))
                                 <p class="text-danger">{{ $errors->first('amount') }}</p>
@@ -100,6 +100,18 @@ $(document).ready(function(){
 
     $('#form').on("submit",function(event){
         event.preventDefault();
+        
+        // Validate amount
+        var amount = parseFloat($('#amount').val()) || 0;
+        if (amount <= 0 || isNaN(amount) || $('#amount').val() === '') {
+            Toast.fire({
+                type:'error',
+                title:'Payment amount must be greater than 0.',
+            });
+            $('#amount').focus();
+            return false;
+        }
+        
         var form = new FormData(this);
         $.ajax({
             url:"{{route('admin.update.payment')}}",

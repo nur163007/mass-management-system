@@ -99,6 +99,7 @@ class UserBillController extends Controller
         }
         
         // Query payments: Filter by payment_type AND selected month (check both formats)
+        // Exclude Super Admin payments
         $payments = Payment::where('payment_type', $bill->bill_type)
             ->where(function($query) use ($selectedMonth, $selectedMonthFull, $selectedMonthAbbr) {
                 // Check original selected month format
@@ -116,6 +117,7 @@ class UserBillController extends Controller
             })
             ->where('payments.status', 1)
             ->join('members', 'payments.member_id', '=', 'members.id')
+            ->where('members.role_id', '!=', 1) // Exclude Super Admin payments
             ->select('payments.*', 'members.full_name', 'members.phone_no')
             ->orderBy('payments.date', 'DESC')
             ->get();

@@ -54,10 +54,48 @@
             <a href="{{route('user.viewPayment')}}" class="nav-link {{ request()->is('user/payment/*') ? 'active' : '' }} ">
               <i class="nav-icon fas fa-comment-dollar text-lime"></i>
               <p>
-               View Payments
+               My Payments
               </p>
             </a>
           </li>
+
+          @php
+              $loggedInMemberId = session()->get('member_id');
+              $loggedInMember = \App\Models\Member::find($loggedInMemberId);
+              $isSuperAdmin = $loggedInMember && $loggedInMember->role_id == 1;
+              $isManager = $loggedInMember && $loggedInMember->role_id == 2;
+              $myResponsibilities = \App\Models\BillTypeResponsibility::where('member_id', $loggedInMemberId)->pluck('bill_type')->toArray();
+              $hasResponsibilities = !empty($myResponsibilities);
+              $canAccessPaymentManagement = $isSuperAdmin || $isManager || $hasResponsibilities;
+          @endphp
+
+          @if($canAccessPaymentManagement)
+          <li class="nav-item has-treeview {{ request()->is('admin/payment/*') ? 'menu-open' : '' }}">
+            <a href="javascript:void()" class="nav-link">
+              <i class="nav-icon fas fa-list-alt text-info"></i>
+              <p>
+                Payment Management
+                <i class="right fas fa-angle-left"></i>
+              </p>
+            </a>
+            <ul class="nav nav-treeview">
+              <li class="nav-item">
+                <a href="{{route('admin.view.payment')}}" class="nav-link {{ request()->is('admin/payment/viewPayment') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>View Payments</p>
+                </a>
+              </li>
+              @if($isSuperAdmin || $isManager || $hasResponsibilities)
+              <li class="nav-item">
+                <a href="{{route('admin.add.payment')}}" class="nav-link {{ request()->is('admin/payment/addPayment','admin/payment/editPayment/*') ? 'active' : '' }}">
+                  <i class="far fa-circle nav-icon"></i>
+                  <p>Add Payment</p>
+                </a>
+              </li>
+              @endif
+            </ul>
+          </li>
+          @endif
 
           <li class="nav-item has-treeview">
             <a href="{{route('user.viewExpanse')}}" class="nav-link {{ request()->is('user/expanse/*') ? 'active' : '' }} ">
