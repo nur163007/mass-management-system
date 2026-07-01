@@ -1,39 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>Registration</title>
-  <!-- Tell the browser to be responsive to screen width -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="{{ asset('assets/admin/plugins/fontawesome-free/css/all.min.css') }}">
-  <!-- Ionicons -->
   <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-  <!-- icheck bootstrap -->
   <link rel="stylesheet" href="{{ asset('assets/admin/plugins/icheck-bootstrap/icheck-bootstrap.min.css') }}">
-  <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('assets/admin/dist/css/adminlte.min.css') }}">
-  <!-- Google Font: Source Sans Pro -->
-  
-<link rel="stylesheet" href="{{ asset('assets/admin/plugins/sweetalert2/sweetalert2.min.css') }}">
-
+  <link rel="stylesheet" href="{{ asset('assets/admin/css/responsive.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/admin/plugins/sweetalert2/sweetalert2.min.css') }}">
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
 </head>
-<body class="bg-gradient-secondary">
+<body class="bg-gradient-secondary mms-auth-page">
 <section class="content">
-    <div class="container-fluid col-md-5 offset-md-3 mt-2">
-        <!-- Small boxes (Stat box) -->
-        
+    <div class="container-fluid mt-2">
         <div class="card">
-          
-            <div class="card-header col-md-12 col-12 text-center">
+            <div class="card-header text-center">
                 <h3 class="font-weight-bolder text-cyan">Mess Management System</h3>
                 <h3 class="text-success">User Registration Form</h3>
             </div>
-           
-                 <div class="col-md-12 text-center mt-1">
+
+            <div class="col-12 text-center mt-1 px-3">
                     @if ($message = Session::get('success'))
                         <div class="alert alert-success alert-block text-center">
                             <button type="button" class="close" data-dismiss="alert">×</button>
@@ -53,7 +43,7 @@
                 <form method="POST"  action="{{route('register.user')}}"enctype="multipart/form-data" id="form" autocomplete="off">
                  @csrf
                     <div class="row">
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-6 col-12">
                             <label for="full_name">Full Name</label>
                             <input class="form-control" type="text" id="full_name" name="full_name" placeholder="Enter your full name" autocomplete="off">
                             @if ($errors->has('full_name'))
@@ -61,7 +51,7 @@
                             @endif
                         </div>
 
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-6 col-12">
                             <label for="phone_no">Phone No</label>
                             <input class="form-control" type="text" id="phone_no" name="phone_no" placeholder="Enter your phone number" autocomplete="off">
                             @if ($errors->has('phone_no'))
@@ -69,7 +59,7 @@
                             @endif
                         </div>
 
-                         <div class="form-group col-md-6">
+                         <div class="form-group col-md-6 col-12">
                             <label for="email">Email</label>
                             <input class="form-control" type="email" id="email" name="email" placeholder="Enter your email address" autocomplete="off">
                             @if ($errors->has('email'))
@@ -77,7 +67,7 @@
                             @endif
                         </div>
 
-                         <div class="form-group col-md-6">
+                         <div class="form-group col-md-6 col-12">
                             <label for="password">Password</label>
                             <input class="form-control" type="password" id="password" name="password" placeholder="Enter your password" autocomplete="new-password">
                             @if ($errors->has('password'))
@@ -85,7 +75,7 @@
                             @endif
                         </div>
 
-                         <div class="form-group col-md-12">
+                         <div class="form-group col-12">
                             <label for="address">Permanent Address</label>
                             <input class="form-control" type="text" id="address" name="address" placeholder="Enter your permanent address" autocomplete="off">
                             @if ($errors->has('address'))
@@ -93,7 +83,7 @@
                             @endif
                         </div>
 
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-6 col-12">
                             <label for="photo">Photo <small class="text-muted">(Optional)</small></label>
                             <input class="form-control-file" type="file" id="photo" name="photo" accept="image/*">
 
@@ -102,7 +92,7 @@
                             @endif
                         </div>
                         
-                        <div class="form-group col-md-6">
+                        <div class="form-group col-md-6 col-12">
                             <label for="nid_photo">NID Photo <small class="text-muted">(Optional)</small></label>
                             <input class="form-control-file" type="file" id="nid_photo" name="nid_photo" accept="image/*">
 
@@ -111,7 +101,7 @@
                             @endif
                         </div>
                     </div>
-                    <input class="btn btn-success col-md-12 mt-2" type="submit" id="submit" name="submit" value="Register">
+                    <input class="btn btn-success btn-block mt-2" type="submit" id="submit" name="submit" value="Register">
                     <div class="social-auth-links text-center">
                         <p>- OR -</p>
                       

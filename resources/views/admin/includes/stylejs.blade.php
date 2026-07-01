@@ -40,6 +40,9 @@
 <!-- DataTables -->
 <script src="{{ asset('assets/admin/plugins/datatables/jquery.dataTables.js') }}"></script>
 <script src="{{ asset('assets/admin/plugins/datatables-bs4/js/dataTables.bootstrap4.js') }}"></script>
+<script src="{{ asset('assets/admin/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
+<script src="{{ asset('assets/admin/plugins/datatables-responsive/js/responsive.bootstrap4.min.js') }}"></script>
 <script src="{{ asset('assets/admin/dist/js/bootstrap-toggle.min.js') }}"></script>
+<script src="{{ asset('assets/admin/js/responsive.js') }}"></script>
 
 @yield('custom_js')

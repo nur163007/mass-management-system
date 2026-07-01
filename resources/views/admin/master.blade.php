@@ -1,9 +1,9 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 @include('admin.includes.stylesheet')
-
+@yield('custom_css')
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
 <div class="wrapper">
@@ -32,17 +32,15 @@
     <div class="content-header">
       <div class="container-fluid">
         <div class="row mb-2">
-          <div class="col-sm-6">
-           
-          </div><!-- /.col -->
-          <div class="col-sm-6">
-            <ol class="breadcrumb float-sm-right">
+          <div class="col-12">
+            <ol class="breadcrumb float-sm-right mb-0">
               <li class="breadcrumb-item"><a href="#">Home</a></li>
-              <li class="breadcrumb-item active">@yield('heading')</li>
+              <li class="breadcrumb-item active d-none d-sm-inline">@yield('heading')</li>
+              <li class="breadcrumb-item active d-inline d-sm-none text-truncate" style="max-width: 55vw;">@yield('heading')</li>
             </ol>
-          </div><!-- /.col -->
-        </div><!-- /.row -->
-      </div><!-- /.container-fluid -->
+          </div>
+        </div>
+      </div>
     </div>
     <!-- /.content-header -->
 
