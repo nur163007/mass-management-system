@@ -160,8 +160,8 @@
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
-            icon: 'success',
-            showConfirmbutton: false,
+            type: 'success',
+            showConfirmButton: false,
             timer: 3000
         });
 
@@ -171,22 +171,9 @@
             // Store current member ID and month for reload
             var currentMemberId = null;
             var currentMonth = null;
+            var paymentStatusChanged = false;
 
-            // Handle view payment details button click
-            $(document).on('click', '.view-payment-details', function() {
-                var memberId = $(this).data('member-id');
-                var memberName = $(this).data('member-name');
-                var month = $(this).data('month');
-                
-                // Store for reload
-                currentMemberId = memberId;
-                currentMonth = month;
-                
-                $('#modalMemberName').text(memberName);
-                $('#modalMonth').text(month);
-                $('#paymentDetailsModal').modal('show');
-                
-                // Load payment details via AJAX
+            function loadPaymentDetails(memberId, month) {
                 var url = "{{ url('admin/payment/details') }}/" + memberId + "/" + encodeURIComponent(month);
                 $.ajax({
                     url: url,
@@ -240,24 +227,42 @@
                         });
                     }
                 });
+            }
+
+            // Handle view payment details button click
+            $(document).on('click', '.view-payment-details', function() {
+                var memberId = $(this).data('member-id');
+                var memberName = $(this).data('member-name');
+                var month = $(this).data('month');
+                
+                // Store for reload
+                currentMemberId = memberId;
+                currentMonth = month;
+                paymentStatusChanged = false;
+                
+                $('#modalMemberName').text(memberName);
+                $('#modalMonth').text(month);
+                $('#paymentDetailsBody').html('<tr><td colspan="7" class="text-center">Loading...</td></tr>');
+                $('#paymentDetailsModal').modal('show');
+                
+                loadPaymentDetails(memberId, month);
             });
 
             // Handle approve payment button click
             $(document).on('click', '.approve-payment', function() {
                 var paymentId = $(this).data('id');
-                var row = $(this).closest('tr');
                 
                 Swal.fire({
                     title: 'Are you sure?',
                     text: 'Do you want to approve this payment?',
-                    icon: 'question',
+                    type: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#28a745',
                     cancelButtonColor: '#6c757d',
                     confirmButtonText: 'Yes, Approve!',
                     cancelButtonText: 'Cancel'
                 }).then((result) => {
-                    if (result.isConfirmed) {
+                    if (result.value || result.isConfirmed) {
                         $.ajax({
                             url: "{{ url('admin/payment/paymentStatus') }}/" + paymentId + "/1",
                             method: 'GET',
@@ -266,54 +271,12 @@
                                     type: 'success',
                                     title: 'Payment approved successfully!'
                                 });
+                                paymentStatusChanged = true;
                                 
-                                // Reload payment details
+                                // Reload payment details in modal
                                 if (currentMemberId && currentMonth) {
-                                    var url = "{{ url('admin/payment/details') }}/" + currentMemberId + "/" + encodeURIComponent(currentMonth);
-                                    $.ajax({
-                                        url: url,
-                                        method: 'GET',
-                                        success: function(response) {
-                                            if (response.success) {
-                                                var html = '';
-                                                if (response.payments && response.payments.length > 0) {
-                                                    response.payments.forEach(function(payment, index) {
-                                                        var statusBadge = payment.status == 1 
-                                                            ? '<span class="badge badge-success">Paid</span>' 
-                                                            : '<span class="badge badge-warning">Pending</span>';
-                                                        
-                                                        var actionButtons = '';
-                                                        if (payment.status == 0 && payment.can_approve) {
-                                                            actionButtons += '<button type="button" class="btn btn-success btn-xs approve-payment" data-id="' + payment.id + '" title="Approve Payment"><i class="fas fa-check"></i></button>';
-                                                        }
-                                                        if (payment.can_edit) {
-                                                            if (actionButtons) actionButtons += ' ';
-                                                            actionButtons += '<button type="button" class="btn btn-primary btn-xs edit-payment" data-id="' + payment.id + '" title="Edit Payment"><i class="fas fa-edit"></i></button>';
-                                                        }
-                                                        if (!actionButtons) {
-                                                            actionButtons = '-';
-                                                        }
-                                                        
-                                                        html += '<tr>';
-                                                        html += '<td>' + (index + 1) + '</td>';
-                                                        html += '<td><strong>' + payment.type + '</strong></td>';
-                                                        html += '<td><span class="badge badge-secondary">' + payment.date + '</span></td>';
-                                                        html += '<td class="text-right"><strong class="text-success">Tk. ' + parseFloat(payment.amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong></td>';
-                                                        html += '<td>' + statusBadge + '</td>';
-                                                        html += '<td>' + (payment.notes ? payment.notes : '-') + '</td>';
-                                                        html += '<td class="text-nowrap">' + actionButtons + '</td>';
-                                                        html += '</tr>';
-                                                    });
-                                                }
-                                                $('#paymentDetailsBody').html(html);
-                                                $('#paymentTotal').text('Tk. ' + parseFloat(response.total).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-                                            }
-                                        }
-                                    });
+                                    loadPaymentDetails(currentMemberId, currentMonth);
                                 }
-                                
-                                // Reload main table
-                                location.reload();
                             },
                             error: function(xhr) {
                                 var errorMsg = 'Failed to approve payment.';
@@ -321,7 +284,7 @@
                                     errorMsg = xhr.responseJSON.message;
                                 }
                                 Swal.fire({
-                                    icon: 'error',
+                                    type: 'error',
                                     title: 'Error',
                                     text: errorMsg
                                 });
@@ -329,6 +292,13 @@
                         });
                     }
                 });
+            });
+
+            // Reload main table if any payment status changed when modal closes
+            $('#paymentDetailsModal').on('hidden.bs.modal', function () {
+                if (paymentStatusChanged) {
+                    location.reload();
+                }
             });
 
             // Handle edit payment button click

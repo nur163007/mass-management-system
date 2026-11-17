@@ -23,6 +23,7 @@ class RoomController extends Controller
      */
     public function index()
     {
+        $this->roomRentService->syncRoomMembersRent();
         $rooms = Room::with(['roomMembers.member'])->get();
         return view('admin.room.index', compact('rooms'));
     }
@@ -100,6 +101,7 @@ class RoomController extends Controller
      */
     public function show($id)
     {
+        $this->roomRentService->syncRoomMembersRent();
         $room = Room::with(['roomMembers.member'])->findOrFail($id);
         return view('admin.room.show', compact('room'));
     }

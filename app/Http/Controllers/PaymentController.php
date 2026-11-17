@@ -132,6 +132,9 @@ class PaymentController extends Controller
 
 
         if ($payments->save()) {
+            // Clear dashboard analytics cache so Total Payment updates immediately
+            \Illuminate\Support\Facades\Cache::forget("dashboard_analytics_{$month}");
+
             $message = 'success';
             if ($paymentStatus == "1") {
                 if ($isManager && $request->payment_type === 'food_advance') {
@@ -251,8 +254,13 @@ class PaymentController extends Controller
     }
 
     public function paymentStatus($id, $status){
-        $active = Payment::findOrFail($id);
+        $active = Payment::find($id);
+        if (!$active) {
+            return response()->json(['message' => 'Payment not found.'], 404);
+        }
+
         $loggedInMemberId = session()->get('member_id');
+        $loggedInRole = session('role');
         
         // Check if logged-in user is responsible for this payment type
         $responsibility = BillTypeResponsibility::where('bill_type', $active->payment_type)
@@ -260,43 +268,36 @@ class PaymentController extends Controller
             ->first();
         
         // Get logged-in member details
-        $loggedInMember = Member::find($loggedInMemberId);
-        $isSuperAdmin = $loggedInMember && $loggedInMember->role_id == 1;
-        $isManager = $loggedInMember && $loggedInMember->role_id == 2;
+        $loggedInMember = $loggedInMemberId ? Member::find($loggedInMemberId) : null;
+        $isSuperAdmin = ($loggedInMember && $loggedInMember->role_id == 1) || $loggedInRole == 1;
+        $isManager = ($loggedInMember && $loggedInMember->role_id == 2) || $loggedInRole == 2;
         
         // Authorization check:
-        // 1. Super Admin can approve all
-        // 2. Manager can approve food_advance and their responsible bill types
-        // 3. Regular users can approve only their responsible bill types
+        // 1. Super Admin and Manager can approve all payments (food advance, bills, room rent, etc.)
+        // 2. Regular users can approve only their responsible bill types
         $canApprove = false;
         
-        if ($isSuperAdmin) {
+        if ($isSuperAdmin || $isManager) {
             $canApprove = true;
-        } elseif ($isManager) {
-            // Manager can approve food_advance or their responsible bill types
-            if ($active->payment_type === 'food_advance' || $responsibility) {
-                $canApprove = true;
-            }
-        } else {
-            // Regular users can approve only their responsible bill types
-            if ($responsibility) {
-                $canApprove = true;
-            }
+        } elseif ($responsibility) {
+            $canApprove = true;
         }
         
         if (!$canApprove) {
             return response()->json([
                 'message' => 'You are not authorized to approve this payment. ' . 
-                    ($isManager ? 'Manager can approve Food Advance and assigned bill types only.' : 
-                    'Only the responsible member for ' . ucfirst(str_replace('_', ' ', $active->payment_type)) . ' can approve it.')
+                    'Only Admin, Manager, or the responsible member for ' . ucfirst(str_replace('_', ' ', $active->payment_type)) . ' can approve it.'
             ], 403);
         }
         
         $active->status = $status; 
+        $active->save();
 
-        if($active->save()){
-            return response()->json(['message'=> 'Success']);
-        }
+        // Clear dashboard analytics cache so Total Payment updates immediately
+        $month = $active->month;
+        \Illuminate\Support\Facades\Cache::forget("dashboard_analytics_{$month}");
+
+        return response()->json(['success' => true, 'message' => 'Success']);
     }
 
     public function deletePayment($id){
@@ -644,8 +645,9 @@ class PaymentController extends Controller
             return response()->json(['success' => false, 'message' => 'Member not found.'], 404);
         }
         
-        $isSuperAdmin = $loggedInMember->role_id == 1;
-        $isManager = $loggedInMember->role_id == 2;
+        $loggedInRole = session('role');
+        $isSuperAdmin = ($loggedInMember && $loggedInMember->role_id == 1) || $loggedInRole == 1;
+        $isManager = ($loggedInMember && $loggedInMember->role_id == 2) || $loggedInRole == 2;
         
         $myResponsibilities = BillTypeResponsibility::where('member_id', $loggedInMemberId)
             ->pluck('bill_type')
@@ -704,22 +706,10 @@ class PaymentController extends Controller
             $canApprove = false;
             $canEdit = false;
             
-            // Check if user can approve this payment
-            if ($isSuperAdmin) {
+            // Check if user can approve this payment: Super Admin and Manager can approve and edit all payments
+            if ($isSuperAdmin || $isManager) {
                 $canApprove = true;
                 $canEdit = true;
-            } elseif ($isManager) {
-                // Manager can approve food_advance or their responsible bill types
-                $responsibility = BillTypeResponsibility::where('bill_type', $payment->payment_type)
-                    ->where('member_id', $loggedInMemberId)
-                    ->first();
-                if ($payment->payment_type === 'food_advance' || $responsibility) {
-                    $canApprove = true;
-                }
-                // Manager can edit food_advance or their responsible bill types
-                if ($payment->payment_type === 'food_advance' || $responsibility) {
-                    $canEdit = true;
-                }
             } else {
                 // Regular users can approve/edit only their responsible bill types
                 $responsibility = BillTypeResponsibility::where('bill_type', $payment->payment_type)

@@ -69,17 +69,10 @@ class RoomRentService
         
         // Determine monthly rent for this member
         $monthlyRent = 0;
-        if ($room->room_name === 'Room 1' || $room->room_name === 'Room 2') {
-            $monthlyRent = 6700 / 2; // Split between 2 members
-        } elseif ($room->room_name === 'Room 3') {
-            // First person pays more
-            if ($currentOccupants == 0) {
-                $monthlyRent = 4700; // First person
-            } else {
-                $monthlyRent = 3500; // Second person
-            }
-        } elseif ($room->room_type === 'dining') {
-            $monthlyRent = 2900;
+        if ($room->capacity > 0) {
+            $monthlyRent = $room->monthly_rent / $room->capacity;
+        } else {
+            $monthlyRent = $room->monthly_rent;
         }
         
         DB::beginTransaction();
@@ -185,6 +178,23 @@ class RoomRentService
                 ['room_name' => $roomData['room_name']],
                 $roomData
             );
+        }
+    }
+
+    /**
+     * Sync and correct monthly rent for active room members based on room capacity
+     */
+    public function syncRoomMembersRent()
+    {
+        $rooms = Room::all();
+        foreach ($rooms as $room) {
+            if ($room->capacity > 0) {
+                $expectedRent = $room->monthly_rent / $room->capacity;
+                RoomMember::where('room_id', $room->id)
+                    ->where('status', 1)
+                    ->where('monthly_rent', '!=', $expectedRent)
+                    ->update(['monthly_rent' => $expectedRent]);
+            }
         }
     }
 }

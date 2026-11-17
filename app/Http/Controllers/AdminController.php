@@ -28,7 +28,7 @@ class AdminController extends Controller
     }
 
     public function dashboard(){
-        $now = Carbon::now()->isoFormat('MMM');
+        $now = Carbon::now()->format('F'); // Full month name e.g. "November" to match payment records
 
         // Get smart analytics
         $analytics = $this->analyticsService->getDashboardAnalytics($now);
@@ -52,6 +52,7 @@ class AdminController extends Controller
         $all_ex = $analytics['current']['expense'];
         $meal_rate = $analytics['current']['meal_rate'];
         $cash = $analytics['current']['cash'];
+        $remaining = $analytics['current']['remaining'];
 
         return view('admin.dashboard', compact(
             'analytics',
@@ -65,7 +66,8 @@ class AdminController extends Controller
             'fund',
             'all_ex',
             'meal_rate',
-            'cash'
+            'cash',
+            'remaining'
         ));
     }
 

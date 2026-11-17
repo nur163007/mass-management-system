@@ -14,9 +14,9 @@ class SmartAnalyticsService
      */
     public function getDashboardAnalytics($month = null)
     {
-        $month = $month ?? Carbon::now()->isoFormat('MMM');
+        $month = $month ?? Carbon::now()->format('F');
         
-        return Cache::remember("dashboard_analytics_{$month}", 3600, function () use ($month) {
+        return Cache::remember("dashboard_analytics_{$month}", 60, function () use ($month) {
             // Current month data
             $currentData = $this->getMonthData($month);
             
@@ -81,6 +81,63 @@ class SmartAnalyticsService
         
         $meal_rate = $total_meal > 0 ? ($all_ex / $total_meal) : 0;
         $cash = ($fund - $all_ex);
+
+        // -------------------------------------------------------
+        // Calculate REMAINING: total expected − total paid
+        // Expected = bill_type_responsibilities এর types (room_advance বাদে):
+        //   - bill types (water/internet/gas etc.) → bills table total_amount for this month
+        //   - room_rent → room_members active members এর monthly_rent sum
+        //   - food_advance → bills নেই, skip (payments এ track হয়)
+        // Paid = payments table status=1 এর payment_amount sum for this month
+        // -------------------------------------------------------
+
+        // Step 1: Get distinct bill types from responsibilities (exclude room_advance)
+        $responsibilities = DB::select(
+            "SELECT DISTINCT bill_type FROM bill_type_responsibilities WHERE bill_type != 'room_advance'"
+        );
+
+        $totalExpected = 0;
+
+        foreach ($responsibilities as $resp) {
+            $billType = $resp->bill_type;
+
+            if ($billType === 'room_rent') {
+                // room_rent → sum of active room_members monthly_rent
+                $rentResult = DB::select(
+                    "SELECT COALESCE(SUM(rm.monthly_rent), 0) as total
+                     FROM room_members rm
+                     JOIN members m ON rm.member_id = m.id
+                     WHERE rm.status = 1 AND m.status = 1 AND m.role_id IN (2, 3)"
+                );
+                $totalExpected += $rentResult[0]->total ?? 0;
+
+            } elseif ($billType === 'food_advance') {
+                // food_advance → no fixed bill, skip
+                continue;
+
+            } else {
+                // Other bill types (water, internet, electricity, gas, bua_moyla etc.)
+                // → bills table, month = current month (full name), status = 1
+                $billResult = DB::select(
+                    "SELECT COALESCE(SUM(total_amount), 0) as total
+                     FROM bills
+                     WHERE bill_type = ? AND month = ? AND status = 1",
+                    [$billType, $month]
+                );
+                $totalExpected += $billResult[0]->total ?? 0;
+            }
+        }
+
+        // Step 2: Total paid (all types, status=1, this month) from payments table
+        $paidResult = DB::select(
+            "SELECT COALESCE(SUM(payment_amount), 0) as total
+             FROM payments
+             WHERE status = '1' AND month = ?",
+            [$month]
+        );
+        $totalPaid = $paidResult[0]->total ?? 0;
+
+        $remaining = max(0, $totalExpected - $totalPaid);
         
         // Exclude Super Admin (role_id = 1), only count Manager (2) and User (3)
         $members = DB::select("SELECT count('id') as total_member from members where status = '1' AND role_id IN (2, 3)");
@@ -94,6 +151,7 @@ class SmartAnalyticsService
             'expense' => $all_ex,
             'meal_rate' => AmountHelper::roundAmount($meal_rate),
             'cash' => $cash,
+            'remaining' => AmountHelper::roundAmount($remaining),
             'members' => $members[0]->total_member ?? 0,
         ];
     }

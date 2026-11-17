@@ -14,24 +14,26 @@ use Illuminate\Support\Facades\Log;
 
 class AddmemberController extends Controller
 {
-    public function add(){
+    public function add()
+    {
         // Only Super Admin can add members
         $loggedInRole = session('role');
-        if($loggedInRole != 1){
+        if ($loggedInRole != 1) {
             return redirect()->route('admin.view-member')->with('error', 'Only Super Admin can add members.');
         }
-        
+
         return view('admin.member.add-member');
     }
 
-    public function store(Request $request){
+    public function store(Request $request)
+    {
         // Only Super Admin can create members
         $loggedInRole = session('role');
-        if($loggedInRole != 1){
+        if ($loggedInRole != 1) {
             return response()->json(['error' => 'Only Super Admin can create members.']);
         }
 
-        $this->validate($request,[
+        $this->validate($request, [
             'full_name' => 'required',
             'phone_no' => 'required',
             'address' => 'required',
@@ -43,53 +45,50 @@ class AddmemberController extends Controller
 
         $members = new Member;
 
-        $date = Carbon::now()->format('his')+rand(1000,9999);
+        $date = Carbon::now()->format('his') + rand(1000, 9999);
         // profile photo 
-       
-        if($image = $request->file('photo')){
+
+        if ($image = $request->file('photo')) {
             $extention = $request->file('photo')->getClientOriginalExtension();
-            $imageName = $date.'.'.$extention;
+            $imageName = $date . '.' . $extention;
             $path = public_path('uploads/members/profile');
-            $image->move($path,$imageName);
-            $members->photo = $imageName;     
-        }  
-        else{
-            $members->photo = "null";  
+            $image->move($path, $imageName);
+            $members->photo = $imageName;
+        } else {
+            $members->photo = "null";
         }
         // nid photo 
-        if($image2 = $request->file('nid_photo')){
+        if ($image2 = $request->file('nid_photo')) {
             $extention2 = $request->file('nid_photo')->getClientOriginalExtension();
-            $imageName2 = $date.'.'.$extention2;
+            $imageName2 = $date . '.' . $extention2;
             $path2 = public_path('uploads/members/nid');
-            $image2->move($path2,$imageName2);
+            $image2->move($path2, $imageName2);
             $members->nid_photo = $imageName2;
             // dd($request['photo']);
-        }  
-        else{
+        } else {
             $members->nid_photo = "null";
         }
         $members->full_name = $request->full_name;
         $members->phone_no = $request->phone_no;
         $members->address = $request->address;
         $members->email = $request->email;
-        $members->password = Hash::make("12345678");
+        $members->password = Hash::make("password");
         $members->role_id = $request->role_id;
         $members->role_name = $request->role_id == 2 ? "Manager" : "User";
         // All admin-created members are active
         $members->status = "1";
-        
-        // dd($members);
-    
-         if ($members->save()) {
-            return response()->json(["members" => $members]);
-         }
-         else{
-            return response()->json("error");
-         }    
 
+        // dd($members);
+
+        if ($members->save()) {
+            return response()->json(["members" => $members]);
+        } else {
+            return response()->json("error");
+        }
     }
 
-    public function view(){
+    public function view()
+    {
         // Show all members except Super Admin (role_id = 1)
         // Only Manager (2) and User (3) should be shown
         $members = DB::table('members')
@@ -98,27 +97,28 @@ class AddmemberController extends Controller
             ->orderBy('id', 'asc') // Order by ID ascending
             ->get();
         // dd($members);
-        return view('admin.member.view_members',compact('members'));
+        return view('admin.member.view_members', compact('members'));
     }
 
-    public function memberStatus($id, $status){
+    public function memberStatus($id, $status)
+    {
         // Only Super Admin can update member status
         $loggedInRole = session('role');
-        if($loggedInRole != 1){
+        if ($loggedInRole != 1) {
             return response()->json(['error' => 'Only Super Admin can update member status.'], 403);
         }
 
         // dd($id);
         $active = Member::findOrFail($id);
         // Cannot change Super Admin status
-        if($active->role_id == 1){
+        if ($active->role_id == 1) {
             return response()->json(['error' => 'Cannot change Super Admin status.'], 403);
         }
-        
-        $active->status= $status; 
 
-        if($active->save()){
-            return response()->json(['message'=> 'Success']);
+        $active->status = $status;
+
+        if ($active->save()) {
+            return response()->json(['message' => 'Success']);
         }
     }
 
@@ -129,52 +129,54 @@ class AddmemberController extends Controller
     //    return response()->json($members);
     // }
 
-        public function delete($id){
-          // Only Super Admin can delete members
-          $loggedInRole = session('role');
-          if($loggedInRole != 1){
-              return redirect()->back()->with('error', 'Only Super Admin can delete members.');
-          }
-
-          // echo "clicked";
-            $members = Member::findOrFail($id);
-            // Cannot delete Super Admin
-            if($members->role_id == 1){
-                return redirect()->back()->with('error', 'Cannot delete Super Admin.');
-            }
-         // dd($members);
-            if($members){
-                if(file_exists('uploads/members/profile/'.$members->photo) AND !empty($members->photo)){
-                    unlink('uploads/members/profile/'.$members->photo);
-                }
-                if(file_exists('uploads/members/nid/'.$members->nid_photo) AND !empty($members->nid_photo)){
-                    unlink('uploads/members/nid/'.$members->nid_photo);
-                }
-             
-                $members->delete();
-                 return redirect()->back()->with('success','Member successfully deleted.');
-            }else{
-                 return redirect()->back()->with('error','Something Error Found !, Please try again.');
-            }
+    public function delete($id)
+    {
+        // Only Super Admin can delete members
+        $loggedInRole = session('role');
+        if ($loggedInRole != 1) {
+            return redirect()->back()->with('error', 'Only Super Admin can delete members.');
         }
 
-        public function edit($id){
-            // Only Super Admin can edit members
-            $loggedInRole = session('role');
-            if($loggedInRole != 1){
-                return redirect()->back()->with('error', 'Only Super Admin can edit members.');
-            }
-
-            $members = Member::findOrFail($id);
-            // Cannot edit Super Admin
-            if($members->role_id == 1){
-                return redirect()->back()->with('error', 'Cannot edit Super Admin.');
-            }
-          
-            // dd($id);
-
-            return view('admin.member.edit-member',compact('members'));
+        // echo "clicked";
+        $members = Member::findOrFail($id);
+        // Cannot delete Super Admin
+        if ($members->role_id == 1) {
+            return redirect()->back()->with('error', 'Cannot delete Super Admin.');
         }
+        // dd($members);
+        if ($members) {
+            if (file_exists('uploads/members/profile/' . $members->photo) and !empty($members->photo)) {
+                unlink('uploads/members/profile/' . $members->photo);
+            }
+            if (file_exists('uploads/members/nid/' . $members->nid_photo) and !empty($members->nid_photo)) {
+                unlink('uploads/members/nid/' . $members->nid_photo);
+            }
+
+            $members->delete();
+            return redirect()->back()->with('success', 'Member successfully deleted.');
+        } else {
+            return redirect()->back()->with('error', 'Something Error Found !, Please try again.');
+        }
+    }
+
+    public function edit($id)
+    {
+        // Only Super Admin can edit members
+        $loggedInRole = session('role');
+        if ($loggedInRole != 1) {
+            return redirect()->back()->with('error', 'Only Super Admin can edit members.');
+        }
+
+        $members = Member::findOrFail($id);
+        // Cannot edit Super Admin
+        if ($members->role_id == 1) {
+            return redirect()->back()->with('error', 'Cannot edit Super Admin.');
+        }
+
+        // dd($id);
+
+        return view('admin.member.edit-member', compact('members'));
+    }
 
     /**
      * Change member role (only Super Admin can change roles)
@@ -184,7 +186,7 @@ class AddmemberController extends Controller
         try {
             // Only Super Admin can change roles
             $loggedInRole = session('role');
-            if($loggedInRole != 1){
+            if ($loggedInRole != 1) {
                 return response()->json(['error' => 'Only Super Admin can change member roles.'], 403);
             }
 
@@ -194,7 +196,7 @@ class AddmemberController extends Controller
 
             $member = Member::findOrFail($id);
             // Cannot change Super Admin's role
-            if($member->role_id == 1){
+            if ($member->role_id == 1) {
                 return response()->json(['error' => 'Cannot change Super Admin role.'], 403);
             }
 
@@ -207,24 +209,24 @@ class AddmemberController extends Controller
                 // First, find existing Manager and change to User (role_id = 3, role_name = 'User')
                 // Then update current User to Manager
                 // Only one Manager can exist at a time, so if any Manager exists, change them to User first
-                if($newRole == 2 && $currentRole == 3) {
+                if ($newRole == 2 && $currentRole == 3) {
                     // Find existing Manager (if any) - check all Managers regardless of status
                     // Only one Manager allowed, so find any existing Manager and change to User
                     $existingManager = Member::where('role_id', 2)
                         ->where('id', '!=', $id)
                         ->first();
-                    
-                    if($existingManager) {
+
+                    if ($existingManager) {
                         // Change existing Manager to User (role_id = 3, role_name = 'User')
                         $existingManager->role_id = 3;
                         $existingManager->role_name = 'User';
                         $existingManager->save();
                     }
                 }
-                
+
                 // Case 2: If changing Manager to User (newRole = 3, currentRole = 2)
                 // Just change directly - role_id = 3, role_name = 'User'
-                
+
                 // Update the member's role
                 $member->role_id = $newRole;
                 $member->role_name = $newRole == 2 ? 'Manager' : 'User';
@@ -253,82 +255,78 @@ class AddmemberController extends Controller
         }
     }
 
-        public function update(Request $request){
+    public function update(Request $request)
+    {
         // Only Super Admin can update members
         $loggedInRole = session('role');
-        if($loggedInRole != 1){
+        if ($loggedInRole != 1) {
             return redirect()->back()->with('error', 'Only Super Admin can update members.');
         }
 
         //   dd($request->all());
-            $this->validate($request,[
-                'full_name' => 'required',
-                'phone_no' => 'required',
-                'address' => 'required',
-                'email' => 'required',
-                // 'photo' => 'required',
-                // 'nid_photo' => 'required',
-            ]);
-    
-            $id = $request->memberID;
-            // dd($id);
-            $members = Member::findOrFail($id);
-            // Cannot update Super Admin
-            if($members->role_id == 1){
-                return redirect()->back()->with('error', 'Cannot update Super Admin.');
-            }
-    
-            $date = Carbon::now()->format('his')+rand(1000,9999);
-    
-            // profile photo 
-            
-            if($image = $request->file('photo')){
-                $extention = $request->file('photo')->getClientOriginalExtension();
-                $imageName = $date.'.'.$extention;
-                $path = public_path('uploads/members/profile');
-                $image->move($path,$imageName);
+        $this->validate($request, [
+            'full_name' => 'required',
+            'phone_no' => 'required',
+            'address' => 'required',
+            'email' => 'required',
+            // 'photo' => 'required',
+            // 'nid_photo' => 'required',
+        ]);
 
-                if(file_exists('uploads/members/profile/'.$members->photo) AND !empty($members->photo)){
-                    unlink('uploads/members/profile/'.$members->photo);
-                }
-
-                $members->photo = $imageName;
-                
-            }  
-            else{
-                
-                $members->photo = $members->photo;
-            }
-    
-            // nid photo 
-    
-            if($image2 = $request->file('nid_photo')){
-                $extention2 = $request->file('nid_photo')->getClientOriginalExtension();
-                $imageName2 = $date.'.'.$extention2;
-                $path2 = public_path('uploads/members/nid');
-                $image2->move($path2,$imageName2);
-
-                if(file_exists('uploads/members/nid/'.$members->nid_photo) AND !empty($members->nid_photo)){
-                    unlink('uploads/members/nid/'.$members->nid_photo);
-                }
-                
-                $members->nid_photo = $imageName2;
-                // dd($request['photo']);
-            }  
-            else{
-                $members->nid_photo = $members->nid_photo;
-            }
-            $members->full_name = $request->full_name;
-            $members->phone_no = $request->phone_no;
-            $members->address = $request->address;
-            $members->email = $request->email;
-    // dd($members);
-            if ($members->save()) {
-                return response()->json("success");
-             }
-             else{
-                return response()->json("error");
-             }  
+        $id = $request->memberID;
+        // dd($id);
+        $members = Member::findOrFail($id);
+        // Cannot update Super Admin
+        if ($members->role_id == 1) {
+            return redirect()->back()->with('error', 'Cannot update Super Admin.');
         }
 
+        $date = Carbon::now()->format('his') + rand(1000, 9999);
+
+        // profile photo 
+
+        if ($image = $request->file('photo')) {
+            $extention = $request->file('photo')->getClientOriginalExtension();
+            $imageName = $date . '.' . $extention;
+            $path = public_path('uploads/members/profile');
+            $image->move($path, $imageName);
+
+            if (file_exists('uploads/members/profile/' . $members->photo) and !empty($members->photo)) {
+                unlink('uploads/members/profile/' . $members->photo);
+            }
+
+            $members->photo = $imageName;
+        } else {
+
+            $members->photo = $members->photo;
+        }
+
+        // nid photo 
+
+        if ($image2 = $request->file('nid_photo')) {
+            $extention2 = $request->file('nid_photo')->getClientOriginalExtension();
+            $imageName2 = $date . '.' . $extention2;
+            $path2 = public_path('uploads/members/nid');
+            $image2->move($path2, $imageName2);
+
+            if (file_exists('uploads/members/nid/' . $members->nid_photo) and !empty($members->nid_photo)) {
+                unlink('uploads/members/nid/' . $members->nid_photo);
+            }
+
+            $members->nid_photo = $imageName2;
+            // dd($request['photo']);
+        } else {
+            $members->nid_photo = $members->nid_photo;
+        }
+        $members->full_name = $request->full_name;
+        $members->phone_no = $request->phone_no;
+        $members->address = $request->address;
+        $members->email = $request->email;
+        // dd($members);
+        if ($members->save()) {
+            return response()->json("success");
+        } else {
+            return response()->json("error");
+        }
+    }
 }

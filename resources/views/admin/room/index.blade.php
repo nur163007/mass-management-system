@@ -46,9 +46,7 @@
                                                         <span class="badge badge-warning badge-sm">Manager</span>
                                                     @endif
                                                 </span>
-                                                <a href="{{ route('admin.room.show', $room->id) }}" class="btn btn-info btn-xs">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
+                                                <span class="badge badge-success">Rent: Tk. {{ number_format($roomMember->monthly_rent, 2) }}</span>
                                             </div>
                                         </li>
                                         @endforeach
