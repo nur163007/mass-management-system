@@ -3,6 +3,42 @@
 <?php $__env->startSection('heading', 'dashboard'); ?>
 <?php $__env->startSection('title', 'dashboard'); ?>
 
+<?php $__env->startSection('custom_css'); ?>
+<style>
+/* Mobile: small-box card text responsive fix */
+@media (max-width: 767px) {
+    .small-box > .inner h3 {
+        font-size: 1.3rem !important;
+        word-break: break-word;
+        line-height: 1.2;
+    }
+    .small-box > .inner p {
+        font-size: 0.75rem !important;
+        white-space: normal;
+        word-break: break-word;
+    }
+    .small-box .icon {
+        display: none; /* icon লুকাও, জায়গা বাড়বে */
+    }
+    .small-box > .inner {
+        padding: 8px 10px !important;
+    }
+    .small-box-footer {
+        font-size: 0.75rem;
+    }
+}
+/* Extra small screens (< 400px) */
+@media (max-width: 400px) {
+    .small-box > .inner h3 {
+        font-size: 1rem !important;
+    }
+    .small-box > .inner p {
+        font-size: 0.65rem !important;
+    }
+}
+</style>
+<?php $__env->stopSection(); ?>
+
 <?php $__env->startSection('main-content'); ?>
     <section class="content">
         <div class="container-fluid">

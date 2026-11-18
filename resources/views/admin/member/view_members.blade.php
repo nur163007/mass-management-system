@@ -3,6 +3,17 @@
 @section('heading', 'All members')
 @section('title', 'view member')
 
+@section('custom_css')
+<style>
+/* Page-specific: table horizontal scroll inside card on mobile */
+@media (max-width: 767px) {
+    .card-body {
+        padding: 10px !important;
+    }
+}
+</style>
+@endsection
+
 @section('main-content')
     <section class="content">
         <div class="container-fluid">
@@ -219,6 +230,8 @@
                                         $('#all-category tbody').html($newTbody.html());
                                         // Reinitialize DataTable
                                         $('#all-category').DataTable({
+                                            "responsive": true,
+                                            "autoWidth": false,
                                             "drawCallback": function(settings) {
                                                 $('.changeRole').each(function(){
                                                     if(!$(this).data('old-value')) {
@@ -259,6 +272,8 @@
      
         $(function() {
             $("#all-category").DataTable({
+                "responsive": true,
+                "autoWidth": false,
                 "drawCallback": function(settings) {
                     // Store initial role values after DataTable draws
                     $('.changeRole').each(function(){

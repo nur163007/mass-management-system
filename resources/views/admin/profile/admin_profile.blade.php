@@ -105,7 +105,7 @@
                         <div class="form-group row">
                         <label for="address" class="col-sm-2 col-form-label">Address</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" name="address" id="address" value="{{$profile->address}}">
+                          <textarea class="form-control" name="address" id="address" rows="3" placeholder="Enter your address">{{$profile->address}}</textarea>
                         </div>
                       </div>
                    

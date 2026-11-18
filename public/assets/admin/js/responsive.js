@@ -70,6 +70,17 @@
         // Re-wrap after DataTables initializes on individual pages
         $(document).on('init.dt', function () {
             wrapTables();
+
+            // Remove "Search:" label text, keep only the input box
+            $('.dataTables_filter label').contents().filter(function () {
+                return this.nodeType === 3; // plain text nodes only
+            }).remove();
+
+            // Set placeholder from page heading (h3 inside card-header or content-header)
+            var heading = $('.card-header h3').first().text().trim()
+                       || $('.content-header h1').first().text().trim()
+                       || 'Search...';
+            $('.dataTables_filter input[type="search"]').attr('placeholder', 'Search ' + heading + '...');
         });
     });
 })(jQuery);

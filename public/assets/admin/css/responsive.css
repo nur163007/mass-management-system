@@ -116,22 +116,44 @@ img {
     }
 
     /* DataTables controls */
+    .dataTables_wrapper {
+        overflow-x: visible !important;
+    }
+
     .dataTables_wrapper .dataTables_length,
     .dataTables_wrapper .dataTables_filter {
-        text-align: left;
+        float: none !important;
+        display: block !important;
+        text-align: left !important;
+        width: 100% !important;
         margin-bottom: 0.5rem;
     }
 
-    .dataTables_wrapper .dataTables_length select,
-    .dataTables_wrapper .dataTables_filter input {
+    /* label must be block so width:100% takes full row */
+    .dataTables_wrapper .dataTables_filter label {
+        display: block !important;
         width: 100% !important;
+        margin: 0 !important;
+    }
+
+    /* Input fills full width */
+    .dataTables_wrapper .dataTables_filter input[type="search"] {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        width: auto;
         max-width: 100%;
     }
 
     .dataTables_wrapper .dataTables_info,
     .dataTables_wrapper .dataTables_paginate {
-        text-align: center !important;
         float: none !important;
+        display: block !important;
+        text-align: center !important;
         margin-top: 0.5rem;
     }
 
