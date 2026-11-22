@@ -1,21 +1,30 @@
+@php
+    $currentRoleId = session()->get('role', 3);
+    $currentMemberId = session()->get('member_id');
+    $menuService = app(\App\Services\MenuService::class);
+    $sidebarMenus = $menuService->getMenusForRole($currentRoleId, $currentMemberId);
+    $dashboardRoute = route('dashboard');
+    $profileRoute = route('profile.view');
+@endphp
+
 <aside class="main-sidebar sidebar-light-olive elevation-5">
     <!-- Brand Logo -->
-    <a href="{{ route('admin.dashboard') }}" class="mb-3">
-        <img src="{{ asset('assets/admin/dist/img/projectlogo.PNG') }}" alt="MMS"
-            class="brand-image img-square elevation-0 ml-4" style="opacity: .8">
-
+    <a href="{{ $dashboardRoute }}" class="brand-link" style="display: flex; align-items: center; height: 75px; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.08); text-decoration: none; overflow: hidden;">
+        <img src="{{ asset('assets/admin/dist/img/mms.png') }}" alt="MMS Logo"
+            class="brand-image-logo" style="height: 54px; max-height: 56px; max-width: 85px; width: auto; object-fit: contain; flex-shrink: 0; display: inline-block;">
+        <span class="brand-text font-weight-bold ml-2 text-dark" style="font-size: 1.5rem; letter-spacing: 1.5px; line-height: 1;">MMS</span>
     </a>
-    <hr>
+
     <!-- Sidebar -->
     <div class="sidebar">
         <!-- Sidebar user panel (optional) -->
         <div class="user-panel mt-1 pb-3 mb-3 d-flex">
             <div class="image">
                 <img src="{{ asset('uploads/members/profile/' . session()->get('profile')) }}"
-                    class="img-circle elevation-2" alt="User Image" style="height:38px;width:38px; border-radius:50%;">
+                    class="img-circle elevation-2" alt="User Image" style="height:38px;width:38px; border-radius:50%; object-fit: cover;">
             </div>
             <div class="info">
-                <a href="{{ route('admin.view.profile') }}" class="d-block">{{ session()->get('member_name') }}</a>
+                <a href="{{ $profileRoute }}" class="d-block">{{ session()->get('member_name') }}</a>
             </div>
         </div>
 
@@ -23,301 +32,48 @@
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column text-sm" data-widget="treeview" role="menu"
                 data-accordion="false">
-                <!-- Add icons to the links using the .nav-icon class
-               with font-awesome or any other icon font library -->
-                <li class="nav-item has-treeview">
-                    <a href="{{ route('admin.dashboard') }}"
-                        class="nav-link {{ request()->is('admin/dashboard') ? 'active' : '' }} ">
-                        <i class="nav-icon fas fa-tachometer-alt text-secondary"></i>
-                        <p>
-                            Dashboard
-                        </p>
-                    </a>
-                </li>
+                @foreach ($sidebarMenus as $menu)
+                    @php
+                        $hasChildren = $menu->children->isNotEmpty();
+                        $isActive = $menu->isActive();
+                        $hasActiveChild = $menu->hasActiveChild();
+                        $isOpen = $isActive || $hasActiveChild;
+                        $menuUrl = $menu->route ? (Route::has($menu->route) ? route($menu->route) : 'javascript:void(0)') : ($menu->url ?? 'javascript:void(0)');
+                    @endphp
 
-                <li class="nav-item has-treeview {{ request()->is('admin/member/*') ? 'menu-open' : '' }}">
-                    <a href="javascript:void()" class="nav-link">
-                        <i class="nav-icon fas fa-users text-success"></i>
-                        <p>
-                            Manage Members
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.add-member') }}"
-                                class="nav-link {{ request()->is('admin/member/addmembers', 'admin/member/editdata/*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Add Member</p>
+                    @if ($hasChildren)
+                        <li class="nav-item has-treeview {{ $isOpen ? 'menu-open' : '' }}">
+                            <a href="javascript:void(0)" class="nav-link {{ $isOpen ? 'active' : '' }}">
+                                <i class="nav-icon {{ $menu->icon ?? 'far fa-circle' }}"></i>
+                                <p>
+                                    {{ $menu->name }}
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                @foreach ($menu->children as $child)
+                                    @php
+                                        $isChildActive = $child->isActive();
+                                        $childUrl = $child->route ? (Route::has($child->route) ? route($child->route) : '#') : ($child->url ?? '#');
+                                    @endphp
+                                    <li class="nav-item">
+                                        <a href="{{ $childUrl }}" class="nav-link {{ $isChildActive ? 'active' : '' }}">
+                                            <i class="{{ $child->icon ?? 'far fa-circle nav-icon' }}"></i>
+                                            <p>{{ $child->name }}</p>
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </li>
+                    @else
+                        <li class="nav-item has-treeview">
+                            <a href="{{ $menuUrl }}" class="nav-link {{ $isActive ? 'active' : '' }}">
+                                <i class="nav-icon {{ $menu->icon ?? 'far fa-circle' }}"></i>
+                                <p>{{ $menu->name }}</p>
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.view-member') }}"
-                                class="nav-link {{ request()->is('admin/member/viewmembers') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>View Member</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item has-treeview {{ request()->is('admin/room*') ? 'menu-open' : '' }}">
-                    <a href="javascript:void()" class="nav-link">
-                        <i class="nav-icon fas fa-door-open text-info"></i>
-                        <p>
-                            Room Management
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.room.index') }}"
-                                class="nav-link {{ request()->is('admin/room') && !request()->is('admin/room/assign') && !request()->is('admin/room/*/edit') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>View Rooms</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.room.assign') }}"
-                                class="nav-link {{ request()->is('admin/room/assign') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Assign Member</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                {{-- 
-          <li class="nav-item has-treeview {{ request()->is('admin/category/*') ? 'menu-open' : '' }}">
-            <a href="javascript:void()" class="nav-link">
-              <i class="nav-icon fas fa-list text-cyan"></i>
-              <p>
-                Food Category
-                <i class="right fas fa-angle-left"></i>
-              </p>
-            </a>
-            <ul class="nav nav-treeview">
-              <li class="nav-item">
-                <a href="{{route('admin.add.category')}}" class="nav-link {{ request()->is('admin/category/addCategory','admin/category/editCategory/*') ? 'active' : '' }}">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>Add Category</p>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a href="{{route('admin.view.category')}}" class="nav-link {{ request()->is('admin/category/viewCategory') ? 'active' : '' }}">
-                  <i class="far fa-circle nav-icon"></i>
-                  <p>View Category</p>
-                </a>
-              </li>
-            </ul>
-          </li> --}}
-
-                <li class="nav-item has-treeview {{ request()->is('admin/food/*') ? 'menu-open' : '' }}">
-                    <a href="javascript:void()" class="nav-link">
-                        <i class="nav-icon fas fa-hotdog text-pink"></i>
-                        <p>
-                            Food Item
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.add.foodItem') }}"
-                                class="nav-link {{ request()->is('admin/food/addFoodItem', 'admin/food/editFoodItem/*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Add Food Item</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.view.foodItem') }}"
-                                class="nav-link {{ request()->is('admin/food/viewFoodItem') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>View Food Item</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item has-treeview {{ request()->is('admin/expanse/*') ? 'menu-open' : '' }}">
-                    <a href="javascript:void()" class="nav-link">
-                        <i class="nav-icon fas fa-money-bill-alt text-lightblue"></i>
-                        <p>
-                            Manage Expanse
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.add.expanse') }}"
-                                class="nav-link {{ request()->is('admin/expanse/addExpanse', 'admin/expanse/editExpanse/*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Add Food Expanse</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.view.expanse') }}"
-                                class="nav-link {{ request()->is('admin/expanse/viewExpanse', 'admin/expanse/detailsExpanse/*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>View Food Expanse</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item has-treeview {{ request()->is('admin/meal/*') ? 'menu-open' : '' }}">
-                    <a href="javascript:void()" class="nav-link">
-                        <i class="nav-icon fas fa-hamburger text-orange"></i>
-                        <p>
-                            Manage Meal
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.add.meal') }}"
-                                class="nav-link {{ request()->is('admin/meal/addMeal', 'admin/meal/editMeal/*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Add Meal</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.view.meal') }}"
-                                class="nav-link {{ request()->is('admin/meal/viewMeal', 'admin/meal/mealDetails/*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>View Meal</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item has-treeview {{ request()->is('admin/payment/*') ? 'menu-open' : '' }}">
-                    <a href="javascript:void()" class="nav-link">
-                        <i class="nav-icon fas fa-comment-dollar text-lime"></i>
-                        <p>
-                            Manage Payments
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.add.payment') }}"
-                                class="nav-link {{ request()->is('admin/payment/addPayment', 'admin/payment/editPayment/*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Add Payment</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.view.payment') }}"
-                                class="nav-link {{ request()->is('admin/payment/viewPayment') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>View Payment</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('user.viewPayment') }}"
-                                class="nav-link {{ request()->is('user/payment/viewPayment') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>My Payments</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item has-treeview {{ request()->is('admin/foodAdvance/*') ? 'menu-open' : '' }}">
-                    <a href="{{ route('admin.foodAdvance.index') }}"
-                        class="nav-link {{ request()->is('admin/foodAdvance*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-hand-holding-usd text-info"></i>
-                        <p>
-                            Food Advance
-                        </p>
-                    </a>
-                </li>
-
-                <li class="nav-item has-treeview {{ request()->is('admin/bill*') ? 'menu-open' : '' }}">
-                    <a href="javascript:void()" class="nav-link">
-                        <i class="nav-icon fas fa-file-invoice-dollar text-warning"></i>
-                        <p>
-                            Bills Management
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.bill.index') }}"
-                                class="nav-link {{ request()->is('admin/bill') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>View Bills</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.bill.create') }}"
-                                class="nav-link {{ request()->is('admin/bill/create', 'admin/bill/*/edit') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Add Bill</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.billResponsibility.index') }}"
-                                class="nav-link {{ request()->is('admin/bill-responsibility*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Bill Responsibilities</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li
-                    class="nav-item has-treeview {{ request()->is('admin/servicecharge*') || request()->is('admin/extra-payment*') ? 'menu-open' : '' }}">
-                    <a href="javascript:void()" class="nav-link">
-                        <i class="nav-icon fas fa-wallet text-danger"></i>
-                        <p>
-                            Financial Management
-                            <i class="right fas fa-angle-left"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="{{ route('admin.servicecharge.index') }}"
-                                class="nav-link {{ request()->is('admin/servicecharge') && !request()->is('admin/servicecharge/expenses') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Service Charges</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.servicecharge.expenses') }}"
-                                class="nav-link {{ request()->is('admin/servicecharge/expenses') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Service Expenses</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('admin.extra_payment.index') }}"
-                                class="nav-link {{ request()->is('admin/extra-payment*') ? 'active' : '' }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Extra Payments</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item has-treeview">
-                    <a href="{{ route('admin.total.summary') }}"
-                        class="nav-link {{ request()->is('admin/totalSummary', 'admin/memberDetails/*') ? 'active' : '' }}">
-                        <i class="nav-icon fas fa-chart-bar text-teal"></i>
-                        <p>
-                            Meal Summary
-                        </p>
-                    </a>
-                </li>
-
-                <li class="nav-item has-treeview">
-                    <a href="{{ route('admin.total.report') }}"
-                        class="nav-link {{ request()->is('admin/totalReports', 'admin/viewReports') ? 'active' : '' }} ">
-                        <i class="nav-icon fas fa-database text-purple"></i>
-                        <p>
-                            Meal rate Calculate
-                        </p>
-                    </a>
-                </li>
+                    @endif
+                @endforeach
             </ul>
         </nav>
         <!-- /.sidebar-menu -->

@@ -72,11 +72,15 @@ class AdminController extends Controller
     }
 
     public function viewProfile(){
-    	$id = session()->get('member_id');
-    	// dd($id);
-    	$profile = DB::table('members')->select('*')->where('id',$id)->first();
-    	// dd($profile);
-        return view('admin.profile.admin_profile',compact('profile'));
+        $id = session()->get('member_id');
+        $profile = DB::table('members')->select('*')->where('id', $id)->first();
+
+        // Role 3 (User) → show user profile view
+        if (session('role') == 3) {
+            return view('userpanel.profile.user_profile', compact('profile'));
+        }
+
+        return view('admin.profile.admin_profile', compact('profile'));
     }
 
 

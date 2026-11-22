@@ -12,6 +12,10 @@ use Barryvdh\DomPDF\Facade\Pdf as PDF;
 class ReportController extends Controller
 {
     public function report(){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserReportController::class)->index();
+        }
+
         $meals = DB::table('meals')
             ->select('meals.*')
             ->groupBy('month')
@@ -20,7 +24,19 @@ class ReportController extends Controller
         return view('admin.report.index',compact('meals'));
     }
 
+    public function index(){
+        return $this->report();
+    }
+
+    public function viewReport(Request $request){
+        return $this->view($request);
+    }
+
     public function view(Request $request){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserReportController::class)->detailsReport($request);
+        }
+
         // return ($request);
 
         $start_month = date('Y-m-d',strtotime($request->from_date));
@@ -125,6 +141,9 @@ class ReportController extends Controller
 
 
 public function downloadPdf($start_month,$finish_month){
+    if (session('role') == 3) {
+        return app(\App\Http\Controllers\User\UserReportController::class)->downloadPdf($start_month, $finish_month);
+    }
 
 // dd($start_month);
     // $start_month = date('Y-m-d',strtotime($request->from_date));

@@ -9,3 +9,60 @@
 .viewall:hover {
     color: yellow;
 }
+
+/* Sidebar Brand Logo Fixed Styling */
+.main-sidebar .brand-link {
+    display: flex !important;
+    align-items: center !important;
+    height: 75px !important;
+    padding: 10px 16px !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    text-decoration: none !important;
+    overflow: hidden !important;
+    transition: all 0.3s ease;
+}
+
+.main-sidebar .brand-image-logo {
+    height: 54px !important;
+    max-height: 56px !important;
+    max-width: 85px !important;
+    width: auto !important;
+    object-fit: contain !important;
+    flex-shrink: 0 !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    image-rendering: -webkit-optimize-contrast;
+    transition: all 0.3s ease;
+}
+
+.main-sidebar .brand-link .brand-text {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 1.5px !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    margin-left: 10px !important;
+    transition: opacity 0.3s ease;
+}
+
+/* Collapsed Sidebar Logo Adjustment */
+body.sidebar-collapse .main-sidebar .brand-link {
+    padding: 10px 6px !important;
+    justify-content: center !important;
+}
+
+body.sidebar-collapse .main-sidebar .brand-link .brand-text {
+    display: none !important;
+}
+
+body.sidebar-collapse .main-sidebar .brand-image-logo {
+    max-width: 48px !important;
+    max-height: 48px !important;
+    height: auto !important;
+}
+
+/* User avatar circular cover */
+.user-panel .image img,
+.navbar-nav .dropdown img.img-circle {
+    object-fit: cover !important;
+}

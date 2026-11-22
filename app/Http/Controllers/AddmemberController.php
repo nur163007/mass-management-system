@@ -22,7 +22,9 @@ class AddmemberController extends Controller
             return redirect()->route('admin.view-member')->with('error', 'Only Super Admin can add members.');
         }
 
-        return view('admin.member.add-member');
+        $roles = \App\Models\Role::where('status', 1)->where('id', '!=', 1)->get();
+
+        return view('admin.member.add-member', compact('roles'));
     }
 
     public function store(Request $request)
@@ -40,7 +42,7 @@ class AddmemberController extends Controller
             'email' => 'required',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'nid_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'role_id' => 'required|in:2,3', // Manager (2) or User (3)
+            'role_id' => 'required|exists:roles,id',
         ]);
 
         $members = new Member;
@@ -73,8 +75,9 @@ class AddmemberController extends Controller
         $members->address = $request->address;
         $members->email = $request->email;
         $members->password = Hash::make("password");
+        $role = \App\Models\Role::find($request->role_id);
         $members->role_id = $request->role_id;
-        $members->role_name = $request->role_id == 2 ? "Manager" : "User";
+        $members->role_name = $role ? $role->name : ($request->role_id == 2 ? "Manager" : "User");
         // All admin-created members are active
         $members->status = "1";
 
@@ -90,14 +93,15 @@ class AddmemberController extends Controller
     public function view()
     {
         // Show all members except Super Admin (role_id = 1)
-        // Only Manager (2) and User (3) should be shown
         $members = DB::table('members')
             ->select('members.*')
-            ->whereIn('role_id', [2, 3]) // Only Manager and User
-            ->orderBy('id', 'asc') // Order by ID ascending
+            ->where('role_id', '!=', 1)
+            ->orderBy('id', 'asc')
             ->get();
-        // dd($members);
-        return view('admin.member.view_members', compact('members'));
+
+        $roles = \App\Models\Role::where('status', 1)->where('id', '!=', 1)->get();
+
+        return view('admin.member.view_members', compact('members', 'roles'));
     }
 
     public function memberStatus($id, $status)
@@ -191,7 +195,7 @@ class AddmemberController extends Controller
             }
 
             $this->validate($request, [
-                'role_id' => 'required|integer|in:2,3', // Manager (2) or User (3)
+                'role_id' => 'required|integer|exists:roles,id',
             ]);
 
             $member = Member::findOrFail($id);
@@ -217,9 +221,9 @@ class AddmemberController extends Controller
                         ->first();
 
                     if ($existingManager) {
-                        // Change existing Manager to User (role_id = 3, role_name = 'User')
+                        $userRole = \App\Models\Role::find(3);
                         $existingManager->role_id = 3;
-                        $existingManager->role_name = 'User';
+                        $existingManager->role_name = $userRole ? $userRole->name : 'User';
                         $existingManager->save();
                     }
                 }
@@ -228,8 +232,9 @@ class AddmemberController extends Controller
                 // Just change directly - role_id = 3, role_name = 'User'
 
                 // Update the member's role
+                $targetRole = \App\Models\Role::find($newRole);
                 $member->role_id = $newRole;
-                $member->role_name = $newRole == 2 ? 'Manager' : 'User';
+                $member->role_name = $targetRole ? $targetRole->name : ($newRole == 2 ? 'Manager' : 'User');
                 $member->save();
 
                 DB::commit();

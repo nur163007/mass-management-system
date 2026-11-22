@@ -63,13 +63,19 @@
                                     @if(session('role') == 1)
                                         {{-- Only Super Admin can change roles --}}
                                         <select class="form-control form-control-sm changeRole" data-id="{{ $member->id }}" data-old-role="{{ $member->role_id }}" style="min-width: 100px;">
-                                            <option value="3" {{ $member->role_id == 3 ? 'selected' : '' }}>User</option>
-                                            <option value="2" {{ $member->role_id == 2 ? 'selected' : '' }}>Manager</option>
+                                            @if (isset($roles) && count($roles) > 0)
+                                                @foreach ($roles as $r)
+                                                    <option value="{{ $r->id }}" {{ $member->role_id == $r->id ? 'selected' : '' }}>{{ $r->name }}</option>
+                                                @endforeach
+                                            @else
+                                                <option value="3" {{ $member->role_id == 3 ? 'selected' : '' }}>User</option>
+                                                <option value="2" {{ $member->role_id == 2 ? 'selected' : '' }}>Manager</option>
+                                            @endif
                                         </select>
                                     @else
                                         {{-- Manager and User cannot change roles --}}
                                         <span class="badge {{ $member->role_id == 2 ? 'badge-warning' : 'badge-info' }}">
-                                            {{ $member->role_id == 2 ? 'Manager' : 'User' }}
+                                            {{ $member->role_name ?? ($member->role_id == 2 ? 'Manager' : 'User') }}
                                         </span>
                                     @endif
                                 </td>

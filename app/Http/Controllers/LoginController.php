@@ -23,14 +23,14 @@ class LoginController extends Controller
 //            $passInfo = PasswordChange::where('customer_id',$customer->id)->first();
 //            $confirm = isset($passInfo) ? $passInfo->confirmation : '';
                 if(Hash::check($request->password, $user->password)) {
-                            // dd("ok");
-                            // dd($user->full_name);
+                            $roleName = $user->role ? $user->role->name : $user->role_name;
+
                             $logged_in_data = session([
                                 'member_name' => $user->full_name,
                                 'member_id' => $user->id,
                                 'email'=> $email,
                                 'role'=> $user->role_id,
-                                'role_name'=> $user->role_name,
+                                'role_name'=> $roleName,
                                 'user_status'=> $user->status,
                                 'profile'=> $user->photo,
                                 'phone'=> $user->phone_no,
@@ -38,20 +38,12 @@ class LoginController extends Controller
 
                             ]);
                             // return view('home.dashboard');
-                           // Super Admin (1) and Manager (2) go to admin dashboard
-                           if($user->role_id == 1 || $user->role_id == 2){
-                            return redirect('admin/dashboard');
+                            if ($user->status != 1) {
+                                session()->flush();
+                                return redirect('/')->with('error', 'Your account is not active, Please contact with manager.');
                             }
-                           // User (3) goes to user dashboard
-                           elseif ($user->role_id == 3 ) {
-                            if($user->status == 1){
-                                 return redirect('user/dashboard');
-                            }
-                            else{
-                                return redirect('/')->with('error','Your account is not active, Please contact with manager.');
-                              }
-                             
-                            }
+
+                            return redirect()->route('dashboard');
                     }
 
                         else {

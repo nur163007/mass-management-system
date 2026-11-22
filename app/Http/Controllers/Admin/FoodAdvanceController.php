@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\DB;
 class FoodAdvanceController extends Controller
 {
     public function index(Request $request){
+        // Role 3 (User) → delegate to UserFoodAdvanceController
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\FoodAdvanceController::class)->index($request);
+        }
+
         $query = DB::table('food_advances')
             ->join('members', 'food_advances.member_id', '=', 'members.id')
             ->select('food_advances.*', 'members.full_name');
@@ -45,12 +50,20 @@ class FoodAdvanceController extends Controller
     }
 
     public function create(){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\FoodAdvanceController::class)->create();
+        }
+
         // Exclude Super Admin (role_id = 1), only include Manager (2) and User (3)
         $members = Member::whereIn('role_id', [2, 3])->get();
         return view('admin.foodAdvance.create', compact('members'));
     }
 
     public function store(Request $request){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\FoodAdvanceController::class)->store($request);
+        }
+
         $this->validate($request, [
             'member_id' => 'required|exists:members,id',
             'amount' => 'required|numeric|min:1',
@@ -114,6 +127,10 @@ class FoodAdvanceController extends Controller
     }
 
     public function edit($id){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\FoodAdvanceController::class)->edit($id);
+        }
+
         $advance = FoodAdvance::findOrFail($id);
         // Exclude Super Admin (role_id = 1), only include Manager (2) and User (3)
         $members = Member::whereIn('role_id', [2, 3])->get();
@@ -121,6 +138,10 @@ class FoodAdvanceController extends Controller
     }
 
     public function update(Request $request){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\FoodAdvanceController::class)->update($request);
+        }
+
         $this->validate($request, [
             'id' => 'required|exists:food_advances,id',
             'member_id' => 'required|exists:members,id',
@@ -168,6 +189,10 @@ class FoodAdvanceController extends Controller
     }
 
     public function view($id){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\FoodAdvanceController::class)->view($id);
+        }
+
         $advance = DB::table('food_advances')
             ->join('members', 'food_advances.member_id', '=', 'members.id')
             ->select('food_advances.*', 'members.full_name', 'members.phone_no', 'members.email')

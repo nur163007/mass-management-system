@@ -12,7 +12,7 @@
                         <h3 class="font-weight-bolder">All Bills</h3>
                     </div>
                     <div class="card-header col-md-6 col-6 text-right">
-                        <a href="{{route('user.dashboard')}}" class="viewall"><i class="fas fa-home"></i> Dashboard</a>
+                        <a href="{{route('dashboard')}}" class="viewall"><i class="fas fa-home"></i> Dashboard</a>
                     </div>
                 </div>
 

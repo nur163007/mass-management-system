@@ -30,6 +30,11 @@ class Member extends Model
     ];
 
     // Relationships
+    public function role()
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
     public function currentRoom()
     {
         return $this->belongsTo(Room::class, 'current_room_id');

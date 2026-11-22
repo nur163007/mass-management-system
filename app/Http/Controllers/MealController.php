@@ -19,11 +19,17 @@ class MealController extends Controller
     }
 
     public function addMeal(){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserMealController::class)->addMeal();
+        }
         $members = Member::all();
         return view('admin.meal.addMeal',compact('members'));
     }
 
     public function storeMeal(Request $request){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserMealController::class)->storeMeal($request);
+        }
         // dd($request);
         $this->validate($request,[
             'members_id' => 'required',
@@ -61,6 +67,9 @@ class MealController extends Controller
     }
 
     public function viewMeal(){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserMealController::class)->index();
+        }
         // Updated query to use total_meal_count instead of simple addition
         // Exclude Super Admin (role_id = 1) and show all meals (pending and approved)
         // Group by status as well to show pending and approved separately

@@ -15,6 +15,10 @@ use Barryvdh\DomPDF\Facade\Pdf as PDF;
 class ExpanseController extends Controller
 {
     public function addExpanse(){
+        // Role 3 (User) → delegate to UserExpanseController
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserExpanseController::class)->addExpanse();
+        }
         // Exclude Super Admin (role_id = 1), only include Manager (2) and User (3)
         $members = Member::whereIn('role_id', [2, 3])->get();
         $items= FoodItem::all();
@@ -22,6 +26,10 @@ class ExpanseController extends Controller
     }
 
     public function storeExpanse(Request $request){
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserExpanseController::class)->storeExpanse($request);
+        }
+
         // dd($request);
 
         // $test = implode(',',$request->item_name_id);
@@ -109,21 +117,16 @@ class ExpanseController extends Controller
 
 
 public function viewExpanse(){
-        // $bazars = DB::table('expanses')
-        // ->join('members','expanses.member_id','members.id')
-        // // ->join('food_categories','expanses.category_id','food_categories.id')
-        // // ->join('food_items','expanses.item_name_id','food_items.id')
-        // ->select('expanses.date','members.full_name',SUM('expanses.total_amount'))
-        // ->groupBy('expanses.date')
-        // ->get();
+        // Role 3 (User) → delegate to UserExpanseController
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserExpanseController::class)->index();
+        }
 
-        // dd("ok");
- $bazars = DB::select("SELECT ex.id,ex.invoice_no,ex.total_amount as total, ex.date as expanse_date,ex.status,ex.created_at,m.full_name
+        $bazars = DB::select("SELECT ex.id,ex.invoice_no,ex.total_amount as total, ex.date as expanse_date,ex.status,ex.created_at,m.full_name
     FROM expanses ex
     INNER JOIN members m ON ex.member_id = m.id
     ORDER BY ex.created_at DESC, ex.id DESC");
-        // dd($bazars);
- return view('admin.expanse.viewExpanse',compact('bazars'));
+        return view('admin.expanse.viewExpanse',compact('bazars'));
 }
 
 public function expanseStatus($id, $status){

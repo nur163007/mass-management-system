@@ -157,8 +157,9 @@ class UserController extends Controller
         $members->email = $request->email;
         $members->password = Hash::make($request->password);
         // All registrations default to User (role_id = 3)
-        $members->role_id = 3;
-        $members->role_name = "User";
+        $userRole = \App\Models\Role::where('slug', 'user')->first() ?? \App\Models\Role::find(3);
+        $members->role_id = $userRole ? $userRole->id : 3;
+        $members->role_name = $userRole ? $userRole->name : "User";
         // New users are pending approval
         $members->status = "0";
         

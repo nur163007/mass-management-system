@@ -42,9 +42,9 @@ class PaymentController extends Controller
             ->pluck('bill_type')
             ->toArray();
         
-        // Authorization: Super Admin, Manager, or users with responsibilities can access
+        // Authorization: Super Admin, Manager, or users with responsibilities can access admin view; others get user view
         if (!$isSuperAdmin && !$isManager && empty($myResponsibilities)) {
-            return redirect('/')->with('error', 'You are not authorized to add payments.');
+            return app(\App\Http\Controllers\User\UserPaymentController::class)->addPayment();
         }
         
         // Get Manager (2) and User (3) members only, exclude Super Admin (1)
@@ -154,11 +154,6 @@ class PaymentController extends Controller
     }
 
     public function viewPayment(Request $request){
-        $query = DB::table('payments')
-        ->join('members','payments.member_id','members.id')
-        ->select('payments.*','members.full_name')
-        ->where('members.role_id', '!=', 1); // Exclude Super Admin payments
-        
         // Get logged-in member's responsibilities
         $loggedInMemberId = session()->get('member_id');
         $loggedInMember = Member::find($loggedInMemberId);
@@ -168,6 +163,16 @@ class PaymentController extends Controller
         $myResponsibilities = BillTypeResponsibility::where('member_id', $loggedInMemberId)
             ->pluck('bill_type')
             ->toArray();
+
+        // Regular users without bill responsibility see their personal payments view
+        if (!$isSuperAdmin && !$isManager && empty($myResponsibilities)) {
+            return app(\App\Http\Controllers\User\UserPaymentController::class)->index();
+        }
+
+        $query = DB::table('payments')
+        ->join('members','payments.member_id','members.id')
+        ->select('payments.*','members.full_name')
+        ->where('members.role_id', '!=', 1); // Exclude Super Admin payments
         
         // Manager can see all payments, but regular users see only their responsible bill types
         if (!$isSuperAdmin && !$isManager && !empty($myResponsibilities)) {

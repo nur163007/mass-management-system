@@ -54,13 +54,19 @@
                         <div class="form-group col-md-6">
                             <label for="role_id">Role</label>
                             <select class="form-control" id="role_id" name="role_id" required autocomplete="off">
-                                <option value="3" selected>User</option>
-                                <option value="2">Manager</option>
+                                @if (isset($roles) && count($roles) > 0)
+                                    @foreach ($roles as $r)
+                                        <option value="{{ $r->id }}" {{ (old('role_id', '3') == $r->id) ? 'selected' : '' }}>{{ $r->name }}</option>
+                                    @endforeach
+                                @else
+                                    <option value="3" selected>User</option>
+                                    <option value="2">Manager</option>
+                                @endif
                             </select>
                             @if ($errors->has('role_id'))
                                 <p class="text-danger">{{ $errors->first('role_id') }}</p>
                             @endif
-                            <small class="text-muted">Note: Only Super Admin can create Managers. Default is User.</small>
+                            <small class="text-muted">Note: Only Super Admin can assign roles. Default is User.</small>
                         </div>
                         <div class="form-group col-md-6">
                             <label for="photo">Photo <small class="text-muted">(Optional)</small></label>

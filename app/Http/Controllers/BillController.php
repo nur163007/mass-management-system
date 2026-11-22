@@ -23,6 +23,10 @@ class BillController extends Controller
      */
     public function index(Request $request)
     {
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserBillController::class)->index($request);
+        }
+
         $monthInput = $request->input('month', Carbon::now()->format('F'));
         
         // Convert abbreviated month to full form if needed
@@ -289,6 +293,10 @@ class BillController extends Controller
      */
     public function view($id, Request $request)
     {
+        if (session('role') == 3) {
+            return app(\App\Http\Controllers\User\UserBillController::class)->view($id);
+        }
+
         $bill = Bill::findOrFail($id);
         
         // Month format conversion map
