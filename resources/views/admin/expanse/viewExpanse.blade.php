@@ -13,13 +13,52 @@
                     </div>
                     <div class="card-header col-md-6 col-6 text-right">
                         <a href="{{route('admin.add.expanse')}}" class="viewall"><i class="far fa-money-bill-alt"></i> Add Expanse</a>
-                         <a href="{{route('admin.expanse.downloadPdf')}}" class="viewall bg-cyan"><i class="far fa-file-pdf"></i> Download pdf</a>
+                         <a href="{{route('admin.expanse.downloadPdf', ['month' => $month ?? ''])}}" class="viewall bg-cyan"><i class="far fa-file-pdf"></i> Download pdf</a>
                     </div>
                 </div>
 
                 @include('admin.includes.message')
 
                 <div class="card-body">
+                    <!-- Month Filter -->
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-md-5 col-sm-7 col-12">
+                            <form method="GET" action="{{ route('admin.view.expanse') }}" id="monthFilterForm">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-olive text-white font-weight-bold">
+                                            <i class="fas fa-calendar-alt mr-1"></i> Month
+                                        </span>
+                                    </div>
+                                    <select name="month" id="monthFilter" class="form-control" onchange="document.getElementById('monthFilterForm').submit()">
+                                        <option value="">All Months</option>
+                                        @foreach($months as $m)
+                                            <option value="{{ $m }}" {{ (isset($month) && $month == $m) ? 'selected' : '' }}>
+                                                {{ $m }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @if(!empty($month))
+                                        <div class="input-group-append">
+                                            <a href="{{ route('admin.view.expanse') }}" class="btn btn-outline-secondary" title="Reset filter to all months">
+                                                <i class="fas fa-times"></i> Clear
+                                            </a>
+                                        </div>
+                                    @endif
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-7 col-sm-5 col-12 text-md-right mt-2 mt-md-0">
+                            @if(!empty($month))
+                                <span class="badge badge-info p-2" style="font-size: 13px;">
+                                    <i class="fas fa-filter"></i> Filtered by: <strong>{{ $month }}</strong>
+                                </span>
+                            @endif
+                            <span class="badge badge-success p-2 ml-1" style="font-size: 13px;">
+                                Total Amount: <strong>Tk. {{ number_format($totalAmount ?? 0, 2) }}</strong>
+                            </span>
+                        </div>
+                    </div>
                     <table id="all-category" class="table table-bordered table-hover">
                         <thead class="bg-olive">
                             <tr>

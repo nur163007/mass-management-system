@@ -12,15 +12,31 @@ use Illuminate\Support\Facades\DB;
 
 class UserExpanseController extends Controller
 {
-    public function index(){
+    public function index(Request $request = null){
 
     	$id = session()->get('member_id');
-	    	$expanse = DB::select("SELECT m.id,SUM(expanses.total_amount) as total, expanses.date,expanses.status,expanses.invoice_no, expanses.id as expanse_id,
+        $month = $request ? $request->input('month') : null;
+
+        $query = "SELECT m.id,SUM(expanses.total_amount) as total, expanses.date,expanses.status,expanses.invoice_no, expanses.id as expanse_id,
                 (SELECT id FROM expanse_details WHERE invoice_no = expanses.invoice_no LIMIT 1) as first_detail_id
 	        FROM members m
-	        INNER JOIN expanses ON m.id = expanses.member_id where m.id = '$id' GROUP BY expanses.date, expanses.invoice_no, expanses.status, expanses.id ORDER BY expanses.date DESC");
-// dd($expanse);
-        return view('userpanel.expanse.user_expanse',compact('expanse'));
+	        INNER JOIN expanses ON m.id = expanses.member_id where m.id = '$id'";
+
+        if (!empty($month)) {
+            $escapedMonth = DB::connection()->getPdo()->quote($month);
+            $query .= " AND (expanses.month = $escapedMonth OR DATE_FORMAT(expanses.date, '%M') = $escapedMonth)";
+        }
+
+        $query .= " GROUP BY expanses.date, expanses.invoice_no, expanses.status, expanses.id ORDER BY expanses.date DESC";
+
+        $expanse = DB::select($query);
+
+        $months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        return view('userpanel.expanse.user_expanse', compact('expanse', 'month', 'months'));
     }
 
     public function editExpanse($id){

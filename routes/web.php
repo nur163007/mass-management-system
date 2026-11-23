@@ -181,6 +181,9 @@ Route::middleware('auth.check')->group(function () {
     Route::post('payment/updatePayment', [PaymentController::class, 'updatePayment'])->name('admin.updatePayment');
     Route::get('payment/deletePayment/{id}', [PaymentController::class, 'deletePayment'])->name('admin.deletePayment');
     Route::get('payment/downloadPaymentPdf', [PaymentController::class, 'downloadPdf'])->name('admin.payment.downloadPdf');
+    Route::get('payment/myPayment', [PaymentController::class, 'myPayment'])->name('payment.myPayment');
+    Route::get('payment/myPayment/downloadPdf', [PaymentController::class, 'myPaymentPdf'])->name('payment.myPayment.pdf');
+    Route::get('user/payment/myPayment', function () { return redirect()->route('payment.myPayment'); })->name('user.payment.myPayment');
     Route::post('payment/getBillAmount', [PaymentController::class, 'getBillAmount'])->name('admin.payment.getBillAmount');
     // Legacy route name aliases for existing payment views
     Route::post('payment/storePayment/admin', [PaymentController::class, 'storePayment'])->name('admin.store.payment');
@@ -195,8 +198,15 @@ Route::middleware('auth.check')->group(function () {
     Route::get('expanse/addExpanse', [ExpanseController::class, 'addExpanse'])->name('admin.add.expanse');
     Route::post('expanse/storeExpanse', [ExpanseController::class, 'storeExpanse'])->name('store.expanse');
     Route::get('expanse/deleteExpanse/{id}', [ExpanseController::class, 'deleteExpanse'])->name('admin.deleteExpanse');
+    Route::get('expanse/deleteExpanseAlias/{id}', [ExpanseController::class, 'deleteExpanse'])->name('delete.expanse');
     Route::get('expanse/editExpanse/{id}', [ExpanseController::class, 'editExpanse'])->name('admin.editExpanse');
+    Route::get('expanse/editExpanseAlias/{id}', [ExpanseController::class, 'editExpanse'])->name('edit.expanse');
     Route::post('expanse/updateExpanse', [ExpanseController::class, 'updateExpanse'])->name('admin.updateExpanse');
+    Route::post('expanse/updateExpanseAlias', [ExpanseController::class, 'updateExpanse'])->name('update.expanse');
+    Route::get('expanse/detailsExpanse/{invoice_no}', [ExpanseController::class, 'detailExpanse'])->name('details.expanse');
+    Route::get('expanse/expanseStatus/{id}/{status}', [ExpanseController::class, 'expanseStatus'])->name('expanseStatus');
+    Route::get('expanse/downloadPdf', [ExpanseController::class, 'downloadPdf'])->name('admin.expanse.downloadPdf');
+    Route::get('expanse/downloadPdfAlias', [ExpanseController::class, 'downloadPdf'])->name('expanse.downloadPdf');
     Route::get('expanse/onChangeExpanse', [ExpanseController::class, 'onChange'])->name('expanse.onChange');
     // User expanse sub-routes
     Route::get('expanse/detailsExpanse/{invoice}/{id}', [UserExpanseController::class, 'detailsExpanse'])->name('user.details.expanse');

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/fontawesome-free/css/all.min.css')); ?>">
+  <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+  <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/icheck-bootstrap/icheck-bootstrap.min.css')); ?>">
+  <link rel="stylesheet" href="<?php echo e(asset('assets/admin/dist/css/adminlte.min.css')); ?>">
+  <link rel="stylesheet" href="<?php echo e(asset('assets/admin/css/responsive.css')); ?>">
+  <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+</head>
+<body class="hold-transition login-page">
+
+<div class="login-box">
+    <div class="col-12 text-center mt-2 px-2">
+    <?php if($message = Session::get('success')): ?>
+        <div class="alert alert-success alert-block text-center">
+            <button type="button" class="close" data-dismiss="alert">×</button>
+            <strong><?php echo e($message); ?></strong>
+        </div>
+    <?php endif; ?>
+
+    <?php if(Session::has('error')): ?>
+        <div class="alert alert-danger alert-block text-center">
+            <button type="button" class="close" data-dismiss="alert">×</button>
+            <strong><?php echo e(Session::get('error')); ?></strong>
+        </div>
+    <?php endif; ?>
+</div>
+    <div class="card">
+      <div class="card-body login-card-body">
+        <div class="login-logo font-weight-bolder">
+            <a href="javascript:void(0)"><b>M</b>M<i>S</i></a>
+          </div>
+        <p class="login-box-msg">Sign in to start your session</p>
+  
+        <form action="<?php echo e(route('loginCheck')); ?>" method="post">
+            <?php echo csrf_field(); ?>
+          <div class="input-group mb-3">
+            <input type="email" class="form-control" name="email" placeholder="Enter Your Email" autocomplete="off">
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-envelope"></span>
+              </div>
+            </div>
+          </div>
+          <div class="input-group mb-3">
+            <input type="password" class="form-control" name="password" placeholder="Enter Your Password" autocomplete="off">
+            <div class="input-group-append">
+              <div class="input-group-text">
+                <span class="fas fa-lock"></span>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-8 col-sm-8">
+              <div class="icheck-primary">
+                <input type="checkbox" id="remember">
+                <label for="remember">
+                  Remember Me
+                </label>
+              </div>
+            </div>
+            <div class="col-4 col-sm-4">
+              <input type="submit" class="btn btn-primary btn-block" name="submit" value="Log In">
+            </div>
+          </div>
+        </form>
+
+        <div class="social-auth-links text-center mb-3">
+            <p>- OR -</p>
+          
+          </div>
+        <!-- /.social-auth-links -->
+  
+       <!--  <p class="mb-1">
+          <a href="forgot-password.html" class="text-danger">I forgot my password</a>
+        </p> -->
+        
+        <p class="mb-0">
+          <a href="<?php echo e(route('user.register')); ?>" class="text-center text-success">Register a new membership</a>
+        </p>
+      </div>
+    </div>
+</div>
+<!-- jQuery -->
+<script src="<?php echo e(asset('assets/admin/plugins/jquery/jquery.min.js')); ?>"></script>
+<!-- Bootstrap 4 -->
+<script src="<?php echo e(asset('assets/admin/plugins/bootstrap/js/bootstrap.bundle.min.js')); ?>"></script>
+<!-- AdminLTE App -->
+<script src="<?php echo e(asset('assets/admin/dist/js/adminlte.min.js')); ?>"></script>
+
+</body>
+</html><?php /**PATH C:\Users\hp\Herd\mass-management-system\resources\views/auth/login.blade.php ENDPATH**/ ?>

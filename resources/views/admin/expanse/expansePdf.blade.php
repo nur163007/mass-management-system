@@ -48,7 +48,7 @@
     <div class="card">
        <div class="head">
           <h3>Mess Management System</h3>
-          <h4>Expanse Summary Sheet</h4>
+          <h4>Expanse Summary Sheet @if(!empty($month)) ({{ $month }}) @endif</h4>
           <hr>
       </div>
       <div class="card-body">

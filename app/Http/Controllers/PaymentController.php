@@ -754,4 +754,169 @@ class PaymentController extends Controller
             'total' => $grandTotal
         ]);
     }
+
+    /**
+     * Display personal payments for the logged-in user (accessible by all roles)
+     */
+    public function myPayment(Request $request)
+    {
+        $loggedInMemberId = session()->get('member_id');
+        if (!$loggedInMemberId) {
+            return redirect('/')->with('error', 'Please login first.');
+        }
+
+        $member = Member::find($loggedInMemberId);
+        if (!$member) {
+            return redirect('/')->with('error', 'Member not found.');
+        }
+
+        $paymentTypes = [
+            'food_advance' => 'Food Advance',
+            'room_rent' => 'Room Rent',
+            'room_advance' => 'Room Advance',
+            'water' => 'Water Bill',
+            'internet' => 'Internet Bill',
+            'electricity' => 'Electricity Bill',
+            'gas' => 'Gas Bill',
+            'bua_moyla' => 'Bua & Moyla Bill',
+            'other' => 'Other / Extra Payment',
+        ];
+
+        $query = Payment::where('member_id', $loggedInMemberId);
+
+        $selectedMonth = $request->input('month');
+        if (!empty($selectedMonth)) {
+            $escapedMonth = DB::connection()->getPdo()->quote($selectedMonth);
+            $query->whereRaw("(month = $escapedMonth OR DATE_FORMAT(date, '%M') = $escapedMonth)");
+        }
+
+        $selectedType = $request->input('payment_type');
+        if (!empty($selectedType)) {
+            $query->where('payment_type', $selectedType);
+        }
+
+        $selectedStatus = $request->input('status');
+        if ($selectedStatus !== null && $selectedStatus !== '') {
+            $query->where('status', (int)$selectedStatus);
+        }
+
+        $payments = $query->orderBy('date', 'DESC')->orderBy('id', 'DESC')->get();
+
+        // Calculate KPI summary
+        $totalPaid = 0;
+        $totalApproved = 0;
+        $totalPending = 0;
+        $typeBreakdown = [];
+
+        foreach ($payments as $p) {
+            $amount = (float)$p->payment_amount;
+            $totalPaid += $amount;
+
+            if ($p->status == 1) {
+                $totalApproved += $amount;
+            } else {
+                $totalPending += $amount;
+            }
+
+            $type = $p->payment_type ?? 'other';
+            if (!isset($typeBreakdown[$type])) {
+                $typeBreakdown[$type] = [
+                    'label' => $paymentTypes[$type] ?? ucfirst(str_replace('_', ' ', $type)),
+                    'count' => 0,
+                    'total' => 0,
+                    'approved' => 0,
+                    'pending' => 0,
+                ];
+            }
+            $typeBreakdown[$type]['count']++;
+            $typeBreakdown[$type]['total'] += $amount;
+            if ($p->status == 1) {
+                $typeBreakdown[$type]['approved'] += $amount;
+            } else {
+                $typeBreakdown[$type]['pending'] += $amount;
+            }
+        }
+
+        // Available months for dropdown
+        $months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        return view('admin.payment.myPayment', compact(
+            'payments',
+            'member',
+            'paymentTypes',
+            'typeBreakdown',
+            'totalPaid',
+            'totalApproved',
+            'totalPending',
+            'months',
+            'selectedMonth',
+            'selectedType',
+            'selectedStatus'
+        ));
+    }
+
+    /**
+     * Download PDF summary of personal payments
+     */
+    public function myPaymentPdf(Request $request)
+    {
+        $loggedInMemberId = session()->get('member_id');
+        if (!$loggedInMemberId) {
+            return redirect('/')->with('error', 'Please login first.');
+        }
+
+        $member = Member::find($loggedInMemberId);
+        if (!$member) {
+            return redirect('/')->with('error', 'Member not found.');
+        }
+
+        $paymentTypes = [
+            'food_advance' => 'Food Advance',
+            'room_rent' => 'Room Rent',
+            'room_advance' => 'Room Advance',
+            'water' => 'Water Bill',
+            'internet' => 'Internet Bill',
+            'electricity' => 'Electricity Bill',
+            'gas' => 'Gas Bill',
+            'bua_moyla' => 'Bua & Moyla Bill',
+            'other' => 'Other / Extra Payment',
+        ];
+
+        $query = Payment::where('member_id', $loggedInMemberId);
+
+        $selectedMonth = $request->input('month');
+        if (!empty($selectedMonth)) {
+            $escapedMonth = DB::connection()->getPdo()->quote($selectedMonth);
+            $query->whereRaw("(month = $escapedMonth OR DATE_FORMAT(date, '%M') = $escapedMonth)");
+        }
+
+        $selectedType = $request->input('payment_type');
+        if (!empty($selectedType)) {
+            $query->where('payment_type', $selectedType);
+        }
+
+        $selectedStatus = $request->input('status');
+        if ($selectedStatus !== null && $selectedStatus !== '') {
+            $query->where('status', (int)$selectedStatus);
+        }
+
+        $payments = $query->orderBy('date', 'DESC')->orderBy('id', 'DESC')->get();
+        $totalPaid = $payments->sum('payment_amount');
+
+        $pdf = PDF::loadView('admin.payment.myPaymentPdf', compact(
+            'payments',
+            'member',
+            'paymentTypes',
+            'totalPaid',
+            'selectedMonth',
+            'selectedType',
+            'selectedStatus'
+        ));
+
+        $fileName = 'my_payments_' . strtolower(preg_replace('/[^A-Za-z0-9]/', '_', $member->full_name)) . '.pdf';
+        return $pdf->download($fileName);
+    }
 }

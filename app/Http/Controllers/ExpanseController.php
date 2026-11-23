@@ -116,17 +116,38 @@ class ExpanseController extends Controller
 }
 
 
-public function viewExpanse(){
+public function viewExpanse(Request $request){
         // Role 3 (User) → delegate to UserExpanseController
         if (session('role') == 3) {
-            return app(\App\Http\Controllers\User\UserExpanseController::class)->index();
+            return app(\App\Http\Controllers\User\UserExpanseController::class)->index($request);
         }
 
-        $bazars = DB::select("SELECT ex.id,ex.invoice_no,ex.total_amount as total, ex.date as expanse_date,ex.status,ex.created_at,m.full_name
-    FROM expanses ex
-    INNER JOIN members m ON ex.member_id = m.id
-    ORDER BY ex.created_at DESC, ex.id DESC");
-        return view('admin.expanse.viewExpanse',compact('bazars'));
+        $month = $request->input('month');
+
+        $query = "SELECT ex.id, ex.invoice_no, ex.total_amount as total, ex.date as expanse_date, ex.month, ex.status, ex.created_at, m.full_name
+            FROM expanses ex
+            INNER JOIN members m ON ex.member_id = m.id";
+
+        if (!empty($month)) {
+            $escapedMonth = DB::connection()->getPdo()->quote($month);
+            $query .= " WHERE (ex.month = $escapedMonth OR DATE_FORMAT(ex.date, '%M') = $escapedMonth)";
+        }
+
+        $query .= " ORDER BY ex.created_at DESC, ex.id DESC";
+
+        $bazars = DB::select($query);
+
+        $totalAmount = 0;
+        foreach ($bazars as $item) {
+            $totalAmount += $item->total;
+        }
+
+        $months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        return view('admin.expanse.viewExpanse', compact('bazars', 'month', 'months', 'totalAmount'));
 }
 
 public function expanseStatus($id, $status){
@@ -267,10 +288,24 @@ public function detailExpanse($invoice_no){
     return view('admin.expanse.detailExpanse',compact('all_details','members')); 
 }
 
-public function downloadPdf(){
-  $bazars = DB::select("SELECT ex.id,ex.invoice_no,ex.total_amount as total, ex.date as expanse_date,ex.status,m.full_name FROM expanses ex INNER JOIN members m ON ex.member_id = m.id");
+public function downloadPdf(Request $request){
+    $month = $request->input('month');
 
-  $pdf = PDF::loadView('admin.expanse.expansePdf',compact('bazars'));
-  return $pdf->download('bazars.pdf');
+    $query = "SELECT ex.id,ex.invoice_no,ex.total_amount as total, ex.date as expanse_date,ex.status,ex.month,m.full_name 
+              FROM expanses ex 
+              INNER JOIN members m ON ex.member_id = m.id";
+
+    if (!empty($month)) {
+        $escapedMonth = DB::connection()->getPdo()->quote($month);
+        $query .= " WHERE (ex.month = $escapedMonth OR DATE_FORMAT(ex.date, '%M') = $escapedMonth)";
+    }
+
+    $query .= " ORDER BY ex.date DESC, ex.id DESC";
+
+    $bazars = DB::select($query);
+
+    $pdf = PDF::loadView('admin.expanse.expansePdf', compact('bazars', 'month'));
+    $fileName = !empty($month) ? 'bazars_' . strtolower($month) . '.pdf' : 'bazars.pdf';
+    return $pdf->download($fileName);
 }
 }

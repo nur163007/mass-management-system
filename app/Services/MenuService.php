@@ -133,9 +133,9 @@ class MenuService
         // Seed if table is empty
         if (DB::table('menus')->count() == 0) {
             $this->seedInitialMenus();
-        } elseif (!cache()->has('system_menus_synced_v3')) {
+        } elseif (!cache()->has('system_menus_synced_v4')) {
             $this->ensureSystemMenus();
-            cache()->forever('system_menus_synced_v3', true);
+            cache()->forever('system_menus_synced_v4', true);
         }
     }
 
@@ -315,6 +315,15 @@ class MenuService
                 'active_pattern' => 'payment/viewPayment',
                 'parent_id'      => $paymentParent->id,
                 'order'          => 2,
+            ], [1, 2, 3]);
+
+            $this->createMenuWithRoles([
+                'name'           => 'My Payment',
+                'icon'           => 'far fa-circle nav-icon',
+                'route'          => 'payment.myPayment',
+                'active_pattern' => 'payment/myPayment',
+                'parent_id'      => $paymentParent->id,
+                'order'          => 3,
             ], [1, 2, 3]);
 
             // 8. Food Advance (Super Admin, Manager, User)
@@ -565,6 +574,7 @@ class MenuService
                 'Manage Payments',
                 'Add Payment',
                 'View Payment',
+                'My Payment',
                 'Food Advance',
                 'Bills Management',
                 'View Bills',
@@ -587,6 +597,44 @@ class MenuService
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
+                }
+            }
+
+            // ----------------------------------------------------------------
+            // 4. Ensure My Payment child menu exists under Manage Payments
+            // ----------------------------------------------------------------
+            $paymentParent = Menu::where(function ($q) {
+                $q->where('name', 'Manage Payments')->orWhere('name', 'Manage Payment');
+            })->whereNull('parent_id')->first();
+
+            if ($paymentParent) {
+                $myPaymentMenu = Menu::where('route', 'payment.myPayment')->first();
+                if (!$myPaymentMenu) {
+                    $this->createMenuWithRoles([
+                        'name'           => 'My Payment',
+                        'icon'           => 'far fa-circle nav-icon',
+                        'route'          => 'payment.myPayment',
+                        'active_pattern' => 'payment/myPayment',
+                        'parent_id'      => $paymentParent->id,
+                        'order'          => 3,
+                    ], [1, 2, 3]);
+                } else {
+                    $myPaymentMenu->update([
+                        'parent_id'      => $paymentParent->id,
+                        'name'           => 'My Payment',
+                        'status'         => 1,
+                        'active_pattern' => 'payment/myPayment',
+                    ]);
+                    foreach ([1, 2, 3] as $rId) {
+                        if (!DB::table('menu_roles')->where('menu_id', $myPaymentMenu->id)->where('role_id', $rId)->exists()) {
+                            DB::table('menu_roles')->insert([
+                                'menu_id'    => $myPaymentMenu->id,
+                                'role_id'    => $rId,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
                 }
             }
 
