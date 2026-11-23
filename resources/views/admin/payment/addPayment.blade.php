@@ -46,7 +46,7 @@
                                    <option value="">--Select Payment Type--</option>
                                    @php
                                        $allPaymentTypes = [
-                                           'food_advance' => 'Meal Payment',
+                                           'meal_expanse_payment' => 'Meal Payment',
                                            'room_rent' => 'House Rent Payment',
                                            'room_advance' => 'Member Ways Amount (Room Advance)',
                                            'water' => 'Water Bill Payment',
@@ -224,14 +224,15 @@ $(document).ready(function(){
         var month = $('#month').val();
 
         // If month is not selected, use current month
-        if (!month && paymentType && paymentType !== 'food_advance' && memberId) {
+        var isMealOrAdvance = paymentType === 'food_advance' || paymentType === 'meal_expanse' || paymentType === 'meal_expanse_payment' || paymentType === 'meal_payment';
+        if (!month && paymentType && !isMealOrAdvance && memberId) {
             var currentMonth = new Date().toLocaleString('default', { month: 'long' });
             $('#month').val(currentMonth);
             month = currentMonth;
         }
 
         // Show amount info for bill payments, room rent, and room advance
-        if (paymentType && paymentType !== 'food_advance' && memberId && month) {
+        if (paymentType && !isMealOrAdvance && memberId && month) {
             $.ajax({
                 url: '{{ route("admin.payment.getBillAmount") }}',
                 method: 'POST',
@@ -311,7 +312,7 @@ $(document).ready(function(){
             $('#bill_amount_due').text('Tk. 0.00');
             $('#bill_amount_due_simple').text('Tk. 0.00');
             // Clear amount if payment type changed to meal payment or no type selected
-            if (paymentType === 'food_advance' || !paymentType) {
+            if (isMealOrAdvance || !paymentType) {
                 $('#amount').val('');
             }
         }

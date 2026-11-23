@@ -102,7 +102,10 @@ class UserExpanseController extends Controller
             }
 
             $expanses->item_name_id = $request->item_name_id;
-            $expanses->weight = $request->weight;
+            $weightVal = $request->weight ?? '';
+            $unitVal = isset($request->unit) ? trim($request->unit) : null;
+            $expanses->weight = !empty($unitVal) ? ($weightVal . ' ' . $unitVal) : $weightVal;
+            $expanses->unit = $unitVal;
             $expanses->amount = $request->amount;
             $expanses->date = $date_convert;
 
@@ -174,12 +177,25 @@ class UserExpanseController extends Controller
                     $expanses_details->member_id = session()->get('member_id');
                     // $expanses->category_id = $request->category_id;
                     $expanses_details->item_name_id = $request->item_name_id[$i];
-                    $expanses_details->weight = $request->weight[$i];
+
+                    $weightVal = $request->weight[$i] ?? '';
+                    $unitVal = isset($request->unit[$i]) ? trim($request->unit[$i]) : null;
+
+                    $expanses_details->weight = !empty($unitVal) ? ($weightVal . ' ' . $unitVal) : $weightVal;
+                    $expanses_details->unit = $unitVal;
                     $expanses_details->amount = $request->amount[$i];
                     $expanses_details->date = $date_convert; 
                     $total += $request->amount[$i];
                  
                     $expanses_details->save();
+
+                    if (!empty($unitVal) && !empty($request->item_name_id[$i])) {
+                        $fItem = \App\Models\FoodItem::find($request->item_name_id[$i]);
+                        if ($fItem && empty($fItem->unit)) {
+                            $fItem->unit = $unitVal;
+                            $fItem->save();
+                        }
+                    }
                 }
     
                 $month = date('F',strtotime($request->date));

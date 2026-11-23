@@ -146,6 +146,31 @@ $('.select2bs4').select2({
 
 $(document).ready(function(){
 
+    $(document).on('input', '#weight', function() {
+        var val = $(this).val();
+        var clean = val.replace(/[^0-9.]/g, '');
+        var parts = clean.split('.');
+        if (parts.length > 2) {
+            clean = parts[0] + '.' + parts.slice(1).join('');
+        }
+        if (val !== clean) {
+            $(this).val(clean);
+        }
+    });
+
+    $(document).on('keypress', '#weight', function(e) {
+        var charCode = (e.which) ? e.which : e.keyCode;
+        if (charCode === 46) {
+            if ($(this).val().indexOf('.') !== -1) {
+                e.preventDefault();
+            }
+            return true;
+        }
+        if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+            e.preventDefault();
+        }
+    });
+
     $('#form').on("submit",function(event){
         event.preventDefault();
         var form = new FormData(this);

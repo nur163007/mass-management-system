@@ -26,7 +26,7 @@
                                <label for="payment_type">Payment Type <span class="text-danger">*</span></label>
                                <select class="form-control" id="payment_type" name="payment_type" required autocomplete="off">
                                    <option value="">--Select Payment Type--</option>
-                                   <option value="food_advance">Meal Payment</option>
+                                   <option value="meal_expanse_payment">Meal Payment</option>
                                    <option value="room_rent">House Rent Payment</option>
                                    <option value="room_advance">Member Ways Amount (Room Advance)</option>
                                    <option value="water">Water Bill Payment</option>
@@ -161,22 +161,11 @@ $(document).ready(function(){
                 if (response.success) {
                     var paymentType = $('#payment_type').val();
                     
-                    // For food_advance, don't show bill amount info, just check for duplicate
-                    if (paymentType === 'food_advance') {
+                    // For food_advance and meal_expanse_payment, don't show bill amount info
+                    if (paymentType === 'food_advance' || paymentType === 'meal_expanse_payment') {
                         $('#bill_amount_info').hide();
-                        
-                        // Check if payment already exists
-                        if (response.payment_exists) {
-                            paymentExists = true;
-                            $('#submit').prop('disabled', true);
-                            Toast.fire({
-                                type: 'warning',
-                                title: 'Payment already exists for current month!'
-                            });
-                        } else {
-                            paymentExists = false;
-                            $('#submit').prop('disabled', false);
-                        }
+                        paymentExists = false;
+                        $('#submit').prop('disabled', false);
                         return;
                     }
 

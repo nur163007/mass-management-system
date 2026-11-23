@@ -22,51 +22,64 @@ class UserPaymentController extends Controller
         $this->billService = $billService;
         $this->roomRentService = $roomRentService;
     }
-    public function index(){
-    	$id = session()->get('member_id');
-	    	$payments = DB::select("SELECT payments.month, SUM(payments.payment_amount) as total_amount
+    public function index()
+    {
+        $id = session()->get('member_id');
+        $payments = DB::select("SELECT payments.month, SUM(payments.payment_amount) as total_amount
 	        FROM members m
 	        INNER JOIN payments ON m.id = payments.member_id 
 	        WHERE payments.status ='1' and m.id = '$id'
 	        GROUP BY payments.month
 	        ORDER BY payments.month DESC");
-	        // dd($payments);
-        return view('userpanel.payment.user_payment',compact('payments'));
-       }
+        // dd($payments);
+        return view('userpanel.payment.user_payment', compact('payments'));
+    }
 
-    public function getPaymentDetails($month){
-    	$id = session()->get('member_id');
-    	
-    	// Month format conversion map
-    	$monthMap = [
-            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
-            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
-            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+    public function getPaymentDetails($month)
+    {
+        $id = session()->get('member_id');
+
+        // Month format conversion map
+        $monthMap = [
+            'Jan' => 'January',
+            'Feb' => 'February',
+            'Mar' => 'March',
+            'Apr' => 'April',
+            'May' => 'May',
+            'Jun' => 'June',
+            'Jul' => 'July',
+            'Aug' => 'August',
+            'Sep' => 'September',
+            'Oct' => 'October',
+            'Nov' => 'November',
+            'Dec' => 'December'
         ];
-        
+
         // Convert month to full form if abbreviated
         $monthFull = $monthMap[$month] ?? $month;
         $reverseMap = array_flip($monthMap);
         $monthAbbr = $reverseMap[$monthFull] ?? null;
-    	
-    	// Get all individual payments with dates for the selected month (check both formats)
-    	$payments = Payment::where('member_id', $id)
-    		->where(function($query) use ($month, $monthFull, $monthAbbr) {
-    			$query->where('month', $month);
-    			if ($monthFull != $month) {
-    				$query->orWhere('month', $monthFull);
-    			}
-    			if ($monthAbbr && $monthAbbr != $month && $monthAbbr != $monthFull) {
-    				$query->orWhere('month', $monthAbbr);
-    			}
-    		})
-    		->where('status', 1)
-    		->orderBy('date', 'DESC')
-    		->orderBy('payment_type', 'ASC')
-    		->get();
-    	
-    	$paymentTypes = [
+
+        // Get all individual payments with dates for the selected month (check both formats)
+        $payments = Payment::where('member_id', $id)
+            ->where(function ($query) use ($month, $monthFull, $monthAbbr) {
+                $query->where('month', $month);
+                if ($monthFull != $month) {
+                    $query->orWhere('month', $monthFull);
+                }
+                if ($monthAbbr && $monthAbbr != $month && $monthAbbr != $monthFull) {
+                    $query->orWhere('month', $monthAbbr);
+                }
+            })
+            ->where('status', 1)
+            ->orderBy('date', 'DESC')
+            ->orderBy('payment_type', 'ASC')
+            ->get();
+
+        $paymentTypes = [
             'food_advance' => 'Food Advance',
+            'meal_expanse_payment' => 'Meal Expanse Payment',
+            'meal_payment' => 'Meal Expanse Payment',
             'room_rent' => 'Room Rent',
             'room_advance' => 'Room Advance',
             'water' => 'Water Bill',
@@ -76,36 +89,38 @@ class UserPaymentController extends Controller
             'bua_moyla' => 'Bua & Moyla Bill',
             'other' => 'Other'
         ];
-    	
-    	$formattedPayments = [];
-    	$grandTotal = 0;
-    	
-    	foreach($payments as $payment) {
-    		$typeName = $paymentTypes[$payment->payment_type] ?? ucfirst(str_replace('_', ' ', $payment->payment_type));
-    		$formattedPayments[] = [
-    			'type' => $typeName,
-    			'amount' => $payment->payment_amount,
-    			'date' => date('d M Y', strtotime($payment->date)),
-    			'notes' => $payment->notes ?? ''
-    		];
-    		$grandTotal += $payment->payment_amount;
-    	}
-    	
-    	return response()->json([
-    		'success' => true,
-    		'month' => $month,
-    		'payments' => $formattedPayments,
-    		'total' => $grandTotal
-    	]);
+
+        $formattedPayments = [];
+        $grandTotal = 0;
+
+        foreach ($payments as $payment) {
+            $typeName = $paymentTypes[$payment->payment_type] ?? ucfirst(str_replace('_', ' ', $payment->payment_type));
+            $formattedPayments[] = [
+                'type' => $typeName,
+                'amount' => $payment->payment_amount,
+                'date' => date('d M Y', strtotime($payment->date)),
+                'notes' => $payment->notes ?? ''
+            ];
+            $grandTotal += $payment->payment_amount;
+        }
+
+        return response()->json([
+            'success' => true,
+            'month' => $month,
+            'payments' => $formattedPayments,
+            'total' => $grandTotal
+        ]);
     }
 
-       public function addPayment(){
-       	return view('userpanel.payment.add_payment');
-       }
+    public function addPayment()
+    {
+        return view('userpanel.payment.add_payment');
+    }
 
-       public function storePayment(Request $request){
-       	 $this->validate($request,[
-            'payment_type' => 'required|in:food_advance,room_rent,room_advance,water,internet,electricity,gas,bua_moyla',
+    public function storePayment(Request $request)
+    {
+        $this->validate($request, [
+            'payment_type' => 'required|in:food_advance,meal_expanse_payment,meal_payment,room_rent,room_advance,water,internet,electricity,gas,bua_moyla',
             'amount' => 'required|numeric|min:0.01',
             'date' => 'required|date',
         ]);
@@ -115,54 +130,71 @@ class UserPaymentController extends Controller
             return response()->json(['error' => 'User not logged in'], 401);
         }
 
-        $date_convert = date('Y-m-d',strtotime($request->date));
-        $month = date('F',strtotime($request->date)); // Full month name (January, February, etc.)
+        $paymentType = $request->payment_type;
+        if ($paymentType === 'meal_payment') {
+            $paymentType = 'meal_expanse_payment';
+        }
+
+        $date_convert = date('Y-m-d', strtotime($request->date));
+        $month = date('F', strtotime($request->date)); // Full month name (January, February, etc.)
 
         // Month format conversion map
         $monthMap = [
-            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
-            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
-            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+            'Jan' => 'January',
+            'Feb' => 'February',
+            'Mar' => 'March',
+            'Apr' => 'April',
+            'May' => 'May',
+            'Jun' => 'June',
+            'Jul' => 'July',
+            'Aug' => 'August',
+            'Sep' => 'September',
+            'Oct' => 'October',
+            'Nov' => 'November',
+            'Dec' => 'December'
         ];
         $reverseMap = array_flip($monthMap);
         $monthAbbr = $reverseMap[$month] ?? null;
 
-        // Check if payment already exists for this month and payment type (prevent duplicate)
-        $existingPayment = Payment::where('member_id', $memberId)
-            ->where('payment_type', $request->payment_type)
-            ->where(function($query) use ($month, $monthAbbr) {
-                $query->where('month', $month);
-                if ($monthAbbr) {
-                    $query->orWhere('month', $monthAbbr);
-                }
-            })
-            ->first();
+        // Check if payment already exists for this month and payment type (prevent duplicate for single-bill types)
+        if (!in_array($paymentType, ['food_advance', 'meal_expanse_payment'])) {
+            $existingPayment = Payment::where('member_id', $memberId)
+                ->where('payment_type', $paymentType)
+                ->where(function($query) use ($month, $monthAbbr) {
+                    $query->where('month', $month);
+                    if ($monthAbbr) {
+                        $query->orWhere('month', $monthAbbr);
+                    }
+                })
+                ->first();
 
-        if ($existingPayment) {
-            return response()->json([
-                'error' => 'Payment already exists for this month and payment type. Duplicate entry not allowed.',
-                'existing_payment' => [
-                    'id' => $existingPayment->id,
-                    'amount' => $existingPayment->payment_amount,
-                    'status' => $existingPayment->status,
-                    'date' => $existingPayment->date
-                ]
-            ], 422);
+            if ($existingPayment) {
+                return response()->json([
+                    'error' => 'Payment already exists for this month and payment type. Duplicate entry not allowed.',
+                    'existing_payment' => [
+                        'id' => $existingPayment->id,
+                        'amount' => $existingPayment->payment_amount,
+                        'status' => $existingPayment->status,
+                        'date' => $existingPayment->date
+                    ]
+                ], 422);
+            }
         }
 
         $payments = new Payment;
 
         $payments->member_id = $memberId;
         $payments->payment_amount = $request->amount;
-        $payments->payment_type = $request->payment_type;
+        $payments->payment_type = $paymentType;
         $payments->date = $date_convert;
         $payments->month = $month;
-        
+        $payments->notes = $paymentType === 'meal_expanse_payment' ? 'Meal Expanse Payment' : ($paymentType === 'food_advance' ? 'Food Advance' : null);
+
         // Check if the paying member is responsible for this bill type - auto approve
-        $responsibility = BillTypeResponsibility::where('bill_type', $request->payment_type)
+        $responsibility = BillTypeResponsibility::where('bill_type', $paymentType)
             ->where('member_id', $memberId)
             ->first();
-        
+
         // Auto-approve if responsible person pays for their own bill
         $payments->status = $responsibility ? "1" : "0";
 
@@ -172,17 +204,17 @@ class UserPaymentController extends Controller
                 'status' => $payments->status,
                 'message' => $responsibility ? 'Payment automatically approved (you are responsible for this bill type).' : 'Payment submitted successfully. Waiting for approval.'
             ]);
-        }
-        else{
+        } else {
             return response()->json("error");
-        } 
-       }
-       public function pendingPayment(){
-       	$id = session()->get('member_id');
-	    $pending = DB::select("SELECT * FROM payments where status ='0' and member_id = '$id'");
-	    // dd($pending);
-    	return view('userpanel.payment.pending_payment',compact('pending'));
-       }
+        }
+    }
+    public function pendingPayment()
+    {
+        $id = session()->get('member_id');
+        $pending = DB::select("SELECT * FROM payments where status ='0' and member_id = '$id'");
+        // dd($pending);
+        return view('userpanel.payment.pending_payment', compact('pending'));
+    }
 
     /**
      * Get bill amount for the logged-in user based on payment type
@@ -199,17 +231,43 @@ class UserPaymentController extends Controller
         }
 
         $this->validate($request, [
-            'payment_type' => 'required|in:food_advance,room_rent,room_advance,water,internet,electricity,gas,bua_moyla',
+            'payment_type' => 'required|in:food_advance,meal_expanse_payment,meal_payment,room_rent,room_advance,water,internet,electricity,gas,bua_moyla',
         ]);
 
         $paymentType = $request->payment_type;
+        if ($paymentType === 'meal_payment') {
+            $paymentType = 'meal_expanse_payment';
+        }
+
+        // Handle food advance and meal expanse payment (open amount, no fixed bill)
+        if (in_array($paymentType, ['food_advance', 'meal_expanse_payment'])) {
+            return response()->json([
+                'success' => true,
+                'amount' => 0,
+                'total_bill' => 0,
+                'paid' => 0,
+                'due' => 0,
+                'payment_exists' => false,
+                'message' => 'Enter your payment amount'
+            ]);
+        }
+
         $currentMonth = Carbon::now()->format('F'); // Full month name (January, February, etc.)
 
         // Month format conversion map
         $monthMap = [
-            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
-            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
-            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+            'Jan' => 'January',
+            'Feb' => 'February',
+            'Mar' => 'March',
+            'Apr' => 'April',
+            'May' => 'May',
+            'Jun' => 'June',
+            'Jul' => 'July',
+            'Aug' => 'August',
+            'Sep' => 'September',
+            'Oct' => 'October',
+            'Nov' => 'November',
+            'Dec' => 'December'
         ];
         $reverseMap = array_flip($monthMap);
         $currentMonthAbbr = $reverseMap[$currentMonth] ?? null;
@@ -217,7 +275,7 @@ class UserPaymentController extends Controller
         // Check if payment already exists for current month (prevent duplicate)
         $existingPayment = Payment::where('member_id', $memberId)
             ->where('payment_type', $paymentType)
-            ->where(function($query) use ($currentMonth, $currentMonthAbbr) {
+            ->where(function ($query) use ($currentMonth, $currentMonthAbbr) {
                 $query->where('month', $currentMonth);
                 if ($currentMonthAbbr) {
                     $query->orWhere('month', $currentMonthAbbr);
@@ -251,11 +309,11 @@ class UserPaymentController extends Controller
             $monthlyRent = $roomRent['monthly_rent'] ?? 0;
             $extraPaymentReduction = $roomRent['extra_payment_reduction'] ?? 0;
             $finalRent = $roomRent['final_rent'] ?? 0;
-            
+
             // Get already paid room rent for current month
             $paidAmount = Payment::where('member_id', $memberId)
                 ->where('payment_type', 'room_rent')
-                ->where(function($query) use ($currentMonth, $currentMonthAbbr) {
+                ->where(function ($query) use ($currentMonth, $currentMonthAbbr) {
                     $query->where('month', $currentMonth);
                     if ($currentMonthAbbr) {
                         $query->orWhere('month', $currentMonthAbbr);
@@ -263,9 +321,9 @@ class UserPaymentController extends Controller
                 })
                 ->where('status', 1)
                 ->sum('payment_amount');
-            
+
             $dueAmount = max(0, $finalRent - $paidAmount);
-            
+
             return response()->json([
                 'success' => true,
                 'amount' => round($dueAmount, 2),
@@ -285,7 +343,7 @@ class UserPaymentController extends Controller
         if ($paymentType === 'room_advance') {
             $roomRent = $this->roomRentService->getMemberRoomRent($memberId, $currentMonth);
             $advancePaid = $roomRent['advance_paid'] ?? 0;
-            
+
             return response()->json([
                 'success' => true,
                 'amount' => 0,
@@ -301,10 +359,10 @@ class UserPaymentController extends Controller
 
         // Handle bill payments (water, internet, electricity, gas, bua_moyla)
         $billType = $paymentType;
-        
+
         // Get the bill for current month and type (check both full and abbreviated forms)
         $bill = Bill::where('bill_type', $billType)
-            ->where(function($query) use ($currentMonth, $currentMonthAbbr) {
+            ->where(function ($query) use ($currentMonth, $currentMonthAbbr) {
                 $query->where('month', $currentMonth);
                 if ($currentMonthAbbr) {
                     $query->orWhere('month', $currentMonthAbbr);
@@ -329,7 +387,7 @@ class UserPaymentController extends Controller
         // Get already paid amount for this bill type (check both month formats)
         $paidAmount = Payment::where('member_id', $memberId)
             ->where('payment_type', $billType)
-            ->where(function($query) use ($currentMonth, $currentMonthAbbr) {
+            ->where(function ($query) use ($currentMonth, $currentMonthAbbr) {
                 $query->where('month', $currentMonth);
                 if ($currentMonthAbbr) {
                     $query->orWhere('month', $currentMonthAbbr);
@@ -352,5 +410,4 @@ class UserPaymentController extends Controller
             'message' => $paymentExists ? 'Payment already exists for this month' : ''
         ]);
     }
-
 }

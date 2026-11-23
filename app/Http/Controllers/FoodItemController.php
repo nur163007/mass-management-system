@@ -58,6 +58,7 @@ class FoodItemController extends Controller
         }
         $items->food_category_id = $request->food_category_id ?? null;
         $items->item_name = $request->item_name;
+        $items->unit = $request->unit ?? null;
         $items->item_description = $request->item_description ?? "Quick created from expense form";
       
 

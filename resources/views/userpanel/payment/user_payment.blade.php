@@ -128,7 +128,7 @@
             $('#paymentDetailsModal').modal('show');
             
             // Load payment details via AJAX
-            var url = "{{ url('user/payment/details') }}/" + month;
+            var url = "{{ url('payment/details') }}/" + month;
             $.ajax({
                 url: url,
                 method: 'GET',

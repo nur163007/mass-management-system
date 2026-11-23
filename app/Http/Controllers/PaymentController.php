@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers; 
+namespace App\Http\Controllers;
+
 use App\Models\Member;
 use App\Models\Payment;
 use App\Models\Bill;
@@ -23,72 +24,79 @@ class PaymentController extends Controller
         $this->roomRentService = $roomRentService;
     }
 
-    public function addPayment(){
+    public function addPayment()
+    {
         // Check authorization
         $loggedInMemberId = session()->get('member_id');
         if (!$loggedInMemberId) {
             return redirect('/')->with('error', 'Please login first.');
         }
-        
+
         $loggedInMember = Member::find($loggedInMemberId);
         if (!$loggedInMember) {
             return redirect('/')->with('error', 'Member not found.');
         }
-        
+
         $isSuperAdmin = $loggedInMember->role_id == 1;
         $isManager = $loggedInMember->role_id == 2;
-        
+
         $myResponsibilities = BillTypeResponsibility::where('member_id', $loggedInMemberId)
             ->pluck('bill_type')
             ->toArray();
-        
+
         // Authorization: Super Admin, Manager, or users with responsibilities can access admin view; others get user view
         if (!$isSuperAdmin && !$isManager && empty($myResponsibilities)) {
             return app(\App\Http\Controllers\User\UserPaymentController::class)->addPayment();
         }
-        
+
         // Get Manager (2) and User (3) members only, exclude Super Admin (1)
         $members = Member::whereIn('role_id', [2, 3])->where('status', 1)->get();
-        
-        return view('admin.payment.addPayment',compact('members', 'myResponsibilities', 'isSuperAdmin', 'isManager'));
+
+        return view('admin.payment.addPayment', compact('members', 'myResponsibilities', 'isSuperAdmin', 'isManager'));
     }
 
-    public function storePayment(Request $request){
+    public function storePayment(Request $request)
+    {
         // Check authorization
         $loggedInMemberId = session()->get('member_id');
         if (!$loggedInMemberId) {
             return response()->json(['error' => 'Please login first.'], 401);
         }
-        
+
         $loggedInMember = Member::find($loggedInMemberId);
         if (!$loggedInMember) {
             return response()->json(['error' => 'Member not found.'], 404);
         }
-        
+
         $isSuperAdmin = $loggedInMember->role_id == 1;
         $isManager = $loggedInMember->role_id == 2;
-        
+
         $myResponsibilities = BillTypeResponsibility::where('member_id', $loggedInMemberId)
             ->pluck('bill_type')
             ->toArray();
-        
+
         // Authorization: Super Admin, Manager, or users with responsibilities can add payment
         if (!$isSuperAdmin && !$isManager && empty($myResponsibilities)) {
             return response()->json(['error' => 'You are not authorized to add payments.'], 403);
         }
-        
+
         // For regular users, check if they're adding payment for their responsible bill type
         if (!$isSuperAdmin && !$isManager && !in_array($request->payment_type, $myResponsibilities)) {
             return response()->json(['error' => 'You are not authorized to add payment for this bill type.'], 403);
         }
-        
-        $this->validate($request,[
+
+        $this->validate($request, [
             'member_id' => 'required',
-            'payment_type' => 'required|in:food_advance,room_rent,room_advance,water,internet,electricity,gas,bua_moyla',
+            'payment_type' => 'required|in:food_advance,meal_expanse_payment,meal_payment,room_rent,room_advance,water,internet,electricity,gas,bua_moyla',
             'amount' => 'required|numeric|min:0.01',
             'date' => 'required',
             'month' => 'required',
         ]);
+
+        $paymentType = $request->payment_type;
+        if ($paymentType === 'meal_payment') {
+            $paymentType = 'meal_expanse_payment';
+        }
 
         // Check if member is Super Admin - prevent payment for Super Admin
         $member = Member::find($request->member_id);
@@ -99,23 +107,23 @@ class PaymentController extends Controller
             return response()->json(['error' => 'Cannot add payment for Super Admin.'], 403);
         }
 
-        $date_convert = date('Y-m-d',strtotime($request->date));
+        $date_convert = date('Y-m-d', strtotime($request->date));
         $month = $request->month;
 
         // Determine payment status:
-        // 1. Manager adds food_advance payment = auto-approved
+        // 1. Manager adds food_advance / meal_expanse_payment = auto-approved
         // 2. Manager adds payment for their responsible bill type = auto-approved
         // 3. Responsible person adds payment for their bill type = auto-approved
         // 4. Others = pending (needs approval)
         $paymentStatus = "0"; // Default: pending
-        
-        if ($isManager && $request->payment_type === 'food_advance') {
-            // Manager adds food advance payment - auto approve
+
+        if ($isManager && in_array($paymentType, ['food_advance', 'meal_expanse_payment'])) {
+            // Manager adds food advance or meal payment - auto approve
             $paymentStatus = "1";
-        } elseif ($isManager && in_array($request->payment_type, $myResponsibilities)) {
+        } elseif ($isManager && in_array($paymentType, $myResponsibilities)) {
             // Manager adds payment for their responsible bill type - auto approve
             $paymentStatus = "1";
-        } elseif (!$isSuperAdmin && !$isManager && in_array($request->payment_type, $myResponsibilities)) {
+        } elseif (!$isSuperAdmin && !$isManager && in_array($paymentType, $myResponsibilities)) {
             // Responsible person (regular user) adds payment for their bill type - auto approve
             $paymentStatus = "1";
         }
@@ -124,11 +132,11 @@ class PaymentController extends Controller
 
         $payments->member_id = $request->member_id;
         $payments->payment_amount = $request->amount;
-        $payments->payment_type = $request->payment_type;
+        $payments->payment_type = $paymentType;
         $payments->date = $date_convert;
         $payments->month = $month;
         $payments->status = $paymentStatus;
-        $payments->notes = $request->notes ?? null;
+        $payments->notes = $request->notes ?? ($paymentType === 'meal_expanse_payment' ? 'Meal Expanse Payment' : null);
 
 
         if ($payments->save()) {
@@ -146,20 +154,19 @@ class PaymentController extends Controller
                 }
             }
             return response()->json($message);
-
-        }
-        else{
+        } else {
             return response()->json("error");
-        } 
+        }
     }
 
-    public function viewPayment(Request $request){
+    public function viewPayment(Request $request)
+    {
         // Get logged-in member's responsibilities
         $loggedInMemberId = session()->get('member_id');
         $loggedInMember = Member::find($loggedInMemberId);
         $isSuperAdmin = $loggedInMember && $loggedInMember->role_id == 1;
         $isManager = $loggedInMember && $loggedInMember->role_id == 2;
-        
+
         $myResponsibilities = BillTypeResponsibility::where('member_id', $loggedInMemberId)
             ->pluck('bill_type')
             ->toArray();
@@ -170,30 +177,34 @@ class PaymentController extends Controller
         }
 
         $query = DB::table('payments')
-        ->join('members','payments.member_id','members.id')
-        ->select('payments.*','members.full_name')
-        ->where('members.role_id', '!=', 1); // Exclude Super Admin payments
-        
+            ->join('members', 'payments.member_id', 'members.id')
+            ->select('payments.*', 'members.full_name')
+            ->where('members.role_id', '!=', 1); // Exclude Super Admin payments
+
         // Manager can see all payments, but regular users see only their responsible bill types
         if (!$isSuperAdmin && !$isManager && !empty($myResponsibilities)) {
             $query->whereIn('payments.payment_type', $myResponsibilities);
         }
-        
+
         // Filter by member if provided
-        if($request->has('member_id') && $request->member_id != ''){
+        if ($request->has('member_id') && $request->member_id != '') {
             $query->where('payments.member_id', $request->member_id);
         }
-        
+
         // Filter by payment type if provided
-        if($request->has('payment_type') && $request->payment_type != ''){
-            $query->where('payments.payment_type', $request->payment_type);
+        if ($request->has('payment_type') && $request->payment_type != '') {
+            if ($request->payment_type === 'meal_expanse_payment' || $request->payment_type === 'meal_payment') {
+                $query->whereIn('payments.payment_type', ['meal_expanse_payment', 'meal_payment']);
+            } else {
+                $query->where('payments.payment_type', $request->payment_type);
+            }
         }
-        
+
         // Get all payments for grouping
         $allPayments = $query->orderBy('payments.created_at', 'DESC')
             ->orderBy('payments.id', 'DESC')
             ->get();
-        
+
         // Group payments by member_id and month, sum amounts
         $groupedPayments = [];
         foreach ($allPayments as $payment) {
@@ -208,21 +219,39 @@ class PaymentController extends Controller
             }
             $groupedPayments[$key]['total_amount'] += $payment->payment_amount;
         }
-        
+
         // Convert to array and sort by month (descending), then by member name
         $payments = array_values($groupedPayments);
-        usort($payments, function($a, $b) {
+        usort($payments, function ($a, $b) {
             $monthOrder = [
-                'January' => 1, 'February' => 2, 'March' => 3, 'April' => 4,
-                'May' => 5, 'June' => 6, 'July' => 7, 'August' => 8,
-                'September' => 9, 'October' => 10, 'November' => 11, 'December' => 12,
-                'Jan' => 1, 'Feb' => 2, 'Mar' => 3, 'Apr' => 4,
-                'May' => 5, 'Jun' => 6, 'Jul' => 7, 'Aug' => 8,
-                'Sep' => 9, 'Oct' => 10, 'Nov' => 11, 'Dec' => 12
+                'January' => 1,
+                'February' => 2,
+                'March' => 3,
+                'April' => 4,
+                'May' => 5,
+                'June' => 6,
+                'July' => 7,
+                'August' => 8,
+                'September' => 9,
+                'October' => 10,
+                'November' => 11,
+                'December' => 12,
+                'Jan' => 1,
+                'Feb' => 2,
+                'Mar' => 3,
+                'Apr' => 4,
+                'May' => 5,
+                'Jun' => 6,
+                'Jul' => 7,
+                'Aug' => 8,
+                'Sep' => 9,
+                'Oct' => 10,
+                'Nov' => 11,
+                'Dec' => 12
             ];
             $aOrder = $monthOrder[$a['month']] ?? 99;
             $bOrder = $monthOrder[$b['month']] ?? 99;
-            
+
             // First sort by month (descending)
             if ($bOrder != $aOrder) {
                 return $bOrder - $aOrder;
@@ -230,12 +259,13 @@ class PaymentController extends Controller
             // Then sort by member name (ascending)
             return strcmp($a['full_name'], $b['full_name']);
         });
-        
+
         // Get members for dropdown (exclude Super Admin)
         $members = Member::whereIn('role_id', [2, 3])->orderBy('full_name')->get();
-        
+
         $paymentTypes = [
             'food_advance' => 'Food Advance',
+            'meal_expanse_payment' => 'Meal Payment',
             'room_rent' => 'Room Rent',
             'room_advance' => 'Room Advance',
             'water' => 'Water Bill',
@@ -244,21 +274,22 @@ class PaymentController extends Controller
             'gas' => 'Gas Bill',
             'bua_moyla' => 'Bua & Moyla Bill',
         ];
-        
+
         // Filter payment types dropdown: Manager sees all, regular users see only responsible types
         if (!$isSuperAdmin && !$isManager && !empty($myResponsibilities)) {
-            $paymentTypes = array_filter($paymentTypes, function($key) use ($myResponsibilities) {
+            $paymentTypes = array_filter($paymentTypes, function ($key) use ($myResponsibilities) {
                 return in_array($key, $myResponsibilities);
             }, ARRAY_FILTER_USE_KEY);
         }
-        
+
         $selectedMemberId = $request->member_id ?? '';
         $selectedPaymentType = $request->payment_type ?? '';
-        
-        return view('admin.payment.viewPayment',compact('payments', 'members', 'paymentTypes', 'selectedMemberId', 'selectedPaymentType', 'myResponsibilities', 'isSuperAdmin', 'isManager'));
+
+        return view('admin.payment.viewPayment', compact('payments', 'members', 'paymentTypes', 'selectedMemberId', 'selectedPaymentType', 'myResponsibilities', 'isSuperAdmin', 'isManager'));
     }
 
-    public function paymentStatus($id, $status){
+    public function paymentStatus($id, $status)
+    {
         $active = Payment::find($id);
         if (!$active) {
             return response()->json(['message' => 'Payment not found.'], 404);
@@ -266,36 +297,36 @@ class PaymentController extends Controller
 
         $loggedInMemberId = session()->get('member_id');
         $loggedInRole = session('role');
-        
+
         // Check if logged-in user is responsible for this payment type
         $responsibility = BillTypeResponsibility::where('bill_type', $active->payment_type)
             ->where('member_id', $loggedInMemberId)
             ->first();
-        
+
         // Get logged-in member details
         $loggedInMember = $loggedInMemberId ? Member::find($loggedInMemberId) : null;
         $isSuperAdmin = ($loggedInMember && $loggedInMember->role_id == 1) || $loggedInRole == 1;
         $isManager = ($loggedInMember && $loggedInMember->role_id == 2) || $loggedInRole == 2;
-        
+
         // Authorization check:
         // 1. Super Admin and Manager can approve all payments (food advance, bills, room rent, etc.)
         // 2. Regular users can approve only their responsible bill types
         $canApprove = false;
-        
+
         if ($isSuperAdmin || $isManager) {
             $canApprove = true;
         } elseif ($responsibility) {
             $canApprove = true;
         }
-        
+
         if (!$canApprove) {
             return response()->json([
-                'message' => 'You are not authorized to approve this payment. ' . 
+                'message' => 'You are not authorized to approve this payment. ' .
                     'Only Admin, Manager, or the responsible member for ' . ucfirst(str_replace('_', ' ', $active->payment_type)) . ' can approve it.'
             ], 403);
         }
-        
-        $active->status = $status; 
+
+        $active->status = $status;
         $active->save();
 
         // Clear dashboard analytics cache so Total Payment updates immediately
@@ -305,48 +336,50 @@ class PaymentController extends Controller
         return response()->json(['success' => true, 'message' => 'Success']);
     }
 
-    public function deletePayment($id){
+    public function deletePayment($id)
+    {
         // dd($id);
         $payments = Payment::findOrFail($id);
 
-        if($payments){
+        if ($payments) {
             $payments->delete();
-            return redirect()->back()->with('success','Payment successfully deleted.');
-        }else{
-            return redirect()->back()->with('error','Something Error Found !, Please try again.');
+            return redirect()->back()->with('success', 'Payment successfully deleted.');
+        } else {
+            return redirect()->back()->with('error', 'Something Error Found !, Please try again.');
         }
     }
 
-    public function editPayment($id){
+    public function editPayment($id)
+    {
         // Check authorization
         $loggedInMemberId = session()->get('member_id');
         if (!$loggedInMemberId) {
             return redirect('/')->with('error', 'Please login first.');
         }
-        
+
         $loggedInMember = Member::find($loggedInMemberId);
         if (!$loggedInMember) {
             return redirect('/')->with('error', 'Member not found.');
         }
-        
+
         $isSuperAdmin = $loggedInMember->role_id == 1;
         $isManager = $loggedInMember->role_id == 2;
-        
+
         $myResponsibilities = BillTypeResponsibility::where('member_id', $loggedInMemberId)
             ->pluck('bill_type')
             ->toArray();
-        
+
         // Get payment details
-        $payments=DB::table('payments')
-        ->join('members','payments.member_id','members.id')
-        ->select('members.full_name','payments.*')
-        ->where('payments.id',$id)
-        ->first();
-        
-        if(!$payments){
+        $payments = DB::table('payments')
+            ->join('members', 'payments.member_id', 'members.id')
+            ->select('members.full_name', 'payments.*')
+            ->where('payments.id', $id)
+            ->first();
+
+        if (!$payments) {
             return redirect()->route('admin.view.payment')->with('error', 'Payment not found.');
         }
-        
+
         // Authorization: Super Admin, Manager, or responsible member for this payment type
         $canEdit = false;
         if ($isSuperAdmin || $isManager) {
@@ -354,37 +387,38 @@ class PaymentController extends Controller
         } elseif (in_array($payments->payment_type, $myResponsibilities)) {
             $canEdit = true;
         }
-        
+
         if (!$canEdit) {
             return redirect()->route('admin.view.payment')->with('error', 'You are not authorized to edit this payment.');
         }
 
         // Exclude Super Admin (role_id = 1), only include Manager (2) and User (3)
         $members = Member::whereIn('role_id', [2, 3])->where('status', 1)->get();
-        return view('admin.payment.editPayment',compact('payments','members'));
+        return view('admin.payment.editPayment', compact('payments', 'members'));
     }
 
 
-    public function updatePayment(Request $request){
+    public function updatePayment(Request $request)
+    {
         // Check authorization
         $loggedInMemberId = session()->get('member_id');
         if (!$loggedInMemberId) {
             return response()->json(['error' => 'Please login first.'], 401);
         }
-        
+
         $loggedInMember = Member::find($loggedInMemberId);
         if (!$loggedInMember) {
             return response()->json(['error' => 'Member not found.'], 404);
         }
-        
+
         $isSuperAdmin = $loggedInMember->role_id == 1;
         $isManager = $loggedInMember->role_id == 2;
-        
+
         $myResponsibilities = BillTypeResponsibility::where('member_id', $loggedInMemberId)
             ->pluck('bill_type')
             ->toArray();
-        
-        $this->validate($request,[
+
+        $this->validate($request, [
             'member_id' => 'required',
             'amount' => 'required|numeric|min:0.01',
             'date' => 'required',
@@ -392,11 +426,11 @@ class PaymentController extends Controller
 
         $id = $request->paymentID;
         $payments = Payment::findOrFail($id);
-        
+
         if (!$payments) {
             return response()->json(['error' => 'Payment not found.'], 404);
         }
-        
+
         // Authorization: Super Admin, Manager, or responsible member for this payment type
         $canEdit = false;
         if ($isSuperAdmin || $isManager) {
@@ -404,11 +438,11 @@ class PaymentController extends Controller
         } elseif (in_array($payments->payment_type, $myResponsibilities)) {
             $canEdit = true;
         }
-        
+
         if (!$canEdit) {
             return response()->json(['error' => 'You are not authorized to edit this payment.'], 403);
         }
-        
+
         // Check if member is Super Admin - prevent payment for Super Admin
         $member = Member::find($request->member_id);
         if (!$member) {
@@ -417,9 +451,9 @@ class PaymentController extends Controller
         if ($member->role_id == 1) {
             return response()->json(['error' => 'Cannot update payment for Super Admin.'], 403);
         }
-        
-        $date_convert = date('Y-m-d',strtotime($request->date));
-        $month = date('F',strtotime($request->date));
+
+        $date_convert = date('Y-m-d', strtotime($request->date));
+        $month = date('F', strtotime($request->date));
 
         $payments->member_id = $request->member_id;
         $payments->payment_amount = $request->amount;
@@ -428,63 +462,78 @@ class PaymentController extends Controller
 
         if ($payments->save()) {
             return response()->json('success');
-        }
-        else{
+        } else {
             return response()->json("error");
-        } 
+        }
     }
 
-    public function viewPaymentDetails($id){
+    public function viewPaymentDetails($id)
+    {
         $payment = DB::table('payments')
             ->join('members', 'payments.member_id', '=', 'members.id')
             ->select('payments.*', 'members.full_name', 'members.phone_no', 'members.email')
             ->where('payments.id', $id)
             ->first();
-        
-        if(!$payment){
+
+        if (!$payment) {
             return redirect()->route('admin.view.payment')->with('error', 'Payment not found.');
         }
 
         return view('admin.payment.viewDetails', compact('payment'));
     }
 
-    public function downloadPdf(){
+    public function downloadPdf()
+    {
         // Check authorization
         $loggedInMemberId = session()->get('member_id');
         if (!$loggedInMemberId) {
             return redirect('/')->with('error', 'Please login first.');
         }
-        
+
         $loggedInMember = Member::find($loggedInMemberId);
         if (!$loggedInMember) {
             return redirect('/')->with('error', 'Member not found.');
         }
-        
+
         $isSuperAdmin = $loggedInMember->role_id == 1;
         $isManager = $loggedInMember->role_id == 2;
-        
+
         $myResponsibilities = BillTypeResponsibility::where('member_id', $loggedInMemberId)
             ->pluck('bill_type')
             ->toArray();
-        
+
         // Authorization: Super Admin, Manager, or users with responsibilities can download
         if (!$isSuperAdmin && !$isManager && empty($myResponsibilities)) {
             return redirect()->route('admin.view.payment')->with('error', 'You are not authorized to download payments.');
         }
-        
+
         $query = DB::table('payments')
-        ->join('members','payments.member_id','members.id')
-        ->select('payments.*','members.full_name')
-        ->where('members.role_id', '!=', 1); // Exclude Super Admin payments
-        
+            ->join('members', 'payments.member_id', 'members.id')
+            ->select('payments.*', 'members.full_name')
+            ->where('members.role_id', '!=', 1); // Exclude Super Admin payments
+
         // Manager can download all, regular users can download only their responsible bill types
         if (!$isSuperAdmin && !$isManager && !empty($myResponsibilities)) {
             $query->whereIn('payments.payment_type', $myResponsibilities);
         }
-        
+
+        // Filter by member if provided
+        if(request()->has('member_id') && request('member_id') != ''){
+            $query->where('payments.member_id', request('member_id'));
+        }
+
+        // Filter by payment type if provided
+        if(request()->has('payment_type') && request('payment_type') != ''){
+            if (request('payment_type') === 'meal_expanse_payment' || request('payment_type') === 'meal_payment') {
+                $query->whereIn('payments.payment_type', ['meal_expanse_payment', 'meal_payment']);
+            } else {
+                $query->where('payments.payment_type', request('payment_type'));
+            }
+        }
+
         $payments = $query->get();
 
-        $pdf = PDF::loadView('admin.payment.paymentPdf',compact('payments'));
+        $pdf = PDF::loadView('admin.payment.paymentPdf', compact('payments'));
         return $pdf->download('payments.pdf');
     }
 
@@ -502,7 +551,7 @@ class PaymentController extends Controller
         $memberId = $request->member_id;
         $paymentType = $request->bill_type;
         $month = $request->month;
-        
+
         // Check if member is Super Admin - prevent bill calculation for Super Admin
         $member = Member::find($memberId);
         if (!$member) {
@@ -526,16 +575,16 @@ class PaymentController extends Controller
             $monthlyRent = $roomRent['monthly_rent'] ?? 0;
             $extraPaymentReduction = $roomRent['extra_payment_reduction'] ?? 0;
             $finalRent = $roomRent['final_rent'] ?? 0;
-            
+
             // Get already paid room rent for this month
             $paidAmount = Payment::where('member_id', $memberId)
                 ->where('payment_type', 'room_rent')
                 ->where('month', $month)
                 ->where('status', 1)
                 ->sum('payment_amount');
-            
+
             $dueAmount = max(0, $finalRent - $paidAmount);
-            
+
             return response()->json([
                 'success' => true,
                 'amount' => $dueAmount,
@@ -551,10 +600,10 @@ class PaymentController extends Controller
         if ($paymentType === 'room_advance') {
             $roomRent = $this->roomRentService->getMemberRoomRent($memberId, $month);
             $advancePaid = $roomRent['advance_paid'] ?? 0;
-            
+
             // Room advance is typically a one-time payment when assigning to room
             $dueAmount = 0;
-            
+
             return response()->json([
                 'success' => true,
                 'amount' => $dueAmount,
@@ -567,24 +616,33 @@ class PaymentController extends Controller
 
         // Handle bill payments (water, internet, electricity, gas, bua_moyla)
         $billType = $paymentType;
-        
+
         // Month format conversion map
         $monthMap = [
-            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
-            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
-            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+            'Jan' => 'January',
+            'Feb' => 'February',
+            'Mar' => 'March',
+            'Apr' => 'April',
+            'May' => 'May',
+            'Jun' => 'June',
+            'Jul' => 'July',
+            'Aug' => 'August',
+            'Sep' => 'September',
+            'Oct' => 'October',
+            'Nov' => 'November',
+            'Dec' => 'December'
         ];
-        
+
         // Convert month to full form
         $monthFull = $monthMap[$month] ?? $month;
-        
+
         // Get abbreviated form if month is in full form
         $reverseMap = array_flip($monthMap);
         $monthAbbr = $reverseMap[$monthFull] ?? null;
-        
+
         // Get the bill for this month and type (check both full and abbreviated forms)
         $bill = Bill::where('bill_type', $billType)
-            ->where(function($query) use ($month, $monthFull, $monthAbbr) {
+            ->where(function ($query) use ($month, $monthFull, $monthAbbr) {
                 $query->where('month', $month);
                 if ($monthFull != $month) {
                     $query->orWhere('month', $monthFull);
@@ -611,7 +669,7 @@ class PaymentController extends Controller
         // Get already paid amount for this bill type (check both month formats)
         $paidAmount = Payment::where('member_id', $memberId)
             ->where('payment_type', $billType)
-            ->where(function($query) use ($month, $monthFull, $monthAbbr) {
+            ->where(function ($query) use ($month, $monthFull, $monthAbbr) {
                 $query->where('month', $month);
                 if ($monthFull != $month) {
                     $query->orWhere('month', $monthFull);
@@ -644,53 +702,74 @@ class PaymentController extends Controller
         if (!$loggedInMemberId) {
             return response()->json(['success' => false, 'message' => 'Please login first.'], 401);
         }
-        
+
         $loggedInMember = Member::find($loggedInMemberId);
         if (!$loggedInMember) {
             return response()->json(['success' => false, 'message' => 'Member not found.'], 404);
         }
-        
+
         $loggedInRole = session('role');
         $isSuperAdmin = ($loggedInMember && $loggedInMember->role_id == 1) || $loggedInRole == 1;
         $isManager = ($loggedInMember && $loggedInMember->role_id == 2) || $loggedInRole == 2;
-        
+
         $myResponsibilities = BillTypeResponsibility::where('member_id', $loggedInMemberId)
             ->pluck('bill_type')
             ->toArray();
-        
+
         // Month format conversion map
         $monthMap = [
-            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
-            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
-            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+            'Jan' => 'January',
+            'Feb' => 'February',
+            'Mar' => 'March',
+            'Apr' => 'April',
+            'May' => 'May',
+            'Jun' => 'June',
+            'Jul' => 'July',
+            'Aug' => 'August',
+            'Sep' => 'September',
+            'Oct' => 'October',
+            'Nov' => 'November',
+            'Dec' => 'December'
         ];
         $reverseMap = array_flip($monthMap);
         $monthAbbr = $reverseMap[$month] ?? null;
-        
+
         // Get all individual payments for this member and month (exclude Super Admin)
-        $payments = Payment::where('member_id', $memberId)
-            ->whereHas('member', function($query) {
+        $paymentsQuery = Payment::where('member_id', $memberId)
+            ->whereHas('member', function ($query) {
                 $query->where('role_id', '!=', 1); // Exclude Super Admin
             })
-            ->where(function($query) use ($month, $monthAbbr) {
+            ->where(function ($query) use ($month, $monthAbbr) {
                 $query->where('month', $month);
                 if ($monthAbbr) {
                     $query->orWhere('month', $monthAbbr);
                 }
-            })
-            ->orderBy('date', 'DESC')
+            });
+
+        if (request()->has('payment_type') && request('payment_type') != '') {
+            $reqType = request('payment_type');
+            if ($reqType === 'meal_expanse_payment' || $reqType === 'meal_payment') {
+                $paymentsQuery->whereIn('payment_type', ['meal_expanse_payment', 'meal_payment']);
+            } else {
+                $paymentsQuery->where('payment_type', $reqType);
+            }
+        }
+
+        $payments = $paymentsQuery->orderBy('date', 'DESC')
             ->orderBy('payment_type', 'ASC')
             ->get();
-        
+
         // Filter by responsibilities if not super admin or manager
         if (!$isSuperAdmin && !$isManager && !empty($myResponsibilities)) {
-            $payments = $payments->filter(function($payment) use ($myResponsibilities) {
+            $payments = $payments->filter(function ($payment) use ($myResponsibilities) {
                 return in_array($payment->payment_type, $myResponsibilities);
             });
         }
-        
+
         $paymentTypes = [
             'food_advance' => 'Food Advance',
+            'meal_expanse_payment' => 'Meal Expanse Payment',
+            'meal_payment' => 'Meal Expanse Payment',
             'room_rent' => 'Room Rent',
             'room_advance' => 'Room Advance',
             'water' => 'Water Bill',
@@ -700,17 +779,17 @@ class PaymentController extends Controller
             'bua_moyla' => 'Bua & Moyla Bill',
             'other' => 'Other'
         ];
-        
+
         $formattedPayments = [];
         $grandTotal = 0;
-        
-        foreach($payments as $payment) {
+
+        foreach ($payments as $payment) {
             $typeName = $paymentTypes[$payment->payment_type] ?? ucfirst(str_replace('_', ' ', $payment->payment_type));
-            
+
             // Check authorization for approve and edit
             $canApprove = false;
             $canEdit = false;
-            
+
             // Check if user can approve this payment: Super Admin and Manager can approve and edit all payments
             if ($isSuperAdmin || $isManager) {
                 $canApprove = true;
@@ -725,12 +804,12 @@ class PaymentController extends Controller
                     $canEdit = true;
                 }
             }
-            
+
             // Can't edit if already approved/paid
             if ($payment->status == 1) {
                 $canEdit = false;
             }
-            
+
             $formattedPayments[] = [
                 'id' => $payment->id,
                 'type' => $typeName,
@@ -745,7 +824,7 @@ class PaymentController extends Controller
             ];
             $grandTotal += $payment->payment_amount;
         }
-        
+
         return response()->json([
             'success' => true,
             'member_id' => $memberId,
@@ -772,6 +851,7 @@ class PaymentController extends Controller
 
         $paymentTypes = [
             'food_advance' => 'Food Advance',
+            'meal_expanse_payment' => 'Meal Expanse Payment',
             'room_rent' => 'Room Rent',
             'room_advance' => 'Room Advance',
             'water' => 'Water Bill',
@@ -792,7 +872,11 @@ class PaymentController extends Controller
 
         $selectedType = $request->input('payment_type');
         if (!empty($selectedType)) {
-            $query->where('payment_type', $selectedType);
+            if ($selectedType === 'meal_expanse_payment' || $selectedType === 'meal_payment') {
+                $query->whereIn('payment_type', ['meal_expanse_payment', 'meal_payment']);
+            } else {
+                $query->where('payment_type', $selectedType);
+            }
         }
 
         $selectedStatus = $request->input('status');
@@ -839,8 +923,18 @@ class PaymentController extends Controller
 
         // Available months for dropdown
         $months = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December'
         ];
 
         return view('admin.payment.myPayment', compact(
@@ -875,6 +969,7 @@ class PaymentController extends Controller
 
         $paymentTypes = [
             'food_advance' => 'Food Advance',
+            'meal_expanse_payment' => 'Meal Expanse Payment',
             'room_rent' => 'Room Rent',
             'room_advance' => 'Room Advance',
             'water' => 'Water Bill',
@@ -895,7 +990,11 @@ class PaymentController extends Controller
 
         $selectedType = $request->input('payment_type');
         if (!empty($selectedType)) {
-            $query->where('payment_type', $selectedType);
+            if ($selectedType === 'meal_expanse_payment' || $selectedType === 'meal_payment') {
+                $query->whereIn('payment_type', ['meal_expanse_payment', 'meal_payment']);
+            } else {
+                $query->where('payment_type', $selectedType);
+            }
         }
 
         $selectedStatus = $request->input('status');

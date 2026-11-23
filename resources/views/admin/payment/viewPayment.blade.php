@@ -16,7 +16,7 @@
                             <a href="{{route('admin.add.payment')}}" class="viewall"><i class="far fa-money-bill-alt"></i> Add Payment</a>
                         @endif
                         @if($isSuperAdmin || $isManager || !empty($myResponsibilities))
-                            <a href="{{route('admin.payment.downloadPdf')}}" class="viewall bg-cyan"><i class="far fa-file-pdf"></i> Download pdf</a>
+                            <a href="{{route('admin.payment.downloadPdf', request()->all())}}" class="viewall bg-cyan"><i class="far fa-file-pdf"></i> Download pdf</a>
                         @endif
                     </div>
                 </div>
@@ -50,7 +50,7 @@
                                             <select name="payment_type" class="form-control" onchange="document.getElementById('filterForm').submit()" style="border-radius: 5px;">
                                                 <option value="">All Payment Types</option>
                                                 @foreach($paymentTypes as $key => $label)
-                                                    <option value="{{ $key }}" {{ $selectedPaymentType == $key ? 'selected' : '' }}>
+                                                    <option value="{{ $key }}" {{ ($selectedPaymentType == $key || ($key == 'meal_expanse_payment' && $selectedPaymentType == 'meal_payment')) ? 'selected' : '' }}>
                                                         {{ $label }}
                                                     </option>
                                                 @endforeach
@@ -174,7 +174,11 @@
             var paymentStatusChanged = false;
 
             function loadPaymentDetails(memberId, month) {
-                var url = "{{ url('admin/payment/details') }}/" + memberId + "/" + encodeURIComponent(month);
+                var paymentType = $('select[name="payment_type"]').val() || '';
+                var url = "{{ url('payment/details') }}/" + memberId + "/" + encodeURIComponent(month);
+                if (paymentType) {
+                    url += "?payment_type=" + encodeURIComponent(paymentType);
+                }
                 $.ajax({
                     url: url,
                     method: 'GET',
@@ -264,7 +268,7 @@
                 }).then((result) => {
                     if (result.value || result.isConfirmed) {
                         $.ajax({
-                            url: "{{ url('admin/payment/paymentStatus') }}/" + paymentId + "/1",
+                            url: "{{ url('payment/paymentStatus') }}/" + paymentId + "/1",
                             method: 'GET',
                             success: function(response) {
                                 Toast.fire({
@@ -304,7 +308,7 @@
             // Handle edit payment button click
             $(document).on('click', '.edit-payment', function() {
                 var paymentId = $(this).data('id');
-                window.location.href = "{{ url('admin/payment/editPayment') }}/" + paymentId;
+                window.location.href = "{{ url('payment/editPayment') }}/" + paymentId;
             });
 
         });

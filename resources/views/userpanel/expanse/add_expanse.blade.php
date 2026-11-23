@@ -50,11 +50,11 @@
                                 <div class="row" id="row_1">
 
                            <div class="form-group col-md-4">
-                            <label for="item_name_id">Item Name</label>
-                            <select id="item_name_id" class="custom-select select2bs4 item-select" name="item_name_id[]" autocomplete="off">
+                            <label for="item_name_id">Item Name <span class="text-danger">*</span></label>
+                            <select id="item_name_id" class="custom-select select2bs4 item-select" name="item_name_id[]" autocomplete="off" required>
                                 <option value="">----select item----</option>
                                 @foreach ($items as $item)
-                                    <option value="{{ $item->id }}">{{ $item->item_name }}</option>
+                                    <option value="{{ $item->id }}" data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">{{ $item->item_name }}</option>
                                 @endforeach
                             </select>
                             @if ($errors->has('item_name_id'))
@@ -62,27 +62,33 @@
                             @endif
                         </div>
 
-                        <div class="form-group col-md-4">
+                        <div class="form-group col-md-2">
+                            <label for="unit">Unit</label>
+                            <input class="form-control unit-input" type="text" id="unit" name="unit[]" placeholder="Unit (kg, pcs...)" autocomplete="off">
+                        </div>
+
+                        <div class="form-group col-md-2">
                             <label for="weight">Weight</label>
-                            <input class="form-control" type="text" id="weight" name="weight[]"placeholder="Enter Weight">
+                            <input class="form-control weight-input" type="text" inputmode="decimal" id="weight" name="weight[]" placeholder="e.g. 1.5" autocomplete="off">
 
                             @if ($errors->has('weight'))
                                 <p class="text-danger">{{ $errors->first('weight') }}</p>
                             @endif
                         </div>
-                           <div class="form-group col-md-3 col-11">
-                               <label for="amount">Price</label>
-                               <input class="form-control" type="number" id="amount" name="amount[]"placeholder="Enter Price">
-   
-                               @if ($errors->has('amount'))
-                                   <p class="text-danger">{{ $errors->first('amount') }}</p>
-                               @endif
-                           </div>
 
-                           <div class="col-md-1 col-1 text-center">
+                        <div class="form-group col-md-3 col-10">
+                            <label for="amount">Price <span class="text-danger">*</span></label>
+                            <input class="form-control" type="number" step="any" min="0" id="amount" name="amount[]" placeholder="Enter Price" autocomplete="off" required>
+
+                            @if ($errors->has('amount'))
+                                <p class="text-danger">{{ $errors->first('amount') }}</p>
+                            @endif
+                        </div>
+
+                        <div class="col-md-1 col-2 text-center">
                             <div class="form-group pt-4">
-                                <span style="font-size: 1.5em; color: Tomato;" id="addButton"> 
-                                  <i class="far fa-plus-square fa-lg pt-3"></i>
+                                <span style="font-size: 1.5em; color: Tomato; cursor: pointer;" id="addButton" title="Add More Item"> 
+                                    <i class="far fa-plus-square fa-lg pt-3"></i>
                                 </span>
                             </div>
                         </div>
@@ -115,6 +121,9 @@
         // Store original item options
         var originalItems = {!! json_encode($items->pluck('item_name', 'id')->toArray()) !!};
         var originalItemIds = {!! json_encode($items->pluck('id')->toArray()) !!};
+        var itemUnits = {!! json_encode($items->mapWithKeys(function($item) {
+            return [$item->id => $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '')];
+        })) !!};
 
         //Initialize Item Select2 Elements
         function initializeItemSelect2(selector) {
@@ -293,6 +302,77 @@
 
             });
 
+            // Auto-fill Unit when item is selected
+            $(document).on('change select2:select', 'select[name="item_name_id[]"]', function(e) {
+                var itemId = (e.params && e.params.data) ? e.params.data.id : $(this).val();
+                var $row = $(this).closest('.row');
+                var $unitInput = $row.find('.unit-input');
+                var unit = '';
+
+                if (itemId) {
+                    var $opt = $(this).find('option[value="' + itemId + '"]');
+                    if ($opt.length && $opt.data('unit')) {
+                        unit = $opt.data('unit');
+                    } else if (itemUnits && itemUnits[itemId]) {
+                        unit = itemUnits[itemId];
+                    }
+                }
+
+                $unitInput.val(unit || '');
+            });
+
+            // Enforce strictly fraction numbers only in weight input (digits and at most one decimal point, absolutely no text)
+            $(document).on('input', '.weight-input', function() {
+                var val = $(this).val();
+                var clean = val.replace(/[^0-9.]/g, '');
+                var parts = clean.split('.');
+                if (parts.length > 2) {
+                    clean = parts[0] + '.' + parts.slice(1).join('');
+                }
+                if (val !== clean) {
+                    $(this).val(clean);
+                }
+            });
+
+            $(document).on('keydown', '.weight-input', function(e) {
+                // Allow: backspace(8), tab(9), enter(13), escape(27), decimal point(110, 190)
+                if ([8, 9, 13, 27, 46, 110, 190].indexOf(e.keyCode) !== -1 ||
+                    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                    (e.ctrlKey === true || e.metaKey === true) ||
+                    // Allow: home, end, left, right, up, down
+                    (e.keyCode >= 35 && e.keyCode <= 40)) {
+                    
+                    // Prevent more than one decimal point
+                    if ((e.keyCode === 110 || e.keyCode === 190 || e.key === '.') && $(this).val().indexOf('.') !== -1) {
+                        e.preventDefault();
+                        return false;
+                    }
+                    return;
+                }
+                // Block any key that is not a numeric digit (0-9 from top row 48-57, or numpad 96-105)
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+
+            $(document).on('paste', '.weight-input', function(e) {
+                e.preventDefault();
+                var clipboardData = e.originalEvent.clipboardData || window.clipboardData;
+                var pastedData = clipboardData ? clipboardData.getData('text') : '';
+                var clean = pastedData.replace(/[^0-9.]/g, '');
+                var currentVal = $(this).val();
+                if (currentVal.indexOf('.') !== -1) {
+                    clean = clean.replace(/\./g, '');
+                } else {
+                    var parts = clean.split('.');
+                    if (parts.length > 2) {
+                        clean = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                }
+                document.execCommand('insertText', false, clean);
+            });
+
             var i = 1;
 
             $("#addButton").click(function(e) {
@@ -301,49 +381,42 @@
 
                 var itemsOptions = '<option value="">----select item----</option>';
                 @foreach ($items as $item)
-                    itemsOptions += '<option value="{{ $item->id }}">{{ $item->item_name }}</option>';
+                    itemsOptions += '<option value="{{ $item->id }}" data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">{{ $item->item_name }}</option>';
                 @endforeach
 
                 _dynamic_div = ` <div class="row" id="row_` + i + `">
 
                     <div class="form-group col-md-4">
-                    <label for="item_name_id">Item Name</label>
-                    <select class="custom-select select2bs4 item-select" name="item_name_id[]" autocomplete="off">
-                                ` + itemsOptions +
-                    `
-                            </select>
-                    @if ($errors->has('item_name_id'))
-                        <p class="text-danger">{{ $errors->first('item_name_id') }}</p>
-                    @endif
+                        <label for="item_name_id">Item Name <span class="text-danger">*</span></label>
+                        <select class="custom-select select2bs4 item-select" name="item_name_id[]" autocomplete="off" required>
+                            ` + itemsOptions + `
+                        </select>
                     </div>
 
-                    <div class="form-group col-md-4">
-                    <label for="weight">Weight</label>
-                    <input class="form-control" type="text" id="weight" name="weight[]"placeholder="Enter Weight" autocomplete="off">
-
-                    @if ($errors->has('weight'))
-                        <p class="text-danger">{{ $errors->first('weight') }}</p>
-                    @endif
-                    </div>
-                    <div class="form-group col-md-3 col-11">
-                        <label for="amount">Price</label>
-                        <input class="form-control" type="number" id="amount" name="amount[]"placeholder="Enter Price" autocomplete="off">
-
-                        @if ($errors->has('amount'))
-                            <p class="text-danger">{{ $errors->first('amount') }}</p>
-                        @endif
+                    <div class="form-group col-md-2">
+                        <label for="unit">Unit</label>
+                        <input class="form-control unit-input" type="text" name="unit[]" placeholder="Unit (kg, pcs...)" autocomplete="off">
                     </div>
 
-                    <div class="col-md-1 col-1">
-                                                <div class="form-group pt-4">
-                                                    <span style="font-size: 1.2em; color: red;" class="btn_remove" id="` + i + `"> 
-                                                    <i class="far fa-trash-alt pt-3"></i>
-                                                    </span>
-                                                </div>
-                                            </div>
+                    <div class="form-group col-md-2">
+                        <label for="weight">Weight</label>
+                        <input class="form-control weight-input" type="text" inputmode="decimal" name="weight[]" placeholder="e.g. 1.5" autocomplete="off">
+                    </div>
 
-                    </div>`;
-                //console.log(_dynamic_div);
+                    <div class="form-group col-md-3 col-10">
+                        <label for="amount">Price <span class="text-danger">*</span></label>
+                        <input class="form-control" type="number" step="any" min="0" name="amount[]" placeholder="Enter Price" autocomplete="off" required>
+                    </div>
+
+                    <div class="col-md-1 col-2 text-center">
+                        <div class="form-group pt-4">
+                            <span style="font-size: 1.2em; color: red; cursor: pointer;" class="btn_remove" id="` + i + `" title="Remove Item"> 
+                                <i class="far fa-trash-alt pt-3"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                </div>`;
                 $('#voucher_details').append(_dynamic_div);
 
                 // Initialize Select2 for the new item dropdown
@@ -357,7 +430,6 @@
 
             $(document).on('click', '.btn_remove', function() {
                 var button_id = $(this).attr("id");
-                //console.log(button_id);   
                 $('#row_' + button_id + '').remove();
             });
 

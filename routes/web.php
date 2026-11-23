@@ -183,15 +183,21 @@ Route::middleware('auth.check')->group(function () {
     Route::get('payment/downloadPaymentPdf', [PaymentController::class, 'downloadPdf'])->name('admin.payment.downloadPdf');
     Route::get('payment/myPayment', [PaymentController::class, 'myPayment'])->name('payment.myPayment');
     Route::get('payment/myPayment/downloadPdf', [PaymentController::class, 'myPaymentPdf'])->name('payment.myPayment.pdf');
+    Route::get('payment/details/{member_id}/{month}', [PaymentController::class, 'getPaymentDetails'])->name('admin.payment.details');
+    Route::get('payment/paymentStatus/{id}/{status}', [PaymentController::class, 'paymentStatus'])->name('paymentStatus');
     Route::get('user/payment/myPayment', function () { return redirect()->route('payment.myPayment'); })->name('user.payment.myPayment');
     Route::post('payment/getBillAmount', [PaymentController::class, 'getBillAmount'])->name('admin.payment.getBillAmount');
     // Legacy route name aliases for existing payment views
     Route::post('payment/storePayment/admin', [PaymentController::class, 'storePayment'])->name('admin.store.payment');
     Route::post('payment/updatePayment/admin', [PaymentController::class, 'updatePayment'])->name('admin.update.payment');
+    Route::get('admin/payment/details/{member_id}/{month}', [PaymentController::class, 'getPaymentDetails']);
+    Route::get('admin/payment/paymentStatus/{id}/{status}', [PaymentController::class, 'paymentStatus']);
+    Route::get('admin/payment/editPayment/{id}', [PaymentController::class, 'editPayment']);
     // User payment sub-routes
     Route::post('payment/getBillAmount/user', [UserPaymentController::class, 'getBillAmount'])->name('user.payment.getBillAmount');
     Route::get('payment/pendingPayment', [UserPaymentController::class, 'pendingPayment'])->name('user.pendingPayment');
     Route::get('payment/details/{month}', [UserPaymentController::class, 'getPaymentDetails'])->name('user.payment.details');
+    Route::get('user/payment/details/{month}', [UserPaymentController::class, 'getPaymentDetails']);
 
     //===============================EXPANSE (Unified — role-based inside controller)====================================
     Route::get('expanse/viewExpanse', [ExpanseController::class, 'viewExpanse'])->name('admin.view.expanse');
