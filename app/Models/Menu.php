@@ -30,7 +30,7 @@ class Menu extends Model
 
     public function children()
     {
-        return $this->hasMany(Menu::class, 'parent_id')->where('status', 1)->orderBy('order', 'asc');
+        return $this->hasMany(Menu::class, 'parent_id')->orderBy('order', 'asc');
     }
 
     public function menuRoles()

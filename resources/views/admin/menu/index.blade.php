@@ -214,9 +214,18 @@
                                     <a href="{{ route('admin.menu.edit', $menu->id) }}" class="btn btn-info btn-xs mr-1 text-nowrap" title="Edit">
                                         <i class="fas fa-pencil-alt"></i> Edit
                                     </a>
-                                    <a href="{{ route('admin.menu.delete', $menu->id) }}" class="btn btn-danger btn-xs text-nowrap" onclick="return confirm('Are you sure? This will delete this menu and any submenus under it!')" title="Delete">
-                                        <i class="fa fa-trash-alt"></i>
-                                    </a>
+                                    @php
+                                        $childCount = $menu->children->count();
+                                    @endphp
+                                    @if ($childCount > 0)
+                                        <button type="button" class="btn btn-secondary btn-xs text-nowrap" onclick="Swal.fire({icon: 'warning', title: 'Cannot Delete Parent Menu', text: 'This parent menu has {{ $childCount }} child submenu(s). Please delete all child submenus first before deleting this parent menu.'})" title="Cannot delete: has {{ $childCount }} child submenu(s)">
+                                            <i class="fa fa-trash-alt"></i> Delete
+                                        </button>
+                                    @else
+                                        <a href="{{ route('admin.menu.delete', $menu->id) }}" class="btn btn-danger btn-xs text-nowrap" onclick="return confirm('Are you sure you want to delete this menu: {{ addslashes($menu->name) }}?')" title="Delete">
+                                            <i class="fa fa-trash-alt"></i> Delete
+                                        </a>
+                                    @endif
                                 </td>
                             </tr>
 
@@ -273,8 +282,8 @@
                                     <a href="{{ route('admin.menu.edit', $child->id) }}" class="btn btn-info btn-xs mr-1 text-nowrap" title="Edit">
                                         <i class="fas fa-pencil-alt"></i> Edit
                                     </a>
-                                    <a href="{{ route('admin.menu.delete', $child->id) }}" class="btn btn-danger btn-xs text-nowrap" onclick="return confirm('Are you sure you want to delete this submenu?')" title="Delete">
-                                        <i class="fa fa-trash-alt"></i>
+                                    <a href="{{ route('admin.menu.delete', $child->id) }}" class="btn btn-danger btn-xs text-nowrap" onclick="return confirm('Are you sure you want to delete this submenu: {{ addslashes($child->name) }}?')" title="Delete">
+                                        <i class="fa fa-trash-alt"></i> Delete
                                     </a>
                                 </td>
                             </tr>
@@ -313,6 +322,21 @@
             showConfirmButton: false,
             timer: 2500
         });
+
+        @if(session('success'))
+            Toast.fire({
+                icon: 'success',
+                title: "{{ session('success') }}"
+            });
+        @endif
+
+        @if(session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Cannot Delete Menu',
+                text: "{{ session('error') }}"
+            });
+        @endif
 
         // -------------------------------------------------------------
         // 1. Drag & Drop Reordering with jQuery UI

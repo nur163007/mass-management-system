@@ -133,8 +133,9 @@ class MenuService
         // Seed if table is empty
         if (DB::table('menus')->count() == 0) {
             $this->seedInitialMenus();
-        } else {
+        } elseif (!cache()->has('system_menus_synced_v3')) {
             $this->ensureSystemMenus();
+            cache()->forever('system_menus_synced_v3', true);
         }
     }
 

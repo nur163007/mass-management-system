@@ -265,19 +265,23 @@ class MenuController extends Controller
 
         $menu = Menu::findOrFail($id);
 
-        // Delete menu and its role associations
+        // Check if this menu has any child items - parent cannot be deleted if children exist
+        $childCount = Menu::where('parent_id', $menu->id)->count();
+        if ($childCount > 0) {
+            return redirect()->route('admin.menu.index')->with('error', "Cannot delete parent menu '{$menu->name}' because it contains {$childCount} child submenu(s). Please delete all child submenus first.");
+        }
+
         DB::beginTransaction();
         try {
-            MenuRole::where('menu_id', $id)->delete();
-            // If it's a parent, also delete children
-            foreach ($menu->children as $child) {
-                MenuRole::where('menu_id', $child->id)->delete();
-                $child->delete();
-            }
+            // Delete associated role permissions
+            MenuRole::where('menu_id', $menu->id)->delete();
+
+            // Delete the menu item
+            $menuName = $menu->name;
             $menu->delete();
 
             DB::commit();
-            return redirect()->route('admin.menu.index')->with('success', 'Menu and its submenus deleted successfully.');
+            return redirect()->route('admin.menu.index')->with('success', "Menu '{$menuName}' deleted successfully.");
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('admin.menu.index')->with('error', 'Failed to delete menu: ' . $e->getMessage());
