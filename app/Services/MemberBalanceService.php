@@ -80,16 +80,21 @@ class MemberBalanceService
         $allBalances = $this->getAllMembersBalance($month);
         
         $totalDue = 0;
-        $totalPaid = 0;
+        $totalCredit = 0;
+        $totalCollected = 0;
+        $totalExpectedCost = 0;
         $membersDue = 0;
         $membersPaid = 0;
         
         foreach ($allBalances as $balance) {
+            $totalExpectedCost += $balance['total_cost'];
+            $totalCollected += $balance['total_payment'];
+
             if ($balance['balance'] < 0) {
                 $totalDue += abs($balance['balance']);
                 $membersDue++;
             } else {
-                $totalPaid += $balance['balance'];
+                $totalCredit += $balance['balance'];
                 $membersPaid++;
             }
         }
@@ -99,9 +104,11 @@ class MemberBalanceService
             'members_due' => $membersDue,
             'members_paid' => $membersPaid,
             'total_due' => AmountHelper::roundAmount($totalDue),
-            'total_paid' => AmountHelper::roundAmount($totalPaid),
-            'collection_rate' => count($allBalances) > 0 
-                ? round(($membersPaid / count($allBalances)) * 100, 2) 
+            'total_paid' => AmountHelper::roundAmount($totalCredit),
+            'total_collected' => AmountHelper::roundAmount($totalCollected),
+            'total_expected_cost' => AmountHelper::roundAmount($totalExpectedCost),
+            'collection_rate' => $totalExpectedCost > 0 
+                ? round(($totalCollected / $totalExpectedCost) * 100, 1) 
                 : 0,
         ];
     }
@@ -111,62 +118,69 @@ class MemberBalanceService
      */
     public function getMemberBalance($memberId, $month = null)
     {
-        $month = $month ?? Carbon::now()->isoFormat('MMM');
+        $month = $month ?? Carbon::now()->format('F');
+        $monthMap = [
+            'Jan' => 'January', 'Feb' => 'February', 'Mar' => 'March', 'Apr' => 'April',
+            'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
+            'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
+        ];
+        $monthFull = $monthMap[$month] ?? $month;
+        $monthAbbr = array_search($monthFull, $monthMap) ?: substr($monthFull, 0, 3);
         
         // Get meal cost
-        $mealCost = $this->mealService->getMemberMealCost($memberId, $month);
-        $mealCount = $this->mealService->getMemberMealCount($memberId, $month);
-        $mealRate = $this->mealService->calculateMealRate($month);
+        $mealCost = $this->mealService->getMemberMealCost($memberId, $monthFull);
+        $mealCount = $this->mealService->getMemberMealCount($memberId, $monthFull);
+        $mealRate = $this->mealService->calculateMealRate($monthFull);
         
         // Get room rent
-        $roomRent = $this->roomRentService->getMemberRoomRent($memberId, $month);
+        $roomRent = $this->roomRentService->getMemberRoomRent($memberId, $monthFull);
         $monthlyRent = $roomRent['final_rent'];
         
         // Get bills (all bills per person)
-        $billsTotal = $this->billService->getTotalBillsPerPerson($month);
+        $billsTotal = $this->billService->getTotalBillsPerPerson($monthFull);
         
-        // Get meal payments (food advance payments)
+        // Get meal payments (food advance & meal payments)
         $mealPayments = DB::select("
-            SELECT SUM(payment_amount) as total_payment
+            SELECT COALESCE(SUM(payment_amount), 0) as total_payment
             FROM payments
-            WHERE member_id = ? AND month = ? AND status = '1' AND payment_type = 'food_advance'
-        ", [$memberId, $month]);
+            WHERE member_id = ? AND (month = ? OR month = ?) AND status = '1' 
+            AND payment_type IN ('food_advance', 'meal_expanse_payment', 'meal_payment')
+        ", [$memberId, $monthFull, $monthAbbr]);
         
         $mealPaymentTotal = $mealPayments[0]->total_payment ?? 0;
         
         // Get bill payments separately (sum of all bill payment types)
         $billPayments = DB::select("
-            SELECT SUM(payment_amount) as total_payment
+            SELECT COALESCE(SUM(payment_amount), 0) as total_payment
             FROM payments
-            WHERE member_id = ? AND month = ? AND status = '1' AND payment_type IN ('water', 'internet', 'electricity', 'gas', 'bua_moyla')
-        ", [$memberId, $month]);
+            WHERE member_id = ? AND (month = ? OR month = ?) AND status = '1' 
+            AND payment_type IN ('water', 'internet', 'electricity', 'gas', 'bua_moyla')
+        ", [$memberId, $monthFull, $monthAbbr]);
         
         $billPaymentTotal = $billPayments[0]->total_payment ?? 0;
         
         // Get room rent payments separately
         $roomRentPayments = DB::select("
-            SELECT SUM(payment_amount) as total_payment
+            SELECT COALESCE(SUM(payment_amount), 0) as total_payment
             FROM payments
-            WHERE member_id = ? AND month = ? AND status = '1' AND payment_type = 'room_rent'
-        ", [$memberId, $month]);
+            WHERE member_id = ? AND (month = ? OR month = ?) AND status = '1' 
+            AND payment_type IN ('room_rent', 'room_advance')
+        ", [$memberId, $monthFull, $monthAbbr]);
         
         $roomRentPaymentTotal = $roomRentPayments[0]->total_payment ?? 0;
         
         // Calculate total payment (all payment types)
         $totalPayment = $mealPaymentTotal + $billPaymentTotal + $roomRentPaymentTotal;
         
-        // Calculate adjusted room rent (monthly rent - room rent payments)
-        $adjustedRoomRent = max(0, $monthlyRent - $roomRentPaymentTotal);
-        
         // Calculate total cost
-        $totalCost = $mealCost + $adjustedRoomRent + $billsTotal;
+        $totalCost = $mealCost + $monthlyRent + $billsTotal;
         
         // Calculate balance (total payment - total cost)
         $balance = $totalPayment - $totalCost;
         
         return [
             'member_id' => $memberId,
-            'month' => $month,
+            'month' => $monthFull,
             'meal_count' => $mealCount,
             'meal_rate' => AmountHelper::roundAmount($mealRate),
             'meal_cost' => AmountHelper::roundAmount($mealCost),
@@ -183,7 +197,6 @@ class MemberBalanceService
             'breakdown' => [
                 'meal_cost' => AmountHelper::roundAmount($mealCost),
                 'room_rent' => AmountHelper::roundAmount($monthlyRent),
-                'adjusted_room_rent' => AmountHelper::roundAmount($adjustedRoomRent),
                 'bills' => AmountHelper::roundAmount($billsTotal),
                 'meal_payment' => AmountHelper::roundAmount($mealPaymentTotal),
                 'bill_payment' => AmountHelper::roundAmount($billPaymentTotal),

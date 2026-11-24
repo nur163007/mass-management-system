@@ -737,14 +737,29 @@
                                 <div>
                                     <span class="text-muted d-block small">Active Mess Members</span>
                                     <strong
-                                        class="h5 font-weight-bold text-dark">{{ $membersSummary['total_members'] ?? $totMember }}</strong>
+                                        class="h5 font-weight-bold text-dark">{{ $membersSummary['total_members'] ?? $totMember }} Members</strong>
                                 </div>
                                 <div class="text-right">
                                     <span class="badge badge-primary px-3 py-1 font-weight-bold"
                                         style="border-radius: 50px;">
-                                        {{ $membersSummary['collection_rate'] ?? 0 }}% Paid
+                                        {{ $membersSummary['collection_rate'] ?? 0 }}% Collected
                                     </span>
                                 </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-success small font-weight-bold">
+                                    <i class="fas fa-check-circle mr-1"></i>Total Collected from Members
+                                </span>
+                                <strong class="text-success font-weight-bold">
+                                    Tk. {{ number_format($membersSummary['total_collected'] ?? 0, 2) }}
+                                </strong>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                                <span class="text-muted small">Total Expected Mess Cost</span>
+                                <strong class="text-dark font-weight-bold">
+                                    Tk. {{ number_format($membersSummary['total_expected_cost'] ?? 0, 2) }}
+                                </strong>
                             </div>
 
                             <div class="d-flex justify-content-between align-items-center mb-2">
@@ -762,17 +777,11 @@
                                 </strong>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-success small font-weight-bold">
-                                    <i class="fas fa-check-circle mr-1"></i>Members with Credit / Advance
-                                </span>
-                                <span class="badge badge-success px-2 py-1">
-                                    {{ $membersSummary['members_paid'] ?? 0 }} Members
-                                </span>
-                            </div>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted small">Total Advance Balance</span>
-                                <strong class="text-success font-weight-bold">
+                                <span class="text-muted small font-weight-bold">
+                                    <i class="fas fa-wallet mr-1 text-info"></i>Total Advance / Credit
+                                </span>
+                                <strong class="text-info font-weight-bold">
                                     Tk. {{ number_format($membersSummary['total_paid'] ?? 0, 2) }}
                                 </strong>
                             </div>
