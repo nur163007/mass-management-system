@@ -160,7 +160,7 @@ class UserPaymentController extends Controller
         if (!in_array($paymentType, ['food_advance', 'meal_expanse_payment'])) {
             $existingPayment = Payment::where('member_id', $memberId)
                 ->where('payment_type', $paymentType)
-                ->where(function($query) use ($month, $monthAbbr) {
+                ->where(function ($query) use ($month, $monthAbbr) {
                     $query->where('month', $month);
                     if ($monthAbbr) {
                         $query->orWhere('month', $monthAbbr);

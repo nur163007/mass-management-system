@@ -29,7 +29,7 @@ class SmartDashboardController extends Controller
      */
     public function getAnalytics(Request $request)
     {
-        $month = $request->input('month', Carbon::now()->isoFormat('MMM'));
+        $month = $request->input('month', Carbon::now()->format('F'));
         $analytics = $this->analyticsService->getDashboardAnalytics($month);
         
         return response()->json($analytics);
@@ -40,7 +40,7 @@ class SmartDashboardController extends Controller
      */
     public function getMemberBalances(Request $request)
     {
-        $month = $request->input('month', Carbon::now()->isoFormat('MMM'));
+        $month = $request->input('month', Carbon::now()->format('F'));
         $balances = $this->balanceService->getAllMembersBalance($month);
         $summary = $this->balanceService->getMembersSummary($month);
         
@@ -55,7 +55,7 @@ class SmartDashboardController extends Controller
      */
     public function getSuggestions(Request $request)
     {
-        $month = $request->input('month', Carbon::now()->isoFormat('MMM'));
+        $month = $request->input('month', Carbon::now()->format('F'));
         $suggestions = $this->analyticsService->getOptimizationSuggestions($month);
         
         return response()->json($suggestions);

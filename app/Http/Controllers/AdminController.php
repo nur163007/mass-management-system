@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Member;
 use Carbon\Carbon;
 use App\Services\SmartAnalyticsService;
@@ -29,6 +30,10 @@ class AdminController extends Controller
 
     public function dashboard(){
         $now = Carbon::now()->format('F'); // Full month name e.g. "November" to match payment records
+        $currentMonth = $now;
+
+        // Clear cached analytics to ensure real-time running month data
+        Cache::forget("dashboard_analytics_{$now}");
 
         // Get smart analytics
         $analytics = $this->analyticsService->getDashboardAnalytics($now);
@@ -49,9 +54,18 @@ class AdminController extends Controller
         // Extract individual variables for backward compatibility with existing views
         $total_meal = $analytics['current']['total_meal'];
         $fund = $analytics['current']['fund'];
+        $food_fund = $analytics['current']['food_fund'] ?? null;
+        if ($food_fund === null) {
+            $monthAbbr = Carbon::now()->isoFormat('MMM');
+            $foodRes = DB::select(
+                "SELECT COALESCE(SUM(payment_amount), 0) as total FROM payments WHERE status = '1' AND (month = ? OR month = ?) AND payment_type IN ('food_advance', 'meal_expanse_payment', 'meal_payment')",
+                [$now, $monthAbbr]
+            );
+            $food_fund = $foodRes[0]->total ?? 0;
+        }
         $all_ex = $analytics['current']['expense'];
         $meal_rate = $analytics['current']['meal_rate'];
-        $cash = $analytics['current']['cash'];
+        $cash = $food_fund - $all_ex;
         $remaining = $analytics['current']['remaining'];
 
         return view('admin.dashboard', compact(
@@ -64,10 +78,13 @@ class AdminController extends Controller
             // Legacy variables for backward compatibility
             'total_meal',
             'fund',
+            'food_fund',
             'all_ex',
             'meal_rate',
             'cash',
-            'remaining'
+            'remaining',
+            'currentMonth',
+            'now'
         ));
     }
 

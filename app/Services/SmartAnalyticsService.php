@@ -52,12 +52,16 @@ class SmartAnalyticsService
      */
     private function getMonthData($month)
     {
+        $month = $month ?? Carbon::now()->format('F');
+        $monthFull = date('F', strtotime("1 {$month} 2000"));
+        $monthAbbr = date('M', strtotime("1 {$month} 2000"));
+
         // Use enhanced meal service for accurate meal count
         $mealService = app(\App\Services\EnhancedMealService::class);
-        $total_meal = $mealService->getTotalMealCount($month);
+        $total_meal = $mealService->getTotalMealCount($monthFull);
         
         // Keep backward compatibility for breakfast, lunch, dinner counts
-        $meals = DB::select("SELECT * from meals where status = '1' and month = ?", [$month]);
+        $meals = DB::select("SELECT * from meals where status = '1' and (month = ? OR month = ?)", [$monthFull, $monthAbbr]);
         $br = 0;
         $ln = 0;
         $dn = 0;
@@ -67,36 +71,45 @@ class SmartAnalyticsService
             $dn += $m->dinner ?? 0;
         }
         
-        $payments = DB::select("SELECT * from payments where status ='1' and month = ?", [$month]);
+        $payments = DB::select("SELECT * from payments where status ='1' and (month = ? OR month = ?)", [$monthFull, $monthAbbr]);
         $fund = 0;
         foreach($payments as $pay) {
             $fund += $pay->payment_amount;
         }
         
-        $expanses = DB::select("SELECT total_amount from expanses where status ='1' and month = ?", [$month]);
+        $expanses = DB::select("SELECT total_amount from expanses where status ='1' and (month = ? OR month = ?)", [$monthFull, $monthAbbr]);
         $all_ex = 0;
         foreach($expanses as $exp) {
             $all_ex += $exp->total_amount;
         }
         
         $meal_rate = $total_meal > 0 ? ($all_ex / $total_meal) : 0;
-        $cash = ($fund - $all_ex);
+
+        // Food collection for food advance / meal expanse payments
+        $foodCollectionResult = DB::select(
+            "SELECT COALESCE(SUM(payment_amount), 0) as total
+             FROM payments
+             WHERE status = '1' AND (month = ? OR month = ?) AND payment_type IN ('food_advance', 'meal_expanse_payment', 'meal_payment')",
+            [$monthFull, $monthAbbr]
+        );
+        $foodCollection = $foodCollectionResult[0]->total ?? 0;
+        $cash = $foodCollection - $all_ex;
 
         // -------------------------------------------------------
-        // Calculate REMAINING: total expected − total paid
-        // Expected = bill_type_responsibilities এর types (room_advance বাদে):
-        //   - bill types (water/internet/gas etc.) → bills table total_amount for this month
-        //   - room_rent → room_members active members এর monthly_rent sum
-        //   - food_advance → bills নেই, skip (payments এ track হয়)
-        // Paid = payments table status=1 এর payment_amount sum for this month
+        // Calculate REMAINING: total expected bills − total paid towards bills
+        // Expected = bill_type_responsibilities types (room_advance & food_advance excluded):
+        //   - bill types (water/internet/gas/etc.) → bills table total_amount for this month
+        //   - room_rent → room_members active members monthly_rent sum
+        // Paid = payments table for bill types & room_rent
         // -------------------------------------------------------
 
-        // Step 1: Get distinct bill types from responsibilities (exclude room_advance)
+        // Step 1: Get distinct bill types from responsibilities (exclude room_advance and food_advance)
         $responsibilities = DB::select(
-            "SELECT DISTINCT bill_type FROM bill_type_responsibilities WHERE bill_type != 'room_advance'"
+            "SELECT DISTINCT bill_type FROM bill_type_responsibilities WHERE bill_type NOT IN ('room_advance', 'food_advance')"
         );
 
         $totalExpected = 0;
+        $billTypes = [];
 
         foreach ($responsibilities as $resp) {
             $billType = $resp->bill_type;
@@ -110,34 +123,35 @@ class SmartAnalyticsService
                      WHERE rm.status = 1 AND m.status = 1 AND m.role_id IN (2, 3)"
                 );
                 $totalExpected += $rentResult[0]->total ?? 0;
-
-            } elseif ($billType === 'food_advance') {
-                // food_advance → no fixed bill, skip
-                continue;
-
+                $billTypes[] = 'room_rent';
             } else {
                 // Other bill types (water, internet, electricity, gas, bua_moyla etc.)
-                // → bills table, month = current month (full name), status = 1
                 $billResult = DB::select(
                     "SELECT COALESCE(SUM(total_amount), 0) as total
                      FROM bills
-                     WHERE bill_type = ? AND month = ? AND status = 1",
-                    [$billType, $month]
+                     WHERE bill_type = ? AND (month = ? OR month = ?) AND status = 1",
+                    [$billType, $monthFull, $monthAbbr]
                 );
                 $totalExpected += $billResult[0]->total ?? 0;
+                $billTypes[] = $billType;
             }
         }
 
-        // Step 2: Total paid (all types, status=1, this month) from payments table
-        $paidResult = DB::select(
-            "SELECT COALESCE(SUM(payment_amount), 0) as total
-             FROM payments
-             WHERE status = '1' AND month = ?",
-            [$month]
-        );
-        $totalPaid = $paidResult[0]->total ?? 0;
+        // Step 2: Total paid for bills and rent (status=1, this month)
+        $totalBillPaid = 0;
+        if (!empty($billTypes)) {
+            $placeholders = implode(',', array_fill(0, count($billTypes), '?'));
+            $paidParams = array_merge([$monthFull, $monthAbbr], $billTypes);
+            $paidResult = DB::select(
+                "SELECT COALESCE(SUM(payment_amount), 0) as total
+                 FROM payments
+                 WHERE status = '1' AND (month = ? OR month = ?) AND payment_type IN ({$placeholders})",
+                $paidParams
+            );
+            $totalBillPaid = $paidResult[0]->total ?? 0;
+        }
 
-        $remaining = max(0, $totalExpected - $totalPaid);
+        $remaining = max(0, $totalExpected - $totalBillPaid);
         
         // Exclude Super Admin (role_id = 1), only count Manager (2) and User (3)
         $members = DB::select("SELECT count('id') as total_member from members where status = '1' AND role_id IN (2, 3)");
@@ -148,6 +162,7 @@ class SmartAnalyticsService
             'lunch' => $ln,
             'dinner' => $dn,
             'fund' => $fund,
+            'food_fund' => $foodCollection,
             'expense' => $all_ex,
             'meal_rate' => AmountHelper::roundAmount($meal_rate),
             'cash' => $cash,

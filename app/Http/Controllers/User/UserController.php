@@ -27,6 +27,8 @@ class UserController extends Controller
 
     public function dashboard(){
         $now = Carbon::now()->format('F'); // Full month name (January, February, etc.)
+        $currentMonth = $now;
+        $monthAbbr = date('M', strtotime($now));
         $id = session()->get('member_id');
         
         // Get smart balance
@@ -36,7 +38,7 @@ class UserController extends Controller
         $notifications = $this->notificationService->getUserNotifications($id);
         
         // Calculate total meal for logged-in user
-        $meal = DB::select("SELECT * from meals where members_id = ? and status = '1' and month = ?", [$id, $now]);
+        $meal = DB::select("SELECT * from meals where members_id = ? and status = '1' and (month = ? OR month = ?)", [$id, $now, $monthAbbr]);
 
         $br = 0;
         $ln = 0;
@@ -50,8 +52,8 @@ class UserController extends Controller
 
         $total_meal = $br +  $ln + $dn;
 
-        // Calculate total payment - only food_advance payments
-        $payments = DB::select("SELECT * from payments where member_id = ? and status ='1' and payment_type = 'food_advance' and month = ?", [$id, $now]);
+        // Calculate total payment - food_advance and meal_expanse_payment
+        $payments = DB::select("SELECT * from payments where member_id = ? and status ='1' and payment_type IN ('food_advance', 'meal_expanse_payment', 'meal_payment') and (month = ? OR month = ?)", [$id, $now, $monthAbbr]);
 
         $fund = 0;
         foreach($payments as $pay){
@@ -62,7 +64,7 @@ class UserController extends Controller
         $all_meal = DB::select("SELECT meals.breakfast, meals.lunch, meals.dinner 
             from meals 
             INNER JOIN members ON meals.members_id = members.id 
-            where meals.status ='1' and members.role_id != 1 and meals.month = ?", [$now]);
+            where meals.status ='1' and members.role_id != 1 and (meals.month = ? OR meals.month = ?)", [$now, $monthAbbr]);
         
         $b = 0;
         $l = 0;
@@ -80,7 +82,7 @@ class UserController extends Controller
         $all_expanse = DB::select("SELECT expanses.total_amount 
             from expanses 
             INNER JOIN members ON expanses.member_id = members.id 
-            where expanses.status ='1' and members.role_id != 1 and expanses.month = ?", [$now]);
+            where expanses.status ='1' and members.role_id != 1 and (expanses.month = ? OR expanses.month = ?)", [$now, $monthAbbr]);
         
         $all_ex = 0;
         foreach($all_expanse as $exp){
@@ -102,7 +104,9 @@ class UserController extends Controller
             'meal_due',
             'cashback',
             'balance',
-            'notifications'
+            'notifications',
+            'currentMonth',
+            'now'
         ));
     }
 

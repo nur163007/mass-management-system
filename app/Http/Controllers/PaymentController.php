@@ -518,12 +518,12 @@ class PaymentController extends Controller
         }
 
         // Filter by member if provided
-        if(request()->has('member_id') && request('member_id') != ''){
+        if (request()->has('member_id') && request('member_id') != '') {
             $query->where('payments.member_id', request('member_id'));
         }
 
         // Filter by payment type if provided
-        if(request()->has('payment_type') && request('payment_type') != ''){
+        if (request()->has('payment_type') && request('payment_type') != '') {
             if (request('payment_type') === 'meal_expanse_payment' || request('payment_type') === 'meal_payment') {
                 $query->whereIn('payments.payment_type', ['meal_expanse_payment', 'meal_payment']);
             } else {

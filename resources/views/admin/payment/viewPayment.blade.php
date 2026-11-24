@@ -79,13 +79,14 @@
                                     'May' => 'May', 'Jun' => 'June', 'Jul' => 'July', 'Aug' => 'August',
                                     'Sep' => 'September', 'Oct' => 'October', 'Nov' => 'November', 'Dec' => 'December'
                                 ];
+                                $totalSum = collect($payments)->sum('total_amount');
                             @endphp
                             @forelse($payments as $payment)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
                                     <td><strong>{{ $payment['full_name'] }}</strong></td>
                                     <td><strong>{{ $monthMap[$payment['month']] ?? $payment['month'] }}</strong></td>
-                                    <td><strong>Tk. {{ number_format($payment['total_amount'], 2) }}</strong></td>
+                                    <td data-order="{{ $payment['total_amount'] }}"><strong>Tk. {{ number_format($payment['total_amount'], 2) }}</strong></td>
                                     <td style="width: 120px">
                                         <button type="button" class="btn btn-info btn-xs view-payment-details" 
                                                 data-member-id="{{ $payment['member_id'] }}" 
@@ -101,6 +102,15 @@
                                 </tr>
                             @endforelse
                         </tbody>
+                        <tfoot class="bg-light font-weight-bold">
+                            <tr>
+                                <td colspan="3" class="text-right" style="font-size: 15px;">Total:</td>
+                                <td style="font-size: 15px;" id="tableGrandTotal">
+                                    <strong class="text-success">Tk. {{ number_format($totalSum, 2) }}</strong>
+                                </td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -166,7 +176,21 @@
         });
 
         $(document).ready(function(){
-            $("#all-category").DataTable();
+            $("#all-category").DataTable({
+                "footerCallback": function (row, data, start, end, display) {
+                    var api = this.api();
+                    var total = api
+                        .column(3, { search: 'applied' })
+                        .data()
+                        .reduce(function (acc, val) {
+                            var clean = String(val).replace(/Tk\.?/gi, '').replace(/,/g, '').replace(/<[^>]*>/g, '').trim();
+                            var num = parseFloat(clean);
+                            return acc + (isNaN(num) ? 0 : num);
+                        }, 0);
+
+                    $('#tableGrandTotal').html('<strong class="text-success">Tk. ' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</strong>');
+                }
+            });
 
             // Store current member ID and month for reload
             var currentMemberId = null;

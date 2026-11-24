@@ -39,10 +39,19 @@ class EnhancedMealService
      */
     public function getTotalMealCount($month = null)
     {
-        $month = $month ?? Carbon::now()->isoFormat('MMM');
+        $month = $month ?? Carbon::now()->format('F');
+        $monthFull = date('F', strtotime("1 {$month} 2000"));
+        $monthAbbr = date('M', strtotime("1 {$month} 2000"));
         
-        $meals = Meal::where('month', $month)
+        $meals = Meal::where(function($q) use ($month, $monthFull, $monthAbbr) {
+                $q->where('month', $month)
+                  ->orWhere('month', $monthFull)
+                  ->orWhere('month', $monthAbbr);
+            })
             ->where('status', 1)
+            ->whereHas('member', function($q) {
+                $q->where('role_id', '!=', 1); // Exclude Super Admin
+            })
             ->get();
         
         $total = 0;

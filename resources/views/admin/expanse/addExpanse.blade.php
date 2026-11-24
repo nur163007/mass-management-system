@@ -78,12 +78,15 @@
                                         <div class="row" id="row_1">
 
                                             <div class="form-group col-md-4">
-                                                <label for="item_name_id">Item Name <span class="text-danger">*</span></label>
+                                                <label for="item_name_id">Item Name <span
+                                                        class="text-danger">*</span></label>
                                                 <select id="item_name_id" class="custom-select select2bs4 item-select"
                                                     name="item_name_id[]" autocomplete="off" required>
                                                     <option value="">----select item----</option>
                                                     @foreach ($items as $item)
-                                                        <option value="{{ $item->id }}" data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">{{ $item->item_name }}</option>
+                                                        <option value="{{ $item->id }}"
+                                                            data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">
+                                                            {{ $item->item_name }}</option>
                                                     @endforeach
                                                 </select>
                                                 @if ($errors->has('item_name_id'))
@@ -99,8 +102,9 @@
 
                                             <div class="form-group col-md-2">
                                                 <label for="weight">Weight</label>
-                                                <input class="form-control weight-input" type="text" inputmode="decimal" id="weight"
-                                                    name="weight[]" placeholder="e.g. 1.5" autocomplete="off">
+                                                <input class="form-control weight-input" type="text" inputmode="decimal"
+                                                    id="weight" name="weight[]" placeholder="e.g. 1.5"
+                                                    autocomplete="off">
 
                                                 @if ($errors->has('weight'))
                                                     <p class="text-danger">{{ $errors->first('weight') }}</p>
@@ -109,8 +113,9 @@
 
                                             <div class="form-group col-md-3 col-10">
                                                 <label for="amount">Price <span class="text-danger">*</span></label>
-                                                <input class="form-control" type="number" step="any" min="0" id="amount"
-                                                    name="amount[]" placeholder="Enter Price" autocomplete="off" required>
+                                                <input class="form-control" type="number" step="any" min="0"
+                                                    id="amount" name="amount[]" placeholder="Enter Price"
+                                                    autocomplete="off" required>
 
                                                 @if ($errors->has('amount'))
                                                     <p class="text-danger">{{ $errors->first('amount') }}</p>
@@ -119,7 +124,8 @@
 
                                             <div class="col-md-1 col-2 text-center">
                                                 <div class="form-group pt-4">
-                                                    <span style="font-size: 1.5em; color: Tomato; cursor: pointer;" id="addButton" title="Add More Item">
+                                                    <span style="font-size: 1.5em; color: Tomato; cursor: pointer;"
+                                                        id="addButton" title="Add More Item">
                                                         <i class="far fa-plus-square fa-lg pt-3"></i>
                                                     </span>
                                                 </div>
@@ -158,9 +164,11 @@
         // Store original item options
         var originalItems = {!! json_encode($items->pluck('item_name', 'id')->toArray()) !!};
         var originalItemIds = {!! json_encode($items->pluck('id')->toArray()) !!};
-        var itemUnits = {!! json_encode($items->mapWithKeys(function($item) {
-            return [$item->id => $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '')];
-        })) !!};
+        var itemUnits = {!! json_encode(
+            $items->mapWithKeys(function ($item) {
+                return [$item->id => $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '')];
+            }),
+        ) !!};
 
         //Initialize Item Select2 Elements
         function initializeItemSelect2(selector) {
@@ -248,7 +256,8 @@
                                             .item_name;
                                         originalItemIds.push(response.item.id);
                                         if (response.item.unit) {
-                                            itemUnits[response.item.id] = response.item.unit;
+                                            itemUnits[response.item.id] = response.item
+                                                .unit;
                                         }
 
                                         // Add new option to all item selects
@@ -419,16 +428,18 @@
                     (e.ctrlKey === true || e.metaKey === true) ||
                     // Allow: home, end, left, right, up, down
                     (e.keyCode >= 35 && e.keyCode <= 40)) {
-                    
+
                     // Prevent more than one decimal point
-                    if ((e.keyCode === 110 || e.keyCode === 190 || e.key === '.') && $(this).val().indexOf('.') !== -1) {
+                    if ((e.keyCode === 110 || e.keyCode === 190 || e.key === '.') && $(this).val().indexOf(
+                            '.') !== -1) {
                         e.preventDefault();
                         return false;
                     }
                     return;
                 }
                 // Block any key that is not a numeric digit (0-9 from top row 48-57, or numpad 96-105)
-                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode >
+                        105)) {
                     e.preventDefault();
                     return false;
                 }
@@ -459,7 +470,8 @@
 
                 var itemsOptions = '<option value="">----select item----</option>';
                 @foreach ($items as $item)
-                    itemsOptions += '<option value="{{ $item->id }}" data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">{{ $item->item_name }}</option>';
+                    itemsOptions +=
+                        '<option value="{{ $item->id }}" data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">{{ $item->item_name }}</option>';
                 @endforeach
 
                 _dynamic_div = ` <div class="row" id="row_` + i + `">

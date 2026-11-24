@@ -3,127 +3,141 @@
 @section('heading', 'User add-expanse')
 @section('title', 'Expanse')
 @section('main-content')
-<section class="content">
-    <div class="container-fluid">
-        <!-- Small boxes (Stat box) -->
-        <div class="card">
-            <div class="row">
-                <div class="card-header col-md-6 col-6">
+    <section class="content">
+        <div class="container-fluid">
+            <!-- Small boxes (Stat box) -->
+            <div class="card">
+                <div class="row">
+                    <div class="card-header col-md-6 col-6">
                         <h3 class="font-weight-bolder">Add Expanse</h3>
                     </div>
                     <div class="card-header col-md-6 col-6 text-right">
-                        <a href="{{route('user.viewExpanse')}}" class="viewall"><i class="fas fa-list"></i> All Expanse</a>
-                        <a href="{{route('user.pending.expanse')}}" class="viewall"><i class="far fa-money-bill-alt"></i> Pending Expanse</a>
+                        <a href="{{ route('user.viewExpanse') }}" class="viewall"><i class="fas fa-list"></i> All Expanse</a>
+                        <a href="{{ route('user.pending.expanse') }}" class="viewall"><i class="far fa-money-bill-alt"></i>
+                            Pending Expanse</a>
                     </div>
-            </div>
-            @include('admin.includes.message')
-            <div class="card-body">
-                <form method="POST"  enctype="multipart/form-data" id="form">
-                    @csrf
-                       <div class="row">
-                           <div class="form-group col-md-6">
-                            <label for="cost_bearer">Expanse Cost Will Be Paid By <span class="text-danger">*</span></label>
-                            <select id="cost_bearer" class="custom-select" name="cost_bearer" required>
-                                <option value="">--select payment source--</option>
-                                <option value="food_advance">Food Advance (Meal Collection)</option>
-                                <option value="user">User Account (Will be deducted from my account)</option>
-                            </select>
-                            @if ($errors->has('cost_bearer'))
-                                <p class="text-danger">{{ $errors->first('cost_bearer') }}</p>
-                            @endif
-                        </div>
-                             
-                           <div class="form-group col-md-6">
-                            <label for="date">Date</label>
-                            <input class="form-control" type="date" id="date" name="date">
-
-                            @if ($errors->has('date'))
-                                <p class="text-danger">{{ $errors->first('date') }}</p>
-                            @endif
-                        </div>
-                           
-
-
-                           <div class="col-md-12">
-                            <div class="row">
-                              <div class="col-md-12" id="voucher_details">
-                                <div class="row" id="row_1">
-
-                           <div class="form-group col-md-4">
-                            <label for="item_name_id">Item Name <span class="text-danger">*</span></label>
-                            <select id="item_name_id" class="custom-select select2bs4 item-select" name="item_name_id[]" autocomplete="off" required>
-                                <option value="">----select item----</option>
-                                @foreach ($items as $item)
-                                    <option value="{{ $item->id }}" data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">{{ $item->item_name }}</option>
-                                @endforeach
-                            </select>
-                            @if ($errors->has('item_name_id'))
-                                <p class="text-danger">{{ $errors->first('item_name_id') }}</p>
-                            @endif
-                        </div>
-
-                        <div class="form-group col-md-2">
-                            <label for="unit">Unit</label>
-                            <input class="form-control unit-input" type="text" id="unit" name="unit[]" placeholder="Unit (kg, pcs...)" autocomplete="off">
-                        </div>
-
-                        <div class="form-group col-md-2">
-                            <label for="weight">Weight</label>
-                            <input class="form-control weight-input" type="text" inputmode="decimal" id="weight" name="weight[]" placeholder="e.g. 1.5" autocomplete="off">
-
-                            @if ($errors->has('weight'))
-                                <p class="text-danger">{{ $errors->first('weight') }}</p>
-                            @endif
-                        </div>
-
-                        <div class="form-group col-md-3 col-10">
-                            <label for="amount">Price <span class="text-danger">*</span></label>
-                            <input class="form-control" type="number" step="any" min="0" id="amount" name="amount[]" placeholder="Enter Price" autocomplete="off" required>
-
-                            @if ($errors->has('amount'))
-                                <p class="text-danger">{{ $errors->first('amount') }}</p>
-                            @endif
-                        </div>
-
-                        <div class="col-md-1 col-2 text-center">
-                            <div class="form-group pt-4">
-                                <span style="font-size: 1.5em; color: Tomato; cursor: pointer;" id="addButton" title="Add More Item"> 
-                                    <i class="far fa-plus-square fa-lg pt-3"></i>
-                                </span>
+                </div>
+                @include('admin.includes.message')
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data" id="form">
+                        @csrf
+                        <div class="row">
+                            <div class="form-group col-md-6">
+                                <label for="cost_bearer">Expanse Cost Will Be Paid By <span
+                                        class="text-danger">*</span></label>
+                                <select id="cost_bearer" class="custom-select" name="cost_bearer" required>
+                                    <option value="">--select payment source--</option>
+                                    <option value="food_advance">Food Advance (Meal Collection)</option>
+                                    <option value="user">User Account (Will be deducted from my account)</option>
+                                </select>
+                                @if ($errors->has('cost_bearer'))
+                                    <p class="text-danger">{{ $errors->first('cost_bearer') }}</p>
+                                @endif
                             </div>
-                        </div>
 
-                        </div>
+                            <div class="form-group col-md-6">
+                                <label for="date">Date</label>
+                                <input class="form-control" type="date" id="date" name="date">
 
-                              </div>
+                                @if ($errors->has('date'))
+                                    <p class="text-danger">{{ $errors->first('date') }}</p>
+                                @endif
                             </div>
-                           </div>
-                           
-                       </div>
-                       <input class="btn btn-success" type="submit" id="submit" name="submit" value="Submit">
-                   </form>
+
+
+
+                            <div class="col-md-12">
+                                <div class="row">
+                                    <div class="col-md-12" id="voucher_details">
+                                        <div class="row" id="row_1">
+
+                                            <div class="form-group col-md-4">
+                                                <label for="item_name_id">Item Name <span
+                                                        class="text-danger">*</span></label>
+                                                <select id="item_name_id" class="custom-select select2bs4 item-select"
+                                                    name="item_name_id[]" autocomplete="off" required>
+                                                    <option value="">----select item----</option>
+                                                    @foreach ($items as $item)
+                                                        <option value="{{ $item->id }}"
+                                                            data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">
+                                                            {{ $item->item_name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @if ($errors->has('item_name_id'))
+                                                    <p class="text-danger">{{ $errors->first('item_name_id') }}</p>
+                                                @endif
+                                            </div>
+
+                                            <div class="form-group col-md-2">
+                                                <label for="unit">Unit</label>
+                                                <input class="form-control unit-input" type="text" id="unit"
+                                                    name="unit[]" placeholder="Unit (kg, pcs...)" autocomplete="off">
+                                            </div>
+
+                                            <div class="form-group col-md-2">
+                                                <label for="weight">Weight</label>
+                                                <input class="form-control weight-input" type="text" inputmode="decimal"
+                                                    id="weight" name="weight[]" placeholder="e.g. 1.5"
+                                                    autocomplete="off">
+
+                                                @if ($errors->has('weight'))
+                                                    <p class="text-danger">{{ $errors->first('weight') }}</p>
+                                                @endif
+                                            </div>
+
+                                            <div class="form-group col-md-3 col-10">
+                                                <label for="amount">Price <span class="text-danger">*</span></label>
+                                                <input class="form-control" type="number" step="any" min="0"
+                                                    id="amount" name="amount[]" placeholder="Enter Price"
+                                                    autocomplete="off" required>
+
+                                                @if ($errors->has('amount'))
+                                                    <p class="text-danger">{{ $errors->first('amount') }}</p>
+                                                @endif
+                                            </div>
+
+                                            <div class="col-md-1 col-2 text-center">
+                                                <div class="form-group pt-4">
+                                                    <span style="font-size: 1.5em; color: Tomato; cursor: pointer;"
+                                                        id="addButton" title="Add More Item">
+                                                        <i class="far fa-plus-square fa-lg pt-3"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <input class="btn btn-success" type="submit" id="submit" name="submit" value="Submit">
+                    </form>
+                </div>
             </div>
-        </div>
 
-        <!-- /.row -->
+            <!-- /.row -->
 
-    </div><!-- /.container-fluid -->
-</section>
+        </div><!-- /.container-fluid -->
+    </section>
 @endsection
 
 {{-- data store with ajax --}}
 @section('custom_js')
 
-<script>
+    <script>
         //Initialize Select2 Elements
         $('.select2').select2()
 
         // Store original item options
         var originalItems = {!! json_encode($items->pluck('item_name', 'id')->toArray()) !!};
         var originalItemIds = {!! json_encode($items->pluck('id')->toArray()) !!};
-        var itemUnits = {!! json_encode($items->mapWithKeys(function($item) {
-            return [$item->id => $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '')];
-        })) !!};
+        var itemUnits = {!! json_encode(
+            $items->mapWithKeys(function ($item) {
+                return [$item->id => $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '')];
+            }),
+        ) !!};
 
         //Initialize Item Select2 Elements
         function initializeItemSelect2(selector) {
@@ -201,7 +215,8 @@
                                     console.log('Item creation response:', response);
                                     if (response && response.success) {
                                         // Update original items
-                                        originalItems[response.item.id] = response.item.item_name;
+                                        originalItems[response.item.id] = response.item
+                                            .item_name;
                                         originalItemIds.push(response.item.id);
 
                                         // Add new option to all item selects
@@ -282,7 +297,8 @@
                             });
                             // Redirect to expanse list after 1.5 seconds
                             setTimeout(function() {
-                                window.location.href = "{{ route('user.viewExpanse') }}";
+                                window.location.href =
+                                    "{{ route('user.viewExpanse') }}";
                             }, 1500);
                         } else {
                             $("#form")[0].reset();
@@ -341,16 +357,18 @@
                     (e.ctrlKey === true || e.metaKey === true) ||
                     // Allow: home, end, left, right, up, down
                     (e.keyCode >= 35 && e.keyCode <= 40)) {
-                    
+
                     // Prevent more than one decimal point
-                    if ((e.keyCode === 110 || e.keyCode === 190 || e.key === '.') && $(this).val().indexOf('.') !== -1) {
+                    if ((e.keyCode === 110 || e.keyCode === 190 || e.key === '.') && $(this).val().indexOf(
+                            '.') !== -1) {
                         e.preventDefault();
                         return false;
                     }
                     return;
                 }
                 // Block any key that is not a numeric digit (0-9 from top row 48-57, or numpad 96-105)
-                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode >
+                        105)) {
                     e.preventDefault();
                     return false;
                 }
@@ -381,7 +399,8 @@
 
                 var itemsOptions = '<option value="">----select item----</option>';
                 @foreach ($items as $item)
-                    itemsOptions += '<option value="{{ $item->id }}" data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">{{ $item->item_name }}</option>';
+                    itemsOptions +=
+                        '<option value="{{ $item->id }}" data-unit="{{ $item->unit ?? (strlen($item->item_description) <= 20 ? $item->item_description : '') }}">{{ $item->item_name }}</option>';
                 @endforeach
 
                 _dynamic_div = ` <div class="row" id="row_` + i + `">
@@ -434,9 +453,5 @@
             });
 
         });
-
-
-
-</script>
+    </script>
 @endsection
-
