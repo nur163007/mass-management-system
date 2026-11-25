@@ -40,6 +40,24 @@ class AdminController extends Controller
         
         // Get member balances
         $memberBalances = $this->balanceService->getAllMembersBalance($now);
+        // Sort by room (Room 1, Room 2, ..., then other rooms like Dining, then unassigned)
+        usort($memberBalances, function ($a, $b) {
+            $getRoomOrder = function ($room) {
+                $room = trim((string) $room);
+                if ($room === '' || strcasecmp($room, 'N/A') === 0 || strcasecmp($room, 'No Room') === 0) {
+                    return [3, 0, $room];
+                }
+                if (preg_match('/^room\s*(\d+)/i', $room, $matches)) {
+                    return [1, (int) $matches[1], $room];
+                }
+                return [2, 0, $room];
+            };
+
+            $orderA = $getRoomOrder($a['room_name'] ?? '');
+            $orderB = $getRoomOrder($b['room_name'] ?? '');
+
+            return $orderA <=> $orderB ?: (($a['balance'] ?? 0) <=> ($b['balance'] ?? 0));
+        });
         $membersSummary = $this->balanceService->getMembersSummary($now);
         
         // Get optimization suggestions

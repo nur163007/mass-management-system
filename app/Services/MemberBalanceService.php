@@ -82,13 +82,19 @@ class MemberBalanceService
         $totalDue = 0;
         $totalCredit = 0;
         $totalCollected = 0;
+        $rentUtilityCollected = 0;  // Only rent + utility bills (no meal)
         $totalExpectedCost = 0;
+        $rentUtilityExpectedCost = 0; // Only rent + bills expected
         $membersDue = 0;
         $membersPaid = 0;
         
         foreach ($allBalances as $balance) {
             $totalExpectedCost += $balance['total_cost'];
             $totalCollected += $balance['total_payment'];
+            // Rent + utility collected = bill_payment + room_rent_payment (exclude meal)
+            $rentUtilityCollected += ($balance['bill_payment'] ?? 0) + ($balance['room_rent_payment'] ?? 0);
+            // Rent + utility expected = room_rent + bills_total (exclude meal cost)
+            $rentUtilityExpectedCost += ($balance['room_rent'] ?? 0) + ($balance['bills_total'] ?? 0);
 
             if ($balance['balance'] < 0) {
                 $totalDue += abs($balance['balance']);
@@ -98,6 +104,11 @@ class MemberBalanceService
                 $membersPaid++;
             }
         }
+
+        // Collection rate based on rent+utility only
+        $collectionRate = $rentUtilityExpectedCost > 0
+            ? round(($rentUtilityCollected / $rentUtilityExpectedCost) * 100, 1)
+            : 0;
         
         return [
             'total_members' => count($allBalances),
@@ -106,10 +117,10 @@ class MemberBalanceService
             'total_due' => AmountHelper::roundAmount($totalDue),
             'total_paid' => AmountHelper::roundAmount($totalCredit),
             'total_collected' => AmountHelper::roundAmount($totalCollected),
-            'total_expected_cost' => AmountHelper::roundAmount($totalExpectedCost),
-            'collection_rate' => $totalExpectedCost > 0 
-                ? round(($totalCollected / $totalExpectedCost) * 100, 1) 
-                : 0,
+            'rent_utility_collected' => AmountHelper::roundAmount($rentUtilityCollected),
+            'rent_utility_due' => AmountHelper::roundAmount(max(0, $rentUtilityExpectedCost - $rentUtilityCollected)),
+            'total_expected_cost' => AmountHelper::roundAmount($rentUtilityExpectedCost),
+            'collection_rate' => $collectionRate,
         ];
     }
 

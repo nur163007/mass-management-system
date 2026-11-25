@@ -739,7 +739,7 @@
                     <div class="fin-panel">
                         <div class="panel-head">
                             <h5 class="panel-title">
-                                <i class="fas fa-user-friends text-info"></i> Member Collection Status
+                                <i class="fas fa-user-friends text-info"></i> Member's Rent and Utility Collection Status
                             </h5>
                         </div>
                         <div class="panel-body">
@@ -762,7 +762,7 @@
                                     <i class="fas fa-check-circle mr-1"></i>Total Collected from Members
                                 </span>
                                 <strong class="text-success font-weight-bold">
-                                    Tk. <?php echo e(number_format($membersSummary['total_collected'] ?? 0, 2)); ?>
+                                    Tk. <?php echo e(number_format($membersSummary['rent_utility_collected'] ?? 0, 2)); ?>
 
                                 </strong>
                             </div>
@@ -785,7 +785,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                                 <span class="text-muted small">Total Outstanding Due</span>
                                 <strong class="text-danger font-weight-bold">
-                                    Tk. <?php echo e(number_format($membersSummary['total_due'] ?? 0, 2)); ?>
+                                    Tk. <?php echo e(number_format($membersSummary['rent_utility_due'] ?? 0, 2)); ?>
 
                                 </strong>
                             </div>
@@ -801,7 +801,7 @@
                             </div>
 
                             <div class="mt-4">
-                                <a href="<?php echo e(route('admin.total.summary')); ?>"
+                                <a href="<?php echo e(route('admin.view.payment', ['category' => 'rent_utility'])); ?>"
                                     class="btn btn-outline-primary btn-block btn-sm font-weight-bold"
                                     style="border-radius: 8px;">
                                     <i class="fas fa-file-alt mr-1"></i> View Full Members Statement
@@ -822,7 +822,7 @@
                                     <i class="fas fa-list-alt text-primary"></i>
                                     Member Monthly Standing Quick Overview
                                 </h5>
-                                <a href="<?php echo e(route('admin.total.summary')); ?>"
+                                <a href="<?php echo e(route('admin.view.payment')); ?>"
                                     class="btn btn-sm btn-primary px-3 font-weight-bold" style="border-radius: 8px;">
                                     <i class="fas fa-external-link-alt mr-1"></i> View Detailed Breakdown
                                 </a>

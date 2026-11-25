@@ -191,6 +191,17 @@ class PaymentController extends Controller
             $query->where('payments.member_id', $request->member_id);
         }
 
+        // Filter by category (e.g., rent_utility or food_meal)
+        $selectedCategory = $request->category ?? '';
+        $rentUtilityTypes = ['room_rent', 'room_advance', 'water', 'internet', 'electricity', 'gas', 'bua_moyla'];
+        $foodMealTypes = ['food_advance', 'meal_expanse_payment', 'meal_payment'];
+
+        if ($selectedCategory === 'rent_utility') {
+            $query->whereIn('payments.payment_type', $rentUtilityTypes);
+        } elseif ($selectedCategory === 'food_meal') {
+            $query->whereIn('payments.payment_type', $foodMealTypes);
+        }
+
         // Filter by payment type if provided
         if ($request->has('payment_type') && $request->payment_type != '') {
             if ($request->payment_type === 'meal_expanse_payment' || $request->payment_type === 'meal_payment') {
@@ -275,6 +286,17 @@ class PaymentController extends Controller
             'bua_moyla' => 'Bua & Moyla Bill',
         ];
 
+        // Filter payment types dropdown by active category
+        if ($selectedCategory === 'rent_utility') {
+            $paymentTypes = array_filter($paymentTypes, function ($key) use ($rentUtilityTypes) {
+                return in_array($key, $rentUtilityTypes);
+            }, ARRAY_FILTER_USE_KEY);
+        } elseif ($selectedCategory === 'food_meal') {
+            $paymentTypes = array_filter($paymentTypes, function ($key) use ($foodMealTypes) {
+                return in_array($key, $foodMealTypes);
+            }, ARRAY_FILTER_USE_KEY);
+        }
+
         // Filter payment types dropdown: Manager sees all, regular users see only responsible types
         if (!$isSuperAdmin && !$isManager && !empty($myResponsibilities)) {
             $paymentTypes = array_filter($paymentTypes, function ($key) use ($myResponsibilities) {
@@ -285,7 +307,7 @@ class PaymentController extends Controller
         $selectedMemberId = $request->member_id ?? '';
         $selectedPaymentType = $request->payment_type ?? '';
 
-        return view('admin.payment.viewPayment', compact('payments', 'members', 'paymentTypes', 'selectedMemberId', 'selectedPaymentType', 'myResponsibilities', 'isSuperAdmin', 'isManager'));
+        return view('admin.payment.viewPayment', compact('payments', 'members', 'paymentTypes', 'selectedMemberId', 'selectedPaymentType', 'selectedCategory', 'myResponsibilities', 'isSuperAdmin', 'isManager'));
     }
 
     public function paymentStatus($id, $status)
@@ -522,6 +544,13 @@ class PaymentController extends Controller
             $query->where('payments.member_id', request('member_id'));
         }
 
+        // Filter by category if provided
+        if (request()->has('category') && request('category') === 'rent_utility') {
+            $query->whereIn('payments.payment_type', ['room_rent', 'room_advance', 'water', 'internet', 'electricity', 'gas', 'bua_moyla']);
+        } elseif (request()->has('category') && request('category') === 'food_meal') {
+            $query->whereIn('payments.payment_type', ['food_advance', 'meal_expanse_payment', 'meal_payment']);
+        }
+
         // Filter by payment type if provided
         if (request()->has('payment_type') && request('payment_type') != '') {
             if (request('payment_type') === 'meal_expanse_payment' || request('payment_type') === 'meal_payment') {
@@ -745,6 +774,12 @@ class PaymentController extends Controller
                     $query->orWhere('month', $monthAbbr);
                 }
             });
+
+        if (request()->has('category') && request('category') === 'rent_utility') {
+            $paymentsQuery->whereIn('payment_type', ['room_rent', 'room_advance', 'water', 'internet', 'electricity', 'gas', 'bua_moyla']);
+        } elseif (request()->has('category') && request('category') === 'food_meal') {
+            $paymentsQuery->whereIn('payment_type', ['food_advance', 'meal_expanse_payment', 'meal_payment']);
+        }
 
         if (request()->has('payment_type') && request('payment_type') != '') {
             $reqType = request('payment_type');
