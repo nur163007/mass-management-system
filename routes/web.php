@@ -66,6 +66,7 @@ Route::middleware('auth.check')->group(function () {
     Route::get('member/addmembers', [AddmemberController::class, 'add'])->name('admin.add-member');
     Route::post('member/storemember', [AddmemberController::class, 'store'])->name('store.member');
     Route::get('member/viewmembers', [AddmemberController::class, 'view'])->name('admin.view-member');
+    Route::get('member/details/{id}', [AddmemberController::class, 'show'])->name('admin.show-member');
     Route::get('member/deletedata/{id}', [AddmemberController::class, 'delete'])->name('admin.delete');
     Route::get('member/editpage', [AddmemberController::class, 'editView'])->name('admin.editpage');
     Route::get('member/editdata/{id}', [AddmemberController::class, 'edit'])->name('admin.edit-member');

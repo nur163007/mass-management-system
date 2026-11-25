@@ -6,11 +6,9 @@
 
 <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
 
-<!-- Font Awesome -->
+<!-- Font Awesome (local) -->
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/fontawesome-free/css/all.min.css')); ?>">
-<!-- Ionicons -->
-<link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
-<!-- Tempusdominus Bbootstrap 4 -->
+<!-- Tempusdominus Bootstrap 4 -->
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css')); ?>">
 <!-- iCheck -->
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/icheck-bootstrap/icheck-bootstrap.min.css')); ?>">
@@ -24,23 +22,23 @@
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/daterangepicker/daterangepicker.css')); ?>">
 <!-- summernote -->
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/summernote/summernote-bs4.css')); ?>">
-<!-- Google Font: Source Sans Pro -->
-<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="gfont" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,300;0,400;0,700;1,400&display=swap" media="print">
+<script>document.getElementById('gfont').media='all';</script>
 
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/css/style.css')); ?>">
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/css/responsive.css')); ?>">
 <!-- sweetalert 2 -->
-
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/sweetalert2/sweetalert2.min.css')); ?>">
-
-<!--select 2-->
+<!-- select 2 -->
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/select2/css/select2.min.css')); ?>">
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css')); ?>">
 <!-- DataTables -->
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/datatables-bs4/css/dataTables.bootstrap4.css')); ?>">
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/plugins/datatables-responsive/css/responsive.bootstrap4.css')); ?>">
-
-
-
+<!-- Bootstrap Toggle -->
 <link rel="stylesheet" href="<?php echo e(asset('assets/admin/dist/css/bootstrap-toggle.min.css')); ?>">
 <?php /**PATH C:\Users\hp\Herd\mass-management-system\resources\views/admin/includes/stylesheet.blade.php ENDPATH**/ ?>

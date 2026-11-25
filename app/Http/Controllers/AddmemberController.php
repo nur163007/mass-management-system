@@ -104,6 +104,30 @@ class AddmemberController extends Controller
         return view('admin.member.view_members', compact('members', 'roles'));
     }
 
+    public function show($id)
+    {
+        $member = Member::findOrFail($id);
+        if ($member->role_id == 1) {
+            return redirect()->route('admin.view-member')->with('error', 'Cannot view Super Admin details.');
+        }
+
+        $currentMonth = Carbon::now()->format('F');
+        $balance = null;
+        try {
+            $balance = app(\App\Services\MemberBalanceService::class)->getMemberBalance($member->id, $currentMonth);
+        } catch (\Exception $e) {
+            Log::warning('Could not load member balance in show(): ' . $e->getMessage());
+        }
+
+        $recentPayments = Payment::where('member_id', $member->id)
+            ->orderBy('date', 'DESC')
+            ->orderBy('id', 'DESC')
+            ->limit(10)
+            ->get();
+
+        return view('admin.member.show_member', compact('member', 'balance', 'recentPayments', 'currentMonth'));
+    }
+
     public function memberStatus($id, $status)
     {
         // Only Super Admin can update member status

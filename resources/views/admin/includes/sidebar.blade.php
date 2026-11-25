@@ -9,10 +9,12 @@
 
 <aside class="main-sidebar sidebar-light-olive elevation-5">
     <!-- Brand Logo -->
-    <a href="{{ $dashboardRoute }}" class="brand-link" style="display: flex; align-items: center; height: 75px; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.08); text-decoration: none; overflow: hidden;">
-        <img src="{{ asset('assets/admin/dist/img/mms.png') }}" alt="MMS Logo"
-            class="brand-image-logo" style="height: 54px; max-height: 56px; max-width: 85px; width: auto; object-fit: contain; flex-shrink: 0; display: inline-block;">
-        <span class="brand-text font-weight-bold ml-2 text-dark" style="font-size: 1.5rem; letter-spacing: 1.5px; line-height: 1;">MMS</span>
+    <a href="{{ $dashboardRoute }}" class="brand-link"
+        style="display: flex; align-items: center; height: 75px; padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.08); text-decoration: none; overflow: hidden;">
+        <img src="{{ asset('assets/admin/dist/img/mms.png') }}" alt="MMS Logo" class="brand-image-logo"
+            style="height: 54px; max-height: 56px; max-width: 85px; width: auto; object-fit: contain; flex-shrink: 0; display: inline-block;">
+        <span class="brand-text font-weight-bold ml-2 text-dark"
+            style="font-size: 1.5rem; letter-spacing: 1.5px; line-height: 1;">MMS</span>
     </a>
 
     <!-- Sidebar -->
@@ -21,7 +23,9 @@
         <div class="user-panel mt-1 pb-3 mb-3 d-flex">
             <div class="image">
                 <img src="{{ asset('uploads/members/profile/' . session()->get('profile')) }}"
-                    class="img-circle elevation-2" alt="User Image" style="height:38px;width:38px; border-radius:50%; object-fit: cover;">
+                    class="img-circle elevation-2" alt="User Image"
+                    onerror="this.onerror=null;this.src='{{ asset('assets/admin/dist/img/avatar5.png') }}'"
+                    style="height:38px;width:38px; border-radius:50%; object-fit: cover;">
             </div>
             <div class="info">
                 <a href="{{ $profileRoute }}" class="d-block">{{ session()->get('member_name') }}</a>
@@ -38,7 +42,11 @@
                         $isActive = $menu->isActive();
                         $hasActiveChild = $menu->hasActiveChild();
                         $isOpen = $isActive || $hasActiveChild;
-                        $menuUrl = $menu->route ? (Route::has($menu->route) ? route($menu->route) : 'javascript:void(0)') : ($menu->url ?? 'javascript:void(0)');
+                        $menuUrl = $menu->route
+                            ? (Route::has($menu->route)
+                                ? route($menu->route)
+                                : 'javascript:void(0)')
+                            : $menu->url ?? 'javascript:void(0)';
                     @endphp
 
                     @if ($hasChildren)
@@ -54,10 +62,15 @@
                                 @foreach ($menu->children as $child)
                                     @php
                                         $isChildActive = $child->isActive();
-                                        $childUrl = $child->route ? (Route::has($child->route) ? route($child->route) : '#') : ($child->url ?? '#');
+                                        $childUrl = $child->route
+                                            ? (Route::has($child->route)
+                                                ? route($child->route)
+                                                : '#')
+                                            : $child->url ?? '#';
                                     @endphp
                                     <li class="nav-item">
-                                        <a href="{{ $childUrl }}" class="nav-link {{ $isChildActive ? 'active' : '' }}">
+                                        <a href="{{ $childUrl }}"
+                                            class="nav-link {{ $isChildActive ? 'active' : '' }}">
                                             <i class="{{ $child->icon ?? 'far fa-circle nav-icon' }}"></i>
                                             <p>{{ $child->name }}</p>
                                         </a>

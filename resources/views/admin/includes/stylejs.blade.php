@@ -27,10 +27,6 @@
 <script src="{{asset('assets/admin/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js')}}"></script>
 <!-- AdminLTE App -->
 <script src="{{asset('assets/admin/dist/js/adminlte.js')}}"></script>
-<!-- AdminLTE dashboard demo (This is only for demo purposes) -->
-<script src="{{asset('assets/admin/dist/js/pages/dashboard.js')}}"></script>
-<!-- AdminLTE for demo purposes -->
-<script src="{{asset('assets/admin/dist/js/demo.js')}}"></script>
 
 <!-- sweetalert 2 -->
 <script src="{{asset('assets/admin/plugins/sweetalert2/sweetalert2.min.js')}}"></script>

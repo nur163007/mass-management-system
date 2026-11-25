@@ -1,14 +1,19 @@
  <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-    <ul class="navbar-nav">
-      <li class="nav-item">
-        <a class="nav-link" data-widget="pushmenu" href="#" role="button" aria-label="Toggle menu"><i class="fas fa-bars"></i></a>
-      </li>
-    </ul>
+     <ul class="navbar-nav">
+         <li class="nav-item">
+             <a class="nav-link" data-widget="pushmenu" href="#" role="button" aria-label="Toggle menu"><i
+                     class="fas fa-bars"></i></a>
+         </li>
+     </ul>
 
     <ul class="navbar-nav ml-auto">
       <li class="nav-item dropdown">
         <a class="nav-link d-flex align-items-center" data-toggle="dropdown" href="#" role="button" aria-label="Profile menu">
-            <img src="{{ asset('uploads/members/profile/' . session()->get('profile')) }}" class="img-circle elevation-2" style="height:38px;width:38px; object-fit: cover;" alt="User Image">
+            <img src="{{ asset('uploads/members/profile/' . session()->get('profile')) }}"
+             class="img-circle elevation-2"
+             style="height:38px;width:38px; object-fit: cover;"
+             onerror="this.onerror=null;this.src='{{ asset('assets/admin/dist/img/avatar5.png') }}'"
+             alt="User Image">
             <span class="d-none d-md-inline ml-2 text-truncate" style="max-width: 140px;">{{ session()->get('member_name') }}</span>
             <i class="fas fa-angle-down text-info ml-1"></i>
         </a>

@@ -26,23 +26,6 @@
         });
     }
 
-    function wrapTables() {
-        $('.card-body > table.table, section.content table.table').each(function () {
-            var $table = $(this);
-
-            if ($table.closest('.table-responsive').length) {
-                return;
-            }
-
-            if ($table.parent().hasClass('dataTables_wrapper')) {
-                $table.parent().wrap('<div class="table-responsive"></div>');
-                return;
-            }
-
-            $table.wrap('<div class="table-responsive"></div>');
-        });
-    }
-
     function initDataTableDefaults() {
         if (!$.fn.dataTable) {
             return;
@@ -51,7 +34,7 @@
         $.extend(true, $.fn.dataTable.defaults, {
             responsive: true,
             autoWidth: false,
-            lengthChange: false,
+            lengthChange: true,
             pageLength: 25,
             language: {
                 paginate: {
@@ -65,22 +48,15 @@
     $(function () {
         initSidebarMobile();
         initDataTableDefaults();
-        wrapTables();
 
-        // Re-wrap after DataTables initializes on individual pages
+        // Fix DataTables filter label — run once after each DataTable initializes
         $(document).on('init.dt', function () {
-            wrapTables();
-
             // Remove "Search:" label text, keep only the input box
             $('.dataTables_filter label').contents().filter(function () {
                 return this.nodeType === 3; // plain text nodes only
             }).remove();
 
-            // Set placeholder from page heading (h3 inside card-header or content-header)
-            var heading = $('.card-header h3').first().text().trim()
-                       || $('.content-header h1').first().text().trim()
-                       || 'Search...';
-            $('.dataTables_filter input[type="search"]').attr('placeholder', 'Search ' + heading + '...');
+            $('.dataTables_filter input[type="search"]').attr('placeholder', 'Search...');
         });
     });
 })(jQuery);
