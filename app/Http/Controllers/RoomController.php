@@ -33,7 +33,7 @@ class RoomController extends Controller
      */
     public function assignForm()
     {
-        $rooms = Room::all();
+        $rooms = Room::with(['roomMembers.member'])->get();
         // Get Manager (2) and User (3) members only, exclude Super Admin (1)
         $members = Member::whereIn('role_id', [2, 3])
             ->where('status', 1)
