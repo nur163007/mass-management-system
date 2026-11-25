@@ -6,26 +6,27 @@
          </li>
      </ul>
 
-    <ul class="navbar-nav ml-auto">
-      <li class="nav-item dropdown">
-        <a class="nav-link d-flex align-items-center" data-toggle="dropdown" href="#" role="button" aria-label="Profile menu">
-            <img src="{{ asset('uploads/members/profile/' . session()->get('profile')) }}"
-             class="img-circle elevation-2"
-             style="height:38px;width:38px; object-fit: cover;"
-             onerror="this.onerror=null;this.src='{{ asset('assets/admin/dist/img/avatar5.png') }}'"
-             alt="User Image">
-            <span class="d-none d-md-inline ml-2 text-truncate" style="max-width: 140px;">{{ session()->get('member_name') }}</span>
-            <i class="fas fa-angle-down text-info ml-1"></i>
-        </a>
-     <div class="dropdown-menu dropdown-menu-md dropdown-menu-right">
-        <a href="{{route('profile.view')}}" class="dropdown-item">
-            <i class="fas fa-user mr-2 text-info"></i> My Profile
-        </a>
-        <div class="dropdown-divider"></div>
-        <a href="{{ route('user_logout') }}" class="dropdown-item">
-            <i class="fas fa-sign-out-alt mr-2 text-danger"></i> Logout
-        </a>
-     </div>
-      </li>
-    </ul>
-  </nav>
+     <ul class="navbar-nav ml-auto">
+         <li class="nav-item dropdown">
+             <a class="nav-link d-flex align-items-center" data-toggle="dropdown" href="#" role="button"
+                 aria-label="Profile menu">
+                 <img src="{{ asset('uploads/members/profile/' . session()->get('profile')) }}"
+                     class="img-circle elevation-2" style="height:38px;width:38px; object-fit: cover;"
+                     onerror="this.onerror=null;this.src='{{ asset('assets/admin/dist/img/avatar5.png') }}'"
+                     alt="User Image">
+                 <span class="d-none d-md-inline ml-2 text-truncate"
+                     style="max-width: 140px;">{{ session()->get('member_name') }}</span>
+                 <i class="fas fa-angle-down text-info ml-1"></i>
+             </a>
+             <div class="dropdown-menu dropdown-menu-md dropdown-menu-right">
+                 <a href="{{ route('profile.view') }}" class="dropdown-item">
+                     <i class="fas fa-user mr-2 text-info"></i> My Profile
+                 </a>
+                 <div class="dropdown-divider"></div>
+                 <a href="{{ route('user_logout') }}" class="dropdown-item">
+                     <i class="fas fa-sign-out-alt mr-2 text-danger"></i> Logout
+                 </a>
+             </div>
+         </li>
+     </ul>
+ </nav>

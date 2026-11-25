@@ -452,14 +452,13 @@
                                         <td>
                                             <?php
                                                 $defaultAvatar = asset('assets/admin/dist/img/avatar5.png');
-                                                $photoSrc = ($member->photo && $member->photo !== 'null')
-                                                    ? asset('uploads/members/profile/' . $member->photo)
-                                                    : $defaultAvatar;
+                                                $photoSrc =
+                                                    $member->photo && $member->photo !== 'null'
+                                                        ? asset('uploads/members/profile/' . $member->photo)
+                                                        : $defaultAvatar;
                                             ?>
-                                            <img class="vm-thumb"
-                                                src="<?php echo e($photoSrc); ?>"
-                                                onerror="this.onerror=null;this.src='<?php echo e($defaultAvatar); ?>'"
-                                                alt="Profile">
+                                            <img class="vm-thumb" src="<?php echo e($photoSrc); ?>"
+                                                onerror="this.onerror=null;this.src='<?php echo e($defaultAvatar); ?>'" alt="Profile">
                                         </td>
                                         <td>
                                             <?php if(session('role') == 1): ?>
@@ -683,4 +682,5 @@
         });
     </script>
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('admin.master', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\hp\Herd\mass-management-system\resources\views/admin/member/view_members.blade.php ENDPATH**/ ?>

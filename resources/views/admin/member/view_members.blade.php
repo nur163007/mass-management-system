@@ -452,14 +452,13 @@
                                         <td>
                                             @php
                                                 $defaultAvatar = asset('assets/admin/dist/img/avatar5.png');
-                                                $photoSrc = ($member->photo && $member->photo !== 'null')
-                                                    ? asset('uploads/members/profile/' . $member->photo)
-                                                    : $defaultAvatar;
+                                                $photoSrc =
+                                                    $member->photo && $member->photo !== 'null'
+                                                        ? asset('uploads/members/profile/' . $member->photo)
+                                                        : $defaultAvatar;
                                             @endphp
-                                            <img class="vm-thumb"
-                                                src="{{ $photoSrc }}"
-                                                onerror="this.onerror=null;this.src='{{ $defaultAvatar }}'"
-                                                alt="Profile">
+                                            <img class="vm-thumb" src="{{ $photoSrc }}"
+                                                onerror="this.onerror=null;this.src='{{ $defaultAvatar }}'" alt="Profile">
                                         </td>
                                         <td>
                                             @if (session('role') == 1)
